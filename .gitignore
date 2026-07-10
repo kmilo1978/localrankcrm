@@ -37,3 +37,4 @@ Thumbs.db
 # La memoria de subagentes (.claude/agent-memory/) SÍ se versiona (es memoria de
 # proyecto compartida con el equipo). La config local de la sesión, no:
 .claude/settings.local.json
+.playwright-mcp/

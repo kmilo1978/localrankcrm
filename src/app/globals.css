@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Identidad visual de Vocero: tema oscuro premium con acento verde WhatsApp (#25D366).
+  Paleta en HSL para las variables de shadcn/ui.
+*/
+@layer base {
+  :root {
+    --background: 220 18% 7%;
+    --foreground: 210 20% 92%;
+    --card: 220 16% 10%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 16% 9%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 145 70% 49%; /* #25D366 */
+    --primary-foreground: 150 60% 8%;
+    --secondary: 219 14% 16%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 219 14% 14%;
+    --muted-foreground: 215 12% 60%;
+    --accent: 219 14% 18%;
+    --accent-foreground: 210 20% 92%;
+    --destructive: 0 68% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 219 14% 18%;
+    --input: 219 14% 20%;
+    --ring: 145 70% 49%;
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-secondary;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

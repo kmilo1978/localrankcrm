@@ -21,14 +21,14 @@ US1, US2 (MVP gate) → US3, US4, US5, US8 (núcleo P1) → US6 (P2) → US7 (P3
 
 **Purpose**: Proyecto Next.js 15 inicializado con el stack fijado (DV-VC-14)
 
-- [ ] T001 Scaffold Next.js 15 App Router + React 19: package.json (pnpm pinneado, `"type":"module"`, versiones DV-VC-14), tsconfig.json (`strict` + `noUncheckedIndexedAccess`), next.config.ts (`output: 'standalone'`), src/app/layout.tsx + page.tsx mínimos
-- [ ] T002 [P] Tailwind CSS + shadcn/ui: tailwind.config.ts, src/app/globals.css con tema oscuro premium propio (acento `#25D366`), components.json, primitivas base en src/components/ui/
-- [ ] T003 [P] ESLint + scripts `typecheck`/`lint`/`build`/`test` en package.json, eslint.config.mjs
-- [ ] T004 [P] docker-compose.dev.yml con Postgres 16 local (puerto 5432, volumen)
-- [ ] T005 [P] Vitest: vitest.config.ts + tests/unit/smoke.test.ts
-- [ ] T006 .env.example con placeholders `REEMPLAZA_...` + guía inline por bloque (SIN `WA_MOCK_ENABLED`); verificar `.env` en .gitignore
-- [ ] T007 [P] src/lib/env.ts — getEnv() lazy+memoizada con Zod, BUILD_PLACEHOLDERS si `NEXT_PHASE === 'phase-production-build'` (DV-VC-10)
-- [ ] T008 [P] src/lib/db/ids.ts — nanoid con prefijos (ct_, cv_, msg_, ld_, stg_, cred_, agp_, kb_, tpl_, run_, case_)
+- [X] T001 Scaffold Next.js 15 App Router + React 19: package.json (pnpm pinneado, `"type":"module"`, versiones DV-VC-14), tsconfig.json (`strict` + `noUncheckedIndexedAccess`), next.config.ts (`output: 'standalone'`), src/app/layout.tsx + page.tsx mínimos
+- [X] T002 [P] Tailwind CSS + shadcn/ui: tailwind.config.ts, src/app/globals.css con tema oscuro premium propio (acento `#25D366`), components.json, primitivas base en src/components/ui/
+- [X] T003 [P] ESLint + scripts `typecheck`/`lint`/`build`/`test` en package.json, eslint.config.mjs
+- [X] T004 [P] docker-compose.dev.yml con Postgres 16 local (puerto 5432, volumen)
+- [X] T005 [P] Vitest: vitest.config.ts + tests/unit/smoke.test.ts
+- [X] T006 .env.example con placeholders `REEMPLAZA_...` + guía inline por bloque (SIN `WA_MOCK_ENABLED`); verificar `.env` en .gitignore
+- [X] T007 [P] src/lib/env.ts — getEnv() lazy+memoizada con Zod, BUILD_PLACEHOLDERS si `NEXT_PHASE === 'phase-production-build'` (DV-VC-10)
+- [X] T008 [P] src/lib/db/ids.ts — nanoid con prefijos (ct_, cv_, msg_, ld_, stg_, cred_, agp_, kb_, tpl_, run_, case_)
 
 **Checkpoint**: `pnpm typecheck && pnpm lint && pnpm build && pnpm test` verde en esqueleto
 
@@ -40,21 +40,21 @@ US1, US2 (MVP gate) → US3, US4, US5, US8 (núcleo P1) → US6 (P2) → US7 (P3
 
 **⚠️ CRITICAL**: bloquea todas las user stories
 
-- [ ] T009 Schema Drizzle completo en src/lib/db/schema.ts según data-model.md (~15 tablas, `organization_id` NOT NULL + índices org-first, UNIQUEs: contact(org,phone), lead(contact_id), conversation parcial (org,contact) WHERE is_test=false, message(wa_message_id), meta_credentials(org / phone_number_id), agent_test_run parcial (org) WHERE status='running', template(org,name,language))
-- [ ] T010 drizzle.config.ts + migración inicial generada en drizzle/ (`pnpm db:generate`, `pnpm db:migrate` con drizzle-kit para dev)
-- [ ] T011 src/lib/db/index.ts (cliente postgres-js) + src/lib/db/tenant.ts (helpers de scope por organización, obligatorios en toda query de dominio)
-- [ ] T012 Better Auth + plugin organization: src/lib/auth/index.ts, src/lib/auth/session.ts (helper requireSession → org activa), src/app/api/auth/[...all]/route.ts
-- [ ] T013 Registro crea org + owner + etapas semilla del pipeline (Nuevo→En conversación→Interesado→Cliente[won]→Perdido[lost]) en src/server/auth/on-signup.ts
-- [ ] T014 Páginas (auth): src/app/(auth)/login/page.tsx + src/app/(auth)/register/page.tsx
-- [ ] T015 Shell autenticado src/app/(app)/layout.tsx: nav lateral (Bandeja, Pipeline, Contactos, Agente, Laboratorio, Configuración), guard de sesión, tema oscuro
-- [ ] T016 [P] src/lib/crypto/index.ts — AES-256-GCM (clave 32B desde ENCRYPTION_KEY base64, IV 12B, cipher/iv/tag separados) (DV-VC-05)
-- [ ] T017 [P] tests/unit/crypto.test.ts — roundtrip, tag inválido lanza, clave mal formada lanza
-- [ ] T018 [P] src/lib/meta/client.ts — graphRequest tipado sobre `META_GRAPH_BASE_URL`/versión, MetaApiError, detección 401/code 190/OAuthException → reconnect_required (DV-VC-13), normalizeRecipient MX 521→52 (DV-VC-12)
-- [ ] T019 [P] tests/unit/meta-client.test.ts — normalizeRecipient (521..13díg → 52+10, otros intactos) y mapeo error 190
-- [ ] T020 src/server/whatsapp/credentials.ts — guardar cifrado, getByPhoneNumberId, getByOrg, estado (connected / reconnect_required / none), last4
-- [ ] T021 src/server/events/bus.ts (EventEmitter in-process por org, publish tras commit) + src/app/api/events/route.ts (SSE contrato sse.md: headers exactos, heartbeat 25s, force-dynamic) (DV-VC-01)
-- [ ] T022 [P] src/app/api/health/route.ts — `{ ok: true }` + check de BD
-- [ ] T023 src/lib/dev-guard.ts — gate mocks (`WA_MOCK_ENABLED==='true' && NODE_ENV !== 'production'` → si no 404) + tests/unit/dev-guard.test.ts (mocks en prod → 404)
+- [X] T009 Schema Drizzle completo en src/lib/db/schema.ts según data-model.md (~15 tablas, `organization_id` NOT NULL + índices org-first, UNIQUEs: contact(org,phone), lead(contact_id), conversation parcial (org,contact) WHERE is_test=false, message(wa_message_id), meta_credentials(org / phone_number_id), agent_test_run parcial (org) WHERE status='running', template(org,name,language))
+- [X] T010 drizzle.config.ts + migración inicial generada en drizzle/ (`pnpm db:generate`, `pnpm db:migrate` con drizzle-kit para dev)
+- [X] T011 src/lib/db/index.ts (cliente postgres-js) + src/lib/db/tenant.ts (helpers de scope por organización, obligatorios en toda query de dominio)
+- [X] T012 Better Auth + plugin organization: src/lib/auth/index.ts, src/lib/auth/session.ts (helper requireSession → org activa), src/app/api/auth/[...all]/route.ts
+- [X] T013 Registro crea org + owner + etapas semilla del pipeline (Nuevo→En conversación→Interesado→Cliente[won]→Perdido[lost]) en src/server/auth/on-signup.ts
+- [X] T014 Páginas (auth): src/app/(auth)/login/page.tsx + src/app/(auth)/register/page.tsx
+- [X] T015 Shell autenticado src/app/(app)/layout.tsx: nav lateral (Bandeja, Pipeline, Contactos, Agente, Laboratorio, Configuración), guard de sesión, tema oscuro
+- [X] T016 [P] src/lib/crypto/index.ts — AES-256-GCM (clave 32B desde ENCRYPTION_KEY base64, IV 12B, cipher/iv/tag separados) (DV-VC-05)
+- [X] T017 [P] tests/unit/crypto.test.ts — roundtrip, tag inválido lanza, clave mal formada lanza
+- [X] T018 [P] src/lib/meta/client.ts — graphRequest tipado sobre `META_GRAPH_BASE_URL`/versión, MetaApiError, detección 401/code 190/OAuthException → reconnect_required (DV-VC-13), normalizeRecipient MX 521→52 (DV-VC-12)
+- [X] T019 [P] tests/unit/meta-client.test.ts — normalizeRecipient (521..13díg → 52+10, otros intactos) y mapeo error 190
+- [X] T020 src/server/whatsapp/credentials.ts — guardar cifrado, getByPhoneNumberId, getByOrg, estado (connected / reconnect_required / none), last4
+- [X] T021 src/server/events/bus.ts (EventEmitter in-process por org, publish tras commit) + src/app/api/events/route.ts (SSE contrato sse.md: headers exactos, heartbeat 25s, force-dynamic) (DV-VC-01)
+- [X] T022 [P] src/app/api/health/route.ts — `{ ok: true }` + check de BD
+- [X] T023 src/lib/dev-guard.ts — gate mocks (`WA_MOCK_ENABLED==='true' && NODE_ENV !== 'production'` → si no 404) + tests/unit/dev-guard.test.ts (mocks en prod → 404)
 
 **Checkpoint**: registro→login→shell navegable; /api/health ok; gate verde
 
