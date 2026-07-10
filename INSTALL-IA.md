@@ -4,8 +4,14 @@
 > herramientas): este archivo ES tu guion de instalación. Síguelo de arriba a
 > abajo y NO le pidas al usuario nada que puedas hacer o generar tú.
 >
-> **Para el humano**: abre tu asistente de IA en una carpeta vacía, pégale este
-> archivo (o su URL) y responde las 3 preguntas que te hará.
+> **Para el humano**: abre tu asistente de IA (p. ej. Claude Code con el MCP de
+> Coolify configurado) en una carpeta vacía, pégale este archivo (o su URL) y
+> responde las 3 preguntas que te hará. **No necesitas clonar el repo ni crear
+> ningún otro archivo**: Coolify construye directo desde GitHub y los secretos
+> viven como variables de la plataforma.
+
+**Repositorio**: `https://github.com/kevinrivm/vocero-crm` (público, rama `main`,
+`Dockerfile` en la raíz).
 
 ## Reglas para el asistente
 
@@ -49,9 +55,10 @@
 1. **Base de datos**: crea un servicio PostgreSQL 16 en el proyecto
    (`database` tipo `postgresql`), con la contraseña generada y base `vocero`.
    Anota su host interno (algo como `<uuid>:5432`).
-2. **Aplicación**: crea una app desde el repositorio público de Vocero
-   (`Dockerfile` en la raíz; build pack `dockerfile`). Asigna el dominio del
-   usuario con HTTPS.
+2. **Aplicación**: crea una app tipo **repositorio público** apuntando a
+   `https://github.com/kevinrivm/vocero-crm` (rama `main`, build pack
+   `dockerfile`, puerto expuesto `3000`) — no requiere GitHub App ni deploy
+   keys. Asigna el dominio del usuario con HTTPS.
 3. **Variables**: configura las variables de la tabla en la app (runtime, no
    build). `DATABASE_URL` apunta al host interno del paso 1.
 4. **Sin Pre-Deployment Command**: las migraciones corren solas al arrancar el
@@ -64,7 +71,7 @@
 ## Ruta B — docker compose (VPS con Docker)
 
 ```bash
-git clone <URL_DEL_REPO> vocero && cd vocero
+git clone https://github.com/kevinrivm/vocero-crm.git vocero && cd vocero
 cp .env.example .env
 # rellena .env con el dominio del usuario y los secretos generados
 docker compose up -d --build

@@ -15,7 +15,8 @@ servidor, con tus datos.
   <img src="docs/screenshots/pipeline.png" width="49%" alt="Pipeline kanban" />
 </p>
 
-> 🎬 **Video-instalador oficial**: `[LINKS-KEVIN: video de YouTube]`
+> 🎬 **Video-instalador oficial**: próximamente en
+> [el canal de Kevin Belier](https://www.youtube.com/@KevinBelier)
 
 ## ¿Para quién es?
 
@@ -99,7 +100,7 @@ genera los secretos y verifica el healthcheck.
 ### Ruta B — docker compose
 
 ```bash
-git clone [LINKS-KEVIN: URL del repo] vocero && cd vocero
+git clone https://github.com/kevinrivm/vocero-crm.git vocero && cd vocero
 cp .env.example .env    # rellena: dominio + secretos (cada uno trae su comando openssl)
 docker compose up -d --build
 ```
@@ -284,7 +285,9 @@ repo ayuda a que más gente lo encuentre.
 
 ## Créditos
 
-Creado por Kevin Belier `[LINKS-KEVIN: canal de YouTube / redes]`. Los patrones
+Creado por [Kevin Belier](https://www.youtube.com/@KevinBelier). ¿Quieres
+aprender a convertirte en Meta Tech Provider y monetizar con tu agencia de IA?
+Únete a la [VIBE Community](https://www.skool.com/vibe-community-vip). Los patrones
 de producción (webhook firmado, ingesta idempotente, cifrado de tokens) vienen
 de un proyecto de referencia privado en producción, portados y simplificados
 para este repo.
