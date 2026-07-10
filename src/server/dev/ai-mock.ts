@@ -14,9 +14,16 @@ export function aiMockCompletion(messages: InMessage[]): string {
   const lastUser =
     [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
-  // Juez del Laboratorio: veredicto fijo por persona.
+  // Juez del Laboratorio: veredicto determinista por persona. Para cerrar el
+  // loop del self-test, la persona fuera_de_kb pasa a verde si el CONOCIMIENTO
+  // configurado ya cubre garantías/devoluciones (sugerencia aplicada).
   if (system.includes(JUDGE_MARKER)) {
-    if (lastUser.includes("fuera_de_kb")) {
+    const kbSection =
+      lastUser
+        .split("CONOCIMIENTO CONFIGURADO:")[1]
+        ?.split("TRANSCRIPT COMPLETO:")[0] ?? "";
+    const kbCoversWarranty = /garant|devoluc/i.test(kbSection);
+    if (lastUser.includes("fuera_de_kb") && !kbCoversWarranty) {
       return JSON.stringify({
         veredicto: "rojo",
         hallazgos: [

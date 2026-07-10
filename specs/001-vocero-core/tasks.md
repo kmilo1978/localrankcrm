@@ -131,15 +131,15 @@ US1, US2 (MVP gate) → US3, US4, US5, US8 (núcleo P1) → US6 (P2) → US7 (P3
 
 **Independent Test**: lanzar corrida con ai-mock → 6 casos con progreso en vivo → reporte con score + hallazgo `fuera_de_kb` rojo → aplicar sugerencia → re-run → score sube; wa-mock outbox permanece VACÍO
 
-- [ ] T056 [US4] src/server/lab/personas.ts — 6 personas fijas guionadas (comprador_decidido, pregunton_precios, cliente_enojado, fuera_de_kb, pide_humano, errores_modismos; 4–5 mensajes c/u, sin LLM)
-- [ ] T057 [US4] src/server/lab/runner.ts — corrida in-process fire-and-forget: crear run+6 cases, por caso crear conversación `is_test=true` + contacto sintético, turnos secuenciales (mensaje → pipeline real debounce 0 → esperar respuesta), fin de guion o handoff → juez; progreso SSE `lab.run`; timeout 10 min → failed (DV-VC-08)
-- [ ] T058 [US4] src/server/lab/judge.ts — UNA llamada por conversación vía chatJson (Verdict de ai.md), reintentos del adaptador, inválido final → case judge_failed (visible, excluido del score); score = round(100*(verdes+0.5*amarillos)/casos_con_veredicto)
-- [ ] T059 [US4] src/instrumentation.ts — al boot marcar runs `running` huérfanos → failed
-- [ ] T060 [US4] APIs: POST /api/lab/runs (409 si running por índice parcial UNIQUE), GET /api/lab/runs (historial + delta score), GET /api/lab/runs/[id] (detalle+progreso), POST /api/lab/suggestions/apply ({caseId,hallazgoIndex,pregunta,respuesta} → kb_entry) en src/app/api/lab/
-- [ ] T061 [US4] UI src/app/(app)/lab/ — botón lanzar + subtítulo "Sandbox interno — no envía mensajes reales", progreso en vivo (SSE), reporte (score 0-100, cards de hallazgo por tipo con evidencia, botón "Agregar al conocimiento" 1-click), transcripts por persona, historial con delta
-- [ ] T062 [P] [US4] tests/unit/judge.test.ts — salida inválida del juez → reintento → judge_failed excluido del denominador del score
-- [ ] T063 [P] [US4] tests/unit/lab-sandbox.test.ts — la corrida completa jamás invoca el cliente Graph (spy sobre lib/meta)
-- [ ] T064 [US4] Guion E2E tests/e2e/us4-lab.md + ejecutarlo (SIEMPRE ai-mock): corrida→reporte→aplicar sugerencia→re-run cierra el loop con score mayor; outbox del wa-mock vacío al final
+- [X] T056 [US4] src/server/lab/personas.ts — 6 personas fijas guionadas (comprador_decidido, pregunton_precios, cliente_enojado, fuera_de_kb, pide_humano, errores_modismos; 4–5 mensajes c/u, sin LLM)
+- [X] T057 [US4] src/server/lab/runner.ts — corrida in-process fire-and-forget: crear run+6 cases, por caso crear conversación `is_test=true` + contacto sintético, turnos secuenciales (mensaje → pipeline real debounce 0 → esperar respuesta), fin de guion o handoff → juez; progreso SSE `lab.run`; timeout 10 min → failed (DV-VC-08)
+- [X] T058 [US4] src/server/lab/judge.ts — UNA llamada por conversación vía chatJson (Verdict de ai.md), reintentos del adaptador, inválido final → case judge_failed (visible, excluido del score); score = round(100*(verdes+0.5*amarillos)/casos_con_veredicto)
+- [X] T059 [US4] src/instrumentation.ts — al boot marcar runs `running` huérfanos → failed
+- [X] T060 [US4] APIs: POST /api/lab/runs (409 si running por índice parcial UNIQUE), GET /api/lab/runs (historial + delta score), GET /api/lab/runs/[id] (detalle+progreso), POST /api/lab/suggestions/apply ({caseId,hallazgoIndex,pregunta,respuesta} → kb_entry) en src/app/api/lab/
+- [X] T061 [US4] UI src/app/(app)/lab/ — botón lanzar + subtítulo "Sandbox interno — no envía mensajes reales", progreso en vivo (SSE), reporte (score 0-100, cards de hallazgo por tipo con evidencia, botón "Agregar al conocimiento" 1-click), transcripts por persona, historial con delta
+- [X] T062 [P] [US4] tests/unit/judge.test.ts — salida inválida del juez → reintento → judge_failed excluido del denominador del score
+- [X] T063 [P] [US4] tests/unit/lab-sandbox.test.ts — la corrida completa jamás invoca el cliente Graph (spy sobre lib/meta)
+- [X] T064 [US4] Guion E2E tests/e2e/us4-lab.md + ejecutarlo (SIEMPRE ai-mock): corrida→reporte→aplicar sugerencia→re-run cierra el loop con score mayor; outbox del wa-mock vacío al final
 
 **Checkpoint**: Laboratorio E2E verde y determinista
 
