@@ -221,10 +221,10 @@ US1, US2 (MVP gate) → US3, US4, US5, US8 (núcleo P1) → US6 (P2) → US7 (P3
 **Purpose**: gate completo, self-test integral, smoke real condicional, higiene de repo público, merge
 
 - [X] T092 Gate técnico completo verde: `pnpm typecheck && pnpm lint && pnpm build && pnpm test` (todos los unit tests enumerados en la spec presentes y verdes)
-- [ ] T093 Corrida integral del self-test E2E: todos los guiones tests/e2e/us1..us7 contra `pnpm dev` Y verificación clave repetida contra compose+Caddy (SSE ≤2s, webhook, seed) — caminos infelices incluidos
+- [X] T093 Corrida integral del self-test E2E: todos los guiones tests/e2e/us1..us7 contra `pnpm dev` Y verificación clave repetida contra compose+Caddy (SSE ≤2s, webhook, seed) — caminos infelices incluidos
 - [X] T094 Smoke test real CONDICIONAL (hay credenciales Meta reales en .env): conexión real del número, webhook real (o override), 1 entrante/saliente real, 1 corrida de Laboratorio con modelo real vía OpenRouter — documentar evidencia
-- [ ] T095 Auditoría de fugas OBLIGATORIA: `git log -p` + working tree, grep por nombres privados, dominios internos y rutas de máquina local; hits en historial → reescribir historia antes de reportar; verificar .mcp.json/.claude sin datos privados
-- [ ] T096 [P] Capturas para README en docs/screenshots/ (bandeja, kanban, Laboratorio-reporte, wizard) — DIFERIBLE
+- [X] T095 Auditoría de fugas OBLIGATORIA: `git log -p` + working tree, grep por nombres privados, dominios internos y rutas de máquina local; hits en historial → reescribir historia antes de reportar; verificar .mcp.json/.claude sin datos privados
+- [X] T096 [P] Capturas para README en docs/screenshots/ (bandeja, kanban, Laboratorio-reporte, wizard) — DIFERIBLE
 - [ ] T097 Lista "pendiente de verificación humana" + reporte final (verde con evidencia / diferido con instrucciones / roadmap) en el chat
 - [ ] T098 Merge `001-vocero-core` → `main` (merge normal, conservar rama — OK explícito ya dado), validar con /speckit-git-validate, dejar `main` activa
 

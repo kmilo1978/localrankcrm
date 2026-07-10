@@ -8,8 +8,13 @@ de tu negocio y un **Laboratorio** donde clientes simulados lo evalúan antes de
 que hable con clientes reales. Una instancia = un negocio, en tu propio
 servidor, con tus datos.
 
-> 📸 _Capturas próximamente_ `[LINKS-KEVIN: captura principal]`
->
+![Bandeja de Vocero CRM](docs/screenshots/bandeja.png)
+
+<p align="center">
+  <img src="docs/screenshots/laboratorio.png" width="49%" alt="Laboratorio: reporte con score y hallazgos" />
+  <img src="docs/screenshots/pipeline.png" width="49%" alt="Pipeline kanban" />
+</p>
+
 > 🎬 **Video-instalador oficial**: `[LINKS-KEVIN: video de YouTube]`
 
 ## ¿Para quién es?
