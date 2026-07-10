@@ -23,6 +23,8 @@ Todas autenticadas por sesión Better Auth y scoped a la organización del usuar
 | `GET /api/lab/runs` / `GET /api/lab/runs/:id` | historial con delta / detalle+progreso |
 | `POST /api/lab/suggestions/apply` | `{ caseId, hallazgoIndex, pregunta, respuesta }` → crea kb_entry |
 | `GET/POST /api/templates` | lista / crear+enviar a aprobación |
+| `POST /api/templates/sync` | sincronizar estados por Graph (pull; cubre modo agencia) |
+| `GET /api/pipeline/board` | etapas + tarjetas del kanban en una llamada |
 | `GET/PUT /api/settings/whatsapp` | estado conexión / guardar credenciales |
 | `POST /api/settings/whatsapp/test` | probar conexión (valida token↔número, NO guarda) |
 | `GET /api/settings/webhook` | URL completa del webhook + estado firma |

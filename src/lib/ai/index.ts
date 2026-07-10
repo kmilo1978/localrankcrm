@@ -38,7 +38,7 @@ export async function chatJson<T>(
     (opts?.judge
       ? (env.OPENROUTER_JUDGE_MODEL ?? env.OPENROUTER_MODEL)
       : env.OPENROUTER_MODEL);
-  if (!model) {
+  if (!model?.trim()) {
     return {
       ok: false,
       error: "not_configured",

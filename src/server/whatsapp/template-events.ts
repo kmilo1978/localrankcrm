@@ -1,13 +1,13 @@
 import type { WebhookValue } from "@/server/inbox/webhook";
+import { applyTemplateStatusEvent } from "@/server/whatsapp/templates";
 
 /**
  * Evento `message_template_status_update` (llega a nivel WABA: se enruta por
- * entry.id). La lógica de plantillas se completa en la fase US6; los eventos
- * de instancias sin plantillas se ignoran sin error.
+ * entry.id). Idempotente: re-aplicar el mismo estado no tiene efectos.
  */
 export async function processTemplateStatusValue(
-  _wabaId: string | null,
-  _value: WebhookValue
+  wabaId: string | null,
+  value: WebhookValue
 ): Promise<void> {
-  // Implementado en US6 (server/whatsapp/templates.ts).
+  await applyTemplateStatusEvent(wabaId, value);
 }

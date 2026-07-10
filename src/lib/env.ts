@@ -47,9 +47,11 @@ let cached: Env | null = null;
 export function getEnv(): Env {
   if (cached) return cached;
   const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+  // Los strings vacíos cuentan como ausentes: los compose/paneles suelen
+  // inyectar VAR="" para opcionales y eso debe activar los defaults.
   const source = isBuild
     ? { ...BUILD_PLACEHOLDERS, ...stripEmpty(process.env) }
-    : process.env;
+    : stripEmpty(process.env);
   const parsed = envSchema.safeParse(source);
   if (!parsed.success) {
     const missing = parsed.error.issues
@@ -80,8 +82,8 @@ export function isMockEnabled(): boolean {
   );
 }
 
-/** true si hay proveedor de IA configurado (token presente). */
+/** true si hay proveedor de IA configurado (token presente y no vacío). */
 export function isAiConfigured(): boolean {
   const token = process.env.OPENROUTER_API_TOKEN;
-  return typeof token === "string" && token.length > 0;
+  return typeof token === "string" && token.trim().length > 0;
 }
