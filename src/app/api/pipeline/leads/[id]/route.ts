@@ -1,8 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { apiError, parseBody, withAuth } from "@/lib/api";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
+import { publish } from "@/server/events/bus";
 
 export const dynamic = "force-dynamic";
 
@@ -48,5 +49,26 @@ export const PATCH = withAuth(async (session, req: Request, ctx: Params) => {
     )
     .returning();
   if (!updated[0]) return apiError(404, "not_found", "Lead no encontrado");
+
+  // Notifica a la bandeja para que la etapa se refleje en vivo (panel de
+  // detalles y punto de etapa de la lista) sin recargar.
+  const convRows = await db
+    .select({ id: schema.conversation.id })
+    .from(schema.conversation)
+    .where(
+      and(
+        eq(schema.conversation.organizationId, session.organizationId),
+        eq(schema.conversation.contactId, updated[0].contactId),
+        eq(schema.conversation.isTest, false)
+      )
+    )
+    .limit(1);
+  if (convRows[0]) {
+    publish(session.organizationId, {
+      type: "conversation.updated",
+      data: { conversation: { id: convRows[0].id } },
+    });
+  }
+
   return Response.json({ lead: updated[0] });
 });

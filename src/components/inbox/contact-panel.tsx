@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, ChevronRight, UserRound } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronRight, Sparkles, UserRound } from "lucide-react";
 import type { ConversationDto, StageDto } from "@/lib/types";
 import { cn, formatPhone } from "@/lib/utils";
 import { ContactAvatar } from "@/components/avatar";
@@ -17,10 +18,13 @@ const HANDOFF_LABELS: Record<string, string> = {
 
 export function ContactPanel({
   conversation,
+  refreshKey = 0,
   onPatchConversation,
   onClose,
 }: {
   conversation: ConversationDto;
+  /** Aumenta con cada evento SSE relevante: dispara un refetch en vivo. */
+  refreshKey?: number;
   onPatchConversation: (patch: {
     aiEnabled?: boolean;
     reactivate?: boolean;
@@ -33,27 +37,61 @@ export function ContactPanel({
   const [stages, setStages] = useState<StageDto[]>([]);
   const [currentStageId, setCurrentStageId] = useState<string | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
+  // Estado global del agente: sin esto, el toggle "Respondiendo" mentiría
+  // cuando el agente aún no se ha configurado/encendido.
+  const [agentEnabled, setAgentEnabled] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState(false);
 
   const contactId = conversation.contact.id;
 
+  const agentReady = aiConfigured && agentEnabled;
+  const aiActive =
+    agentReady && conversation.aiEnabled && !conversation.handoffAt;
+
+  // Carga inicial (incluye notas): se re-ejecuta al cambiar de contacto.
   const refetch = useCallback(async () => {
-    const [detail, stagesRes] = await Promise.all([
+    const [detail, stagesRes, agentRes] = await Promise.all([
       fetch(`/api/contacts/${contactId}`).then((r) => (r.ok ? r.json() : null)),
       fetch("/api/pipeline/stages").then((r) => (r.ok ? r.json() : null)),
-    ]).catch(() => [null, null]);
+      fetch("/api/agent/profile").then((r) => (r.ok ? r.json() : null)),
+    ]).catch(() => [null, null, null]);
     if (detail) {
       setNotes(detail.contact?.notes ?? "");
       setCurrentStageId(detail.stage?.id ?? null);
       setLeadId(detail.lead?.id ?? null);
     }
     if (stagesRes) setStages(stagesRes.stages);
+    setAgentEnabled(Boolean(agentRes?.profile?.enabled));
+    setAiConfigured(Boolean(agentRes?.aiConfigured));
     setNotesLoaded(true);
+  }, [contactId]);
+
+  // Refetch en vivo (etapa/lead + estado del agente) SIN tocar las notas, para
+  // no pisar lo que el operador esté escribiendo. Lo dispara el SSE.
+  const refreshLive = useCallback(async () => {
+    const [detail, agentRes] = await Promise.all([
+      fetch(`/api/contacts/${contactId}`).then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/agent/profile").then((r) => (r.ok ? r.json() : null)),
+    ]).catch(() => [null, null]);
+    if (detail) {
+      setCurrentStageId(detail.stage?.id ?? null);
+      setLeadId(detail.lead?.id ?? null);
+    }
+    if (agentRes) {
+      setAgentEnabled(Boolean(agentRes.profile?.enabled));
+      setAiConfigured(Boolean(agentRes.aiConfigured));
+    }
   }, [contactId]);
 
   useEffect(() => {
     setNotesLoaded(false);
     void refetch();
   }, [refetch]);
+
+  useEffect(() => {
+    if (!notesLoaded) return; // la carga inicial ya trae el estado fresco
+    void refreshLive();
+  }, [refreshKey, notesLoaded, refreshLive]);
 
   async function moveToStage(stageId: string) {
     if (!leadId || stageId === currentStageId) return;
@@ -63,7 +101,7 @@ export function ContactPanel({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ stageId, position: 0 }),
     }).catch(() => null);
-    void refetch();
+    void refreshLive();
   }
 
   async function saveNotes() {
@@ -125,6 +163,7 @@ export function ContactPanel({
                 size="sm"
                 variant="outline"
                 className="mt-2 w-full"
+                disabled={!agentReady}
                 onClick={() => void onPatchConversation({ reactivate: true })}
               >
                 Reactivar IA
@@ -132,32 +171,67 @@ export function ContactPanel({
             </div>
           )}
 
-          <div className="mt-3 flex items-center justify-between rounded-md border bg-secondary/50 px-3 py-2.5">
-            <div>
-              <p className="text-[13px] font-medium">IA en esta conversación</p>
-              <p className="text-[11px] text-text-3">
-                {conversation.aiEnabled ? "Respondiendo" : "En pausa"}
-              </p>
-            </div>
-            <button
-              role="switch"
-              aria-checked={conversation.aiEnabled}
-              aria-label="IA en esta conversación"
-              onClick={() =>
-                void onPatchConversation({ aiEnabled: !conversation.aiEnabled })
-              }
-              className={cn(
-                "relative h-5 w-9 rounded-full transition-colors",
-                conversation.aiEnabled ? "bg-brand" : "bg-border-strong"
-              )}
-            >
-              <span
+          <div className="mt-3 rounded-md border bg-secondary/50 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium">IA en esta conversación</p>
+                <p className="text-[11px] text-text-3">
+                  {!agentReady
+                    ? "Agente sin activar"
+                    : conversation.handoffAt
+                      ? "En pausa · atención humana"
+                      : conversation.aiEnabled
+                        ? "Respondiendo"
+                        : "En pausa"}
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={aiActive}
+                aria-label="IA en esta conversación"
+                disabled={!agentReady}
+                onClick={() => {
+                  if (!agentReady) return;
+                  void onPatchConversation({
+                    aiEnabled: !conversation.aiEnabled,
+                  });
+                }}
                 className={cn(
-                  "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
-                  conversation.aiEnabled ? "translate-x-[18px]" : "translate-x-0.5"
+                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full px-0.5 transition-colors",
+                  aiActive ? "bg-brand" : "bg-border-strong",
+                  !agentReady && "cursor-not-allowed opacity-60"
                 )}
-              />
-            </button>
+              >
+                <span
+                  className={cn(
+                    "h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
+                    aiActive ? "translate-x-4" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+
+            {!agentReady && (
+              <div className="mt-2.5 flex items-start gap-2 rounded-md border border-[#ece2cf] bg-[#faf7f0] p-2.5">
+                <Sparkles
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8a6d3b]"
+                  strokeWidth={1.7}
+                />
+                <p className="text-[11px] leading-relaxed text-[#8a6d3b]">
+                  {aiConfigured
+                    ? "La IA todavía no responde por su cuenta. Configura lo básico del agente y enciéndelo."
+                    : "Falta la clave de IA de la instancia (OPENROUTER_API_TOKEN) para que el agente pueda responder."}
+                  {aiConfigured && (
+                    <Link
+                      href="/agent"
+                      className="ml-1 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
+                    >
+                      Configurar agente →
+                    </Link>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 

@@ -19,6 +19,9 @@ export function InboxClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageDto[]>([]);
   const [panelOpen, setPanelOpen] = useState(true);
+  // Se incrementa con cada evento SSE que puede cambiar la etapa/lead o el
+  // estado del agente: el panel de detalles lo observa y refetch en vivo.
+  const [detailRev, setDetailRev] = useState(0);
 
   useEffect(() => {
     setPanelOpen(localStorage.getItem("vocero.panelOpen") !== "false");
@@ -89,6 +92,8 @@ export function InboxClient() {
         });
       }
       void refetchConversations();
+      // Un entrante nuevo puede crear/mover el lead: refresca el panel.
+      setDetailRev((v) => v + 1);
     },
     onMessageStatus: ({ conversationId, messageId, status }) => {
       if (selectedIdRef.current !== conversationId) return;
@@ -100,11 +105,14 @@ export function InboxClient() {
     },
     onConversationUpdated: () => {
       void refetchConversations();
+      // El agente movió de etapa o cambió el handoff: refresca el panel en vivo.
+      setDetailRev((v) => v + 1);
     },
     onReconnect: () => {
       // Catch-up tras reconexión (contrato sse.md): refetch completo.
       void refetchConversations();
       if (selectedIdRef.current) void refetchMessages(selectedIdRef.current);
+      setDetailRev((v) => v + 1);
     },
   });
 
@@ -224,6 +232,7 @@ export function InboxClient() {
           <div className="h-full w-[320px]">
             <ContactPanel
               conversation={selected}
+              refreshKey={detailRev}
               onPatchConversation={patchConversation}
               onClose={() => togglePanel(false)}
             />
