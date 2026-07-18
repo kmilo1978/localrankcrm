@@ -91,6 +91,11 @@ export default function FormsPage() {
   const [search, setSearch] = useState("");
   const [showConnectForm, setShowConnectForm] = useState(false);
   const [showAddEntry, setShowAddEntry] = useState(false);
+  const [showFormBuilder, setShowFormBuilder] = useState(false);
+  const [builderFields, setBuilderFields] = useState<{ id: string; label: string; type: string; required: boolean }[]>([]);
+  const [builderName, setBuilderName] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | FormEntry["status"]>("all");
   const [filterFormId, setFilterFormId] = useState<string>("all");
@@ -169,6 +174,9 @@ export default function FormsPage() {
             <button onClick={() => setShowAddEntry(!showAddEntry)} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-gray-50 transition-colors">
               <FileText className="h-4 w-4" />Agregar entrada
             </button>
+            <button onClick={() => setShowFormBuilder(!showFormBuilder)} className="flex items-center gap-2 rounded-md border border-brand text-brand px-3 py-2 text-sm font-medium hover:bg-brand-tint transition-colors">
+              <Plus className="h-4 w-4" />Crear formulario
+            </button>
             <button onClick={() => setShowConnectForm(!showConnectForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
               <Link2 className="h-4 w-4" />Conectar formulario
             </button>
@@ -197,6 +205,69 @@ export default function FormsPage() {
               <button onClick={handleConnectForm} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Conectar</button>
               <button onClick={() => setShowConnectForm(false)} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">Cancelar</button>
             </div>
+          </div>
+        )}
+
+        {/* Form Builder */}
+        {showFormBuilder && (
+          <div className="mb-6 rounded-lg border bg-white p-5">
+            <h3 className="mb-4 font-semibold">Crear formulario</h3>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {/* Manual builder */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Construcción manual</h4>
+                <input value={builderName} onChange={(e) => setBuilderName(e.target.value)} placeholder="Nombre del formulario *" className="w-full rounded-md border px-3 py-2 text-sm mb-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                {builderFields.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {builderFields.map((f, i) => (
+                      <div key={f.id} className="flex items-center gap-2 rounded border bg-gray-50 px-3 py-2">
+                        <span className="text-xs font-medium flex-1">{f.label}</span>
+                        <span className="rounded bg-brand/10 px-1.5 py-0.5 text-[10px] text-brand">{f.type}</span>
+                        {f.required && <span className="text-[10px] text-red-500">*</span>}
+                        <button onClick={() => setBuilderFields(builderFields.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-red-500 text-xs">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input id="new-field-label" placeholder="Nombre del campo" className="flex-1 rounded-md border px-3 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <select id="new-field-type" className="rounded-md border px-2 py-1.5 text-xs focus:border-brand focus:outline-none">
+                    <option value="text">Texto</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Teléfono</option>
+                    <option value="number">Número</option>
+                    <option value="textarea">Texto largo</option>
+                    <option value="select">Selección</option>
+                    <option value="checkbox">Checkbox</option>
+                    <option value="date">Fecha</option>
+                    <option value="file">Archivo</option>
+                    <option value="url">URL</option>
+                  </select>
+                  <button onClick={() => { const label = (document.getElementById("new-field-label") as HTMLInputElement)?.value; const type = (document.getElementById("new-field-type") as HTMLSelectElement)?.value; if (label) { setBuilderFields([...builderFields, { id: generateId(), label, type: type || "text", required: false }]); (document.getElementById("new-field-label") as HTMLInputElement).value = ""; } }} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover">+</button>
+                </div>
+              </div>
+
+              {/* AI builder */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Generar con IA</h4>
+                <p className="text-xs text-muted-foreground mb-2">Describe qué información quieres capturar y la IA generará los campos.</p>
+                <textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} placeholder="Ej: Necesito un formulario para capturar leads de servicios dentales. Quiero nombre, email, teléfono, tipo de servicio que buscan, presupuesto y cuándo quieren empezar." rows={4} className="w-full rounded-md border px-3 py-2 text-sm mb-3 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                <button onClick={() => { setAiGenerating(true); setTimeout(() => { const aiFields = [ { id: generateId(), label: "Nombre completo", type: "text", required: true }, { id: generateId(), label: "Email", type: "email", required: true }, { id: generateId(), label: "Teléfono", type: "phone", required: true }, { id: generateId(), label: "Servicio de interés", type: "select", required: true }, { id: generateId(), label: "Presupuesto estimado", type: "number", required: false }, { id: generateId(), label: "¿Cuándo quieres comenzar?", type: "select", required: false }, { id: generateId(), label: "Comentarios adicionales", type: "textarea", required: false } ]; setBuilderFields(aiFields); setBuilderName(aiPrompt.split(".")[0]?.slice(0, 40) || "Formulario IA"); setAiGenerating(false); }, 1500); }} disabled={!aiPrompt.trim() || aiGenerating} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">
+                  {aiGenerating ? "Generando..." : "✨ Generar campos con IA"}
+                </button>
+              </div>
+            </div>
+
+            {/* Save form */}
+            {builderFields.length > 0 && (
+              <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">{builderFields.length} campos configurados</p>
+                <div className="flex gap-2">
+                  <button onClick={() => { if (builderName) { const newForm: ConnectedForm = { id: generateId(), name: builderName, provider: "manual", url: "", webhookUrl: "", entryCount: 0, createdAt: new Date().toISOString().split("T")[0]! }; saveForms([newForm, ...forms]); setBuilderName(""); setBuilderFields([]); setShowFormBuilder(false); } }} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar formulario</button>
+                  <button onClick={() => { setShowFormBuilder(false); setBuilderFields([]); setBuilderName(""); }} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">Cancelar</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

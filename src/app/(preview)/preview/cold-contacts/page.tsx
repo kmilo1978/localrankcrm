@@ -75,6 +75,8 @@ export default function ColdContactsPage() {
   const [view, setView] = useState<"list" | "pipeline">("list");
   const [search, setSearch] = useState("");
   const [filterClase, setFilterClase] = useState("all");
+  const [filterWeb, setFilterWeb] = useState("all");
+  const [filterVerified, setFilterVerified] = useState("all");
   const [sortBy, setSortBy] = useState<"score" | "reviews" | "rating">("score");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
@@ -183,6 +185,19 @@ export default function ColdContactsPage() {
   const clases = [...new Set(contacts.map((c) => c.clase).filter(Boolean))];
   const filtered = contacts
     .filter((c) => filterClase === "all" || c.clase === filterClase)
+    .filter((c) => {
+      if (filterWeb === "with") return c.website && !c.website.includes("instagram") && !c.website.includes("facebook") && !c.website.includes("wa.me") && !c.website.includes("beacons") && !c.website.includes("doctoralia");
+      if (filterWeb === "without") return !c.website;
+      if (filterWeb === "social_only") return c.website && (c.website.includes("instagram") || c.website.includes("facebook") || c.website.includes("beacons"));
+      return true;
+    })
+    .filter((c) => {
+      if (filterVerified === "verified") return c.clase !== "No verificado";
+      if (filterVerified === "unverified") return c.clase === "No verificado";
+      if (filterVerified === "gmb_optimized") return c.reviews > 50 && c.rating >= 4.5 && c.description.length > 50;
+      if (filterVerified === "no_images") return !c.description || c.description.length < 20;
+      return true;
+    })
     .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search) || c.category.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sortBy === "score" ? b.score - a.score : sortBy === "reviews" ? b.reviews - a.reviews : b.rating - a.rating);
 
@@ -241,6 +256,19 @@ export default function ColdContactsPage() {
           <select value={filterClase} onChange={(e) => setFilterClase(e.target.value)} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
             <option value="all">Todas las clases</option>
             {clases.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterWeb} onChange={(e) => setFilterWeb(e.target.value)} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+            <option value="all">Web: Todos</option>
+            <option value="with">Con página web</option>
+            <option value="without">Sin página web</option>
+            <option value="social_only">Solo red social</option>
+          </select>
+          <select value={filterVerified} onChange={(e) => setFilterVerified(e.target.value)} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+            <option value="all">Verificación: Todos</option>
+            <option value="verified">Verificados</option>
+            <option value="unverified">No verificados</option>
+            <option value="gmb_optimized">GMB Optimizado</option>
+            <option value="no_images">Sin imágenes/descripción</option>
           </select>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
             <option value="score">Ordenar por Score</option>
