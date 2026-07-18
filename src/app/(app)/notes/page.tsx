@@ -252,6 +252,7 @@ export default function NotesPage() {
               <button onClick={() => { cloneNote(viewNote); setViewNote(null); }} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Copy className="h-3.5 w-3.5" />Clonar</button>
               <button onClick={() => copyNote(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />Copiar texto</button>
               <button onClick={() => copyNoteJSON(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />JSON</button>
+              <button onClick={() => { deleteNote(viewNote.id); setViewNote(null); }} className="flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 ml-auto"><Trash2 className="h-3.5 w-3.5" />Eliminar</button>
             </div>
           </div>
         </div>
@@ -297,30 +298,31 @@ export default function NotesPage() {
 
 function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: Category[]; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
   return (
-    <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow cursor-pointer overflow-hidden max-h-48" onClick={() => onView(note)}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <StickyNote className="h-4 w-4 text-brand" />
-          <h4 className="text-sm font-semibold truncate">{note.title}</h4>
-        </div>
-        <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
-          {/* Move to category dropdown */}
-          <select value={note.category} onChange={e => onMove(note.id, e.target.value)} className="opacity-0 group-hover:opacity-100 rounded border px-1 py-0.5 text-[9px] max-w-[80px] focus:outline-none cursor-pointer" title="Mover a categoria">
-            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-          </select>
-          <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-brand"}`} title="Fijar"><Pin className="h-3.5 w-3.5" /></button>
-          <button onClick={() => onEdit(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
-          <button onClick={() => onClone(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-gray-700" title="Clonar"><Copy className="h-3.5 w-3.5" /></button>
-          <button onClick={() => onCopy(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-gray-700" title="Copiar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
-          <button onClick={() => onDelete(note.id)} className="rounded p-1 text-red-400 hover:text-red-600 hover:bg-red-50" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
-        </div>
+    <div className="rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow overflow-hidden">
+      {/* Title row — clickable to view */}
+      <div className="flex items-center gap-2 cursor-pointer" onClick={() => onView(note)}>
+        <StickyNote className="h-3.5 w-3.5 text-brand shrink-0" />
+        <h4 className="text-sm font-semibold truncate flex-1">{note.title}</h4>
+        {note.pinned && <Pin className="h-3 w-3 text-brand shrink-0" />}
       </div>
-      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground break-all overflow-hidden max-h-16">{note.content}</p>
-      {note.image && <img src={note.image} alt="" className="mt-2 w-full max-h-32 rounded border object-cover" />}
-      <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
-        {note.relatedTo && <><span>·</span><span>{note.relatedTo}</span></>}
+      {/* Content preview */}
+      <p className="mt-1.5 text-xs text-muted-foreground break-all overflow-hidden line-clamp-2 cursor-pointer" onClick={() => onView(note)}>{note.content}</p>
+      {note.image && <img src={note.image} alt="" className="mt-1.5 w-full max-h-20 rounded border object-cover cursor-pointer" onClick={() => onView(note)} />}
+      {/* Footer with category + date */}
+      <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+        <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
         <span className="ml-auto">{note.createdAt}</span>
+      </div>
+      {/* Action buttons — ALWAYS visible */}
+      <div className="mt-2 flex items-center gap-1 border-t pt-2" onClick={e => e.stopPropagation()}>
+        <select value={note.category} onChange={e => onMove(note.id, e.target.value)} className="rounded border px-1 py-0.5 text-[9px] w-20 focus:outline-none">
+          {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+        </select>
+        <div className="flex-1" />
+        <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "text-muted-foreground hover:text-brand"}`} title="Fijar"><Pin className="h-3 w-3" /></button>
+        <button onClick={() => onEdit(note)} className="rounded p-1 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3 w-3" /></button>
+        <button onClick={() => onClone(note)} className="rounded p-1 text-muted-foreground hover:text-gray-700" title="Clonar"><Copy className="h-3 w-3" /></button>
+        <button onClick={() => onDelete(note.id)} className="rounded p-1 text-red-400 hover:text-red-600 hover:bg-red-50" title="Eliminar"><Trash2 className="h-3 w-3" /></button>
       </div>
     </div>
   );
