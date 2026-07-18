@@ -2,10 +2,10 @@ import { DEFAULT_BRANDING } from "@/lib/branding";
 import { AppNav } from "@/components/app-nav";
 import { PageHelp } from "@/components/page-help";
 import { AiAssistant } from "@/components/ai-assistant";
+import { BlurWrapper } from "@/components/blur-wrapper";
 
 /**
  * Layout de preview: sin autenticación, usa branding por defecto.
- * Accede a /preview/dashboard, /preview/companies, etc.
  */
 export default function PreviewLayout({
   children,
@@ -17,7 +17,7 @@ export default function PreviewLayout({
         userName="Demo User"
         role="owner"
       />
-      <main className="min-w-0 flex-1 overflow-y-auto pt-14 md:pt-0">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto pt-14 md:pt-0"><BlurWrapper>{children}</BlurWrapper></main>
       <PageHelp />
       <AiAssistant />
     </div>
