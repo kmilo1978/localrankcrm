@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, CheckCircle2, Circle, Clock, Plus, Tag, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, Clock, ClipboardCopy, Edit3, Plus, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type Task = {
@@ -20,28 +20,51 @@ const SEED_TASKS: Task[] = [
   { id: "t1", title: "Enviar propuesta Enterprise a TechCorp", description: "Preparar y enviar la propuesta final", priority: "high", status: "in_progress", dueDate: "2026-07-18", assignee: "Juan Pérez", relatedTo: "TechCorp", category: "Venta" },
   { id: "t2", title: "Llamada de seguimiento con María García", description: "Confirmar interés en implementación", priority: "high", status: "pending", dueDate: "2026-07-17", assignee: "Ana López", relatedTo: "LogiNext", category: "Seguimiento" },
   { id: "t3", title: "Demo producto para MediaGroup", description: "Preparar demo personalizada", priority: "medium", status: "pending", dueDate: "2026-07-20", assignee: "Juan Pérez", relatedTo: "MediaGroup", category: "Demo" },
+  { id: "t4", title: "Revisar contrato SaaS con legal", description: "Validar cláusulas de soporte y SLA", priority: "low", status: "completed", dueDate: "2026-07-15", assignee: "Ana López", relatedTo: "TechCorp", category: "Legal" },
 ];
 
 const PRIORITY_STYLES = { high: "bg-red-100 text-red-700", medium: "bg-amber-100 text-amber-700", low: "bg-gray-100 text-gray-600" };
 const PRIORITY_LABELS = { high: "Alta", medium: "Media", low: "Baja" };
 const STATUS_ICONS = { pending: Circle, in_progress: Clock, completed: CheckCircle2 };
+const STATUS_LABELS = { pending: "Pendiente", in_progress: "En progreso", completed: "Completada" };
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "in_progress" | "completed">("all");
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", priority: "medium" as Task["priority"], dueDate: "", assignee: "", relatedTo: "", category: "" });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [form, setForm] = useState({ title: "", description: "", priority: "medium" as Task["priority"], status: "pending" as Task["status"], dueDate: "", assignee: "", relatedTo: "", category: "" });
+  const [toast, setToast] = useState("");
 
   useEffect(() => { setTasks(loadFromStorage("tasks", SEED_TASKS)); }, []);
 
   function save(updated: Task[]) { setTasks(updated); saveToStorage("tasks", updated); }
 
+  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2500); }
+
   function handleAdd() {
     if (!form.title.trim()) return;
-    const t: Task = { id: generateId(), ...form, status: "pending" };
+    const t: Task = { id: generateId(), ...form };
     save([t, ...tasks]);
-    setForm({ title: "", description: "", priority: "medium", dueDate: "", assignee: "", relatedTo: "", category: "" });
+    resetForm();
     setShowForm(false);
+  }
+
+  function openEdit(task: Task) {
+    setEditingTask(task);
+    setForm({ title: task.title, description: task.description, priority: task.priority, status: task.status, dueDate: task.dueDate, assignee: task.assignee, relatedTo: task.relatedTo, category: task.category });
+  }
+
+  function handleUpdate() {
+    if (!editingTask || !form.title.trim()) return;
+    save(tasks.map(t => t.id === editingTask.id ? { ...t, ...form } : t));
+    setEditingTask(null);
+    resetForm();
+    showToast("Tarea actualizada");
+  }
+
+  function resetForm() {
+    setForm({ title: "", description: "", priority: "medium", status: "pending", dueDate: "", assignee: "", relatedTo: "", category: "" });
   }
 
   function toggleStatus(id: string) {
@@ -50,6 +73,30 @@ export default function TasksPage() {
       const next = t.status === "pending" ? "in_progress" : t.status === "in_progress" ? "completed" : "pending";
       return { ...t, status: next };
     }));
+  }
+
+  function duplicateTask(task: Task) {
+    const copy: Task = { ...task, id: generateId(), title: task.title + " (copia)", status: "pending" };
+    save([copy, ...tasks]);
+    showToast("Tarea duplicada");
+  }
+
+  function copyTask(task: Task) {
+    navigator.clipboard.writeText(JSON.stringify(task, null, 2));
+    showToast("Tarea copiada al portapapeles");
+  }
+
+  function pasteTask() {
+    navigator.clipboard.readText().then(text => {
+      try {
+        const data = JSON.parse(text);
+        if (data.title) {
+          const t: Task = { id: generateId(), title: data.title, description: data.description || "", priority: data.priority || "medium", status: "pending", dueDate: data.dueDate || "", assignee: data.assignee || "", relatedTo: data.relatedTo || "", category: data.category || "" };
+          save([t, ...tasks]);
+          showToast("Tarea pegada desde portapapeles");
+        }
+      } catch { showToast("No se reconoce el formato"); }
+    });
   }
 
   function handleDelete(id: string) { save(tasks.filter((t) => t.id !== id)); }
@@ -66,25 +113,24 @@ export default function TasksPage() {
             <h1 className="text-2xl font-bold">Tareas</h1>
             <p className="text-sm text-muted-foreground">{pendingCount} pendientes · {inProgressCount} en progreso</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
-            <Plus className="h-4 w-4" />Nueva tarea
-          </button>
+          <div className="flex gap-2">
+            <button onClick={pasteTask} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Pegar tarea"><ClipboardCopy className="h-3.5 w-3.5" />Pegar</button>
+            <button onClick={() => { resetForm(); setShowForm(!showForm); }} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Nueva tarea</button>
+          </div>
         </div>
 
         {showForm && (
           <div className="mb-6 rounded-lg border bg-white p-5">
             <h3 className="mb-4 font-semibold">Agregar nueva tarea</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título *" className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descripción" rows={2} className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value as Task["priority"] })} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
-                <option value="high">Prioridad Alta</option>
-                <option value="medium">Prioridad Media</option>
-                <option value="low">Prioridad Baja</option>
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Titulo *" className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descripcion" rows={2} className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value as Task["priority"] })} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                <option value="high">Prioridad Alta</option><option value="medium">Prioridad Media</option><option value="low">Prioridad Baja</option>
               </select>
-              <input value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} type="date" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <input value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })} placeholder="Asignado a" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <input value={form.relatedTo} onChange={(e) => setForm({ ...form, relatedTo: e.target.value })} placeholder="Relacionado con" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              <input value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} type="date" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })} placeholder="Asignado a" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={form.relatedTo} onChange={(e) => setForm({ ...form, relatedTo: e.target.value })} placeholder="Relacionado con" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
             </div>
             <div className="mt-4 flex gap-2">
               <button onClick={handleAdd} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar</button>
@@ -93,7 +139,7 @@ export default function TasksPage() {
           </div>
         )}
 
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 flex gap-2 flex-wrap">
           {([["all","Todas"],["pending","Pendientes"],["in_progress","En progreso"],["completed","Completadas"]] as const).map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key)} className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${filter === key ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{label}</button>
           ))}
@@ -108,7 +154,7 @@ export default function TasksPage() {
                   <button onClick={() => toggleStatus(task.id)} title="Cambiar estado">
                     <StatusIcon className={`mt-0.5 h-5 w-5 shrink-0 ${task.status === "completed" ? "text-green-500" : task.status === "in_progress" ? "text-brand" : "text-muted-foreground"}`} />
                   </button>
-                  <div className="flex-1">
+                  <div className="flex-1 cursor-pointer" onClick={() => openEdit(task)}>
                     <div className="flex items-center gap-2">
                       <h4 className={`text-sm font-medium ${task.status === "completed" ? "line-through" : ""}`}>{task.title}</h4>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PRIORITY_STYLES[task.priority]}`}>{PRIORITY_LABELS[task.priority]}</span>
@@ -121,9 +167,12 @@ export default function TasksPage() {
                       {task.relatedTo && <span className="text-brand">{task.relatedTo}</span>}
                     </div>
                   </div>
-                  <button onClick={() => handleDelete(task.id)} className="opacity-0 group-hover:opacity-100 rounded p-1 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-all" title="Eliminar">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEdit(task)} className="rounded p-1 hover:bg-blue-50 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => duplicateTask(task)} className="rounded p-1 hover:bg-gray-100 text-muted-foreground hover:text-gray-700" title="Duplicar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => copyTask(task)} className="rounded p-1 hover:bg-gray-100 text-muted-foreground hover:text-gray-700" title="Copiar JSON"><Tag className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDelete(task.id)} className="rounded p-1 hover:bg-red-50 text-muted-foreground hover:text-red-500" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
                 </div>
               </div>
             );
@@ -131,6 +180,49 @@ export default function TasksPage() {
           {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground">No hay tareas en este filtro.</div>}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold">Editar tarea</h3>
+              <button onClick={() => { setEditingTask(null); resetForm(); }} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Titulo</label><input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Descripcion</label><textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Estado</label>
+                  <select value={form.status} onChange={e => setForm({...form, status: e.target.value as Task["status"]})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">
+                    <option value="pending">Pendiente</option><option value="in_progress">En progreso</option><option value="completed">Completada</option>
+                  </select>
+                </div>
+                <div><label className="text-xs font-medium text-muted-foreground">Prioridad</label>
+                  <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value as Task["priority"]})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">
+                    <option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Fecha limite</label><input value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} type="date" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Asignado a</label><input value={form.assignee} onChange={e => setForm({...form, assignee: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Relacionado con</label><input value={form.relatedTo} onChange={e => setForm({...form, relatedTo: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Categoria</label><input value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={handleUpdate} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar cambios</button>
+                <button onClick={() => { setEditingTask(null); resetForm(); }} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
   );
 }

@@ -215,6 +215,14 @@ export default function ContactsPreviewPage() {
                   {/* Expanded detail */}
                   {isExpanded && (
                     <div className="border-t px-4 pb-4 pt-3">
+                      {/* Editable main fields */}
+                      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <div><label className="text-[10px] font-medium text-muted-foreground">Nombre</label><input defaultValue={contact.name} onBlur={e => { if (e.target.value !== contact.name) save(contacts.map(c => c.id === contact.id ? {...c, name: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                        <div><label className="text-[10px] font-medium text-muted-foreground">Telefono</label><input defaultValue={contact.phone} onBlur={e => { if (e.target.value !== contact.phone) save(contacts.map(c => c.id === contact.id ? {...c, phone: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                        <div><label className="text-[10px] font-medium text-muted-foreground">Email</label><input defaultValue={contact.email} onBlur={e => { if (e.target.value !== contact.email) save(contacts.map(c => c.id === contact.id ? {...c, email: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                        <div><label className="text-[10px] font-medium text-muted-foreground">Empresa</label><input defaultValue={contact.company} onBlur={e => { if (e.target.value !== contact.company) save(contacts.map(c => c.id === contact.id ? {...c, company: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                        <div><label className="text-[10px] font-medium text-muted-foreground">Rol / Cargo</label><input defaultValue={contact.role} onBlur={e => { if (e.target.value !== contact.role) save(contacts.map(c => c.id === contact.id ? {...c, role: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                      </div>
                       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                         {/* Custom Fields */}
                         <div>
