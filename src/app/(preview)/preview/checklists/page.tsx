@@ -85,12 +85,12 @@ export default function ChecklistsPage() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Sidebar */}
-      <div className="w-72 shrink-0 border-r bg-gray-50 flex flex-col">
+      <div className="w-full md:w-72 shrink-0 border-b md:border-b-0 md:border-r bg-gray-50 flex flex-col max-h-52 md:max-h-none">
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="text-sm font-bold flex items-center gap-2"><CheckSquare className="h-4 w-4 text-brand" />Checklists</h2>
-          <button onClick={() => setShowForm(true)} className="rounded p-1 hover:bg-gray-200"><Plus className="h-4 w-4" /></button>
+          <button onClick={() => setShowForm(true)} className="rounded bg-brand text-white p-1.5 hover:bg-brand-hover" title="Nuevo checklist"><Plus className="h-4 w-4" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {checklists.map(cl => {
@@ -139,13 +139,17 @@ export default function ChecklistsPage() {
                 ))}
               </div>
               <div className="flex gap-2 border-t pt-3">
-                <input value={itemInput} onChange={e => setItemInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addItem(); }} placeholder="Agregar item..." className="flex-1 rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                <button onClick={addItem} className="rounded bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover">Agregar</button>
+                <input value={itemInput} onChange={e => setItemInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addItem(); }} placeholder="Escribir nuevo item y presionar Enter..." className="flex-1 rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <button onClick={addItem} disabled={!itemInput.trim()} className="rounded bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50">Agregar</button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">Selecciona o crea un checklist</div>
+          <div className="flex h-full flex-col items-center justify-center text-muted-foreground text-sm gap-4">
+            <CheckSquare className="h-12 w-12 text-gray-300" />
+            <p>Selecciona un checklist o crea uno nuevo</p>
+            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Nuevo checklist</button>
+          </div>
         )}
       </div>
 
