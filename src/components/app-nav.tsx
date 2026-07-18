@@ -16,19 +16,23 @@ import {
   FileText,
   FlaskConical,
   FolderOpen,
+  GitBranch,
   Heart,
+  History,
   Kanban,
   LayoutDashboard,
   LogOut,
   MessageSquare,
   Send,
   Settings,
+  Star,
   StickyNote,
   Tag,
   Target,
   Thermometer,
   Users,
   UsersRound,
+  Zap,
 } from "lucide-react";
 import type { Branding } from "@/lib/branding";
 import { cn, initials } from "@/lib/utils";
@@ -56,7 +60,11 @@ const NAV = [
   { href: "/calendar", label: "Calendario", icon: Calendar },
   // --- Intelligence ---
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/agent", label: "IA & Automatización", icon: Bot },
+  { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
+  { href: "/automations", label: "Automatizaciones", icon: Zap },
+  { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
+  { href: "/scoring", label: "Scoring", icon: Star },
+  { href: "/audit", label: "Auditoría", icon: History },
 ] as const;
 
 export function AppNav({
