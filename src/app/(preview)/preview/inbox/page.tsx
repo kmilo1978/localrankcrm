@@ -164,6 +164,8 @@ export default function InboxPreviewPage() {
   const [active, setActive] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState("");
   const [showConnect, setShowConnect] = useState(false);
+  const [connectingChannel, setConnectingChannel] = useState<string | null>(null);
+  const [connectInput, setConnectInput] = useState("");
   const [showReminders, setShowReminders] = useState(false);
   const [showNewConvo, setShowNewConvo] = useState(false);
   const [newConvoForm, setNewConvoForm] = useState({ name: "", phone: "", channel: "whatsapp" as Conversation["channel"] });
@@ -484,10 +486,15 @@ export default function InboxPreviewPage() {
                       {ch.connected ? (
                         <button onClick={() => toggleChannel(ch.id, "")} className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Desconectar</button>
                       ) : (
-                        <button onClick={() => {
-                          const account = prompt(`Ingresa tu ${ch.type === "whatsapp" ? "número" : ch.type === "email" ? "correo" : "usuario"} de ${ch.label}:`);
-                          if (account) toggleChannel(ch.id, account);
-                        }} className="rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover">Conectar</button>
+                        connectingChannel === ch.id ? (
+                          <div className="flex items-center gap-2">
+                            <input value={connectInput} onChange={(e) => setConnectInput(e.target.value)} placeholder={ch.type.includes("whatsapp") ? "+52 55 1234 5678" : ch.type === "email" || ch.type === "gmail" ? "tu@email.com" : "@usuario"} className="w-36 rounded border px-2 py-1 text-xs focus:border-brand focus:outline-none" onKeyDown={(e) => { if (e.key === "Enter" && connectInput.trim()) { toggleChannel(ch.id, connectInput.trim()); setConnectInput(""); setConnectingChannel(null); } }} autoFocus />
+                            <button onClick={() => { if (connectInput.trim()) { toggleChannel(ch.id, connectInput.trim()); setConnectInput(""); setConnectingChannel(null); } }} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover">OK</button>
+                            <button onClick={() => { setConnectingChannel(null); setConnectInput(""); }} className="text-xs text-muted-foreground">✕</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConnectingChannel(ch.id)} className="rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover">Conectar</button>
+                        )
                       )}
                     </div>
                     {ch.type === "whatsapp" && !ch.connected && (
