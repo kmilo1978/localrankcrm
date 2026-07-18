@@ -204,6 +204,20 @@ export default function AIProvidersPage() {
   }
 
   const enabledCount = Object.values(configs).filter((c) => c.enabled).length;
+  const [defaultModel, setDefaultModel] = useState(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("localrank_default_ai_model") || "";
+    return "";
+  });
+
+  function saveDefaultModel(model: string) {
+    setDefaultModel(model);
+    if (typeof window !== "undefined") localStorage.setItem("localrank_default_ai_model", model);
+    setSaved("default");
+    setTimeout(() => setSaved(null), 1200);
+  }
+
+  // Collect all available models from enabled providers
+  const availableModels = AI_PROVIDERS.filter(p => configs[p.id]?.enabled).flatMap(p => p.models.map(m => ({ provider: p.name, model: m })));
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -217,6 +231,25 @@ export default function AIProvidersPage() {
           <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
             <Check className="h-4 w-4" />
             {enabledCount} proveedor{enabledCount > 1 ? "es" : ""} activo{enabledCount > 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+
+      {/* Default AI Model Selector */}
+      <div className="rounded-lg border border-brand/30 bg-brand-tint/20 p-4">
+        <h4 className="text-sm font-semibold mb-1">Modelo predeterminado</h4>
+        <p className="text-xs text-muted-foreground mb-3">Elige cual modelo de IA usa el CRM para el asistente, resúmenes, y automatizaciones.</p>
+        {availableModels.length > 0 ? (
+          <div className="flex items-center gap-3">
+            <select value={defaultModel} onChange={e => saveDefaultModel(e.target.value)} className="flex-1 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+              <option value="">Seleccionar modelo...</option>
+              {availableModels.map((m, i) => <option key={i} value={m.model}>{m.model} ({m.provider})</option>)}
+            </select>
+            {saved === "default" && <span className="text-xs text-green-600 flex items-center gap-1"><Check className="h-3.5 w-3.5" />Guardado</span>}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-amber-700">
+            <AlertCircle className="h-3.5 w-3.5" />Activa al menos un proveedor para seleccionar un modelo
           </div>
         )}
       </div>

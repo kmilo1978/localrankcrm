@@ -21,6 +21,8 @@ const TABS = [
   { href: "/preview/settings/currency", label: "Moneda" },
   { href: "/preview/settings/appearance", label: "Apariencia" },
   { href: "/preview/settings/credentials", label: "Credenciales" },
+  { href: "/preview/settings/shortcuts", label: "Atajos" },
+  { href: "/preview/settings/account", label: "Cuenta" },
   { href: "/preview/settings/team", label: "Equipo" },
 ] as const;
 
