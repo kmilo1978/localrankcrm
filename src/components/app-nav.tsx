@@ -199,6 +199,7 @@ export function AppNav({
           { href: "/radar", label: "Radar", icon: Bookmark },
           { href: "/forms", label: "Formularios", icon: ClipboardList },
           { href: "/import", label: "Importar", icon: Database },
+          { href: "/suppliers", label: "Proveedores", icon: Building2 },
           { href: "/notes", label: "Notas", icon: StickyNote },
           { href: "/labels", label: "Etiquetas", icon: Tag },
           { href: "/team", label: "Equipo", icon: UsersRound },
