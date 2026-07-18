@@ -14,6 +14,7 @@ const TABS = [
   { href: "/preview/settings/mcp", label: "MCP" },
   { href: "/preview/settings/flows", label: "Flows" },
   { href: "/preview/settings/webhooks", label: "Webhooks" },
+  { href: "/preview/settings/tracking", label: "Pixels & UTM" },
   { href: "/preview/settings/currency", label: "Moneda" },
   { href: "/preview/settings/team", label: "Equipo" },
 ] as const;

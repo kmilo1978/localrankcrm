@@ -14,6 +14,7 @@ const TABS = [
   { href: "/settings/mcp", label: "MCP" },
   { href: "/settings/flows", label: "Flows" },
   { href: "/settings/webhooks", label: "Webhooks" },
+  { href: "/settings/tracking", label: "Pixels & UTM" },
   { href: "/settings/currency", label: "Moneda" },
   { href: "/settings/team", label: "Equipo" },
   { href: "/settings/account", label: "Cuenta" },
