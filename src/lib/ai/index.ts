@@ -97,14 +97,40 @@ async function callProvider(
   timeoutMs = 60_000
 ): Promise<string> {
   const env = getEnv();
+  
+  // Determine which provider to use based on available tokens
+  let baseUrl = env.OPENROUTER_BASE_URL;
+  let token = env.OPENROUTER_API_TOKEN || "";
+  
+  // If OpenRouter not available, try other providers
+  if (!token && env.NVIDIA_API_TOKEN) {
+    baseUrl = "https://integrate.api.nvidia.com";
+    token = env.NVIDIA_API_TOKEN;
+    if (!model || model.includes("claude") || model.includes("gpt")) {
+      model = env.NVIDIA_MODEL || "nvidia/llama-3.1-nemotron-70b";
+    }
+  } else if (!token && env.NINEROUTER_API_TOKEN) {
+    baseUrl = "https://api.9router.ai/api";
+    token = env.NINEROUTER_API_TOKEN;
+  } else if (!token && env.GEMINI_API_KEY) {
+    baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai";
+    token = env.GEMINI_API_KEY;
+    if (!model || !model.includes("gemini")) {
+      model = "gemini-2.0-flash";
+    }
+  }
+
+  if (!token) {
+    throw new Error("No hay token de IA configurado");
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${env.OPENROUTER_BASE_URL}/v1/chat/completions`, {
+    const res = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: "POST",
       headers: {
-        // El token jamás se loguea; solo viaja en este header.
-        Authorization: `Bearer ${env.OPENROUTER_API_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ model, messages }),

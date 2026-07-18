@@ -26,6 +26,10 @@ const envSchema = z.object({
   OPENROUTER_BASE_URL: z.string().url().default("https://openrouter.ai/api"),
   OPENROUTER_MODEL: z.string().optional(),
   OPENROUTER_JUDGE_MODEL: z.string().optional(),
+  NVIDIA_API_TOKEN: z.string().optional(),
+  NVIDIA_MODEL: z.string().optional(),
+  NINEROUTER_API_TOKEN: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
   ALLOW_SIGNUP: z.string().optional(),
   AGENT_COALESCE_MS: z.coerce.number().int().min(0).default(6000),
   WA_MOCK_ENABLED: z.string().optional(),
@@ -82,8 +86,16 @@ export function isMockEnabled(): boolean {
   );
 }
 
-/** true si hay proveedor de IA configurado (token presente y no vacío). */
+/** true si hay proveedor de IA configurado (algún token presente y no vacío). */
 export function isAiConfigured(): boolean {
-  const token = process.env.OPENROUTER_API_TOKEN;
-  return typeof token === "string" && token.trim().length > 0;
+  const openrouter = process.env.OPENROUTER_API_TOKEN;
+  const nvidia = process.env.NVIDIA_API_TOKEN;
+  const ninerouter = process.env.NINEROUTER_API_TOKEN;
+  const gemini = process.env.GEMINI_API_KEY;
+  return (
+    (typeof openrouter === "string" && openrouter.trim().length > 0) ||
+    (typeof nvidia === "string" && nvidia.trim().length > 0) ||
+    (typeof ninerouter === "string" && ninerouter.trim().length > 0) ||
+    (typeof gemini === "string" && gemini.trim().length > 0)
+  );
 }
