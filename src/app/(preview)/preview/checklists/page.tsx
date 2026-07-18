@@ -143,6 +143,23 @@ export default function ChecklistsPage() {
     save(checklists.map(c => c.id === selected ? { ...c, items: c.items.filter(i => i.id !== itemId) } : c));
   }
 
+  // Split a long item into multiple items using the smart parser
+  function splitItem(itemId: string) {
+    if (!checklist) return;
+    const item = checklist.items.find(i => i.id === itemId);
+    if (!item) return;
+    const newItems = parseTextToItems(item.text);
+    if (newItems.length <= 1) { showToast("No se pudo dividir (no se detectan separadores)"); return; }
+    save(checklists.map(c => {
+      if (c.id !== selected) return c;
+      const idx = c.items.findIndex(i => i.id === itemId);
+      const before = c.items.slice(0, idx);
+      const after = c.items.slice(idx + 1);
+      return { ...c, items: [...before, ...newItems, ...after] };
+    }));
+    showToast("Dividido en " + newItems.length + " items");
+  }
+
   function openEdit(cl: Checklist) { setEditCl(cl); setEditForm({ title: cl.title, description: cl.description, category: cl.category, client: cl.client }); }
   function handleUpdate() {
     if (!editCl) return;
@@ -218,9 +235,12 @@ export default function ChecklistsPage() {
               <div className="space-y-1 mb-4">
                 {checklist.items.map(item => (
                   <div key={item.id} className="group flex items-center gap-3 rounded px-2 py-2 hover:bg-gray-50">
-                    <input type="checkbox" checked={item.done} onChange={() => toggleItem(item.id)} className="h-4 w-4 accent-[var(--accent)] rounded" />
+                    <input type="checkbox" checked={item.done} onChange={() => toggleItem(item.id)} className="h-4 w-4 accent-[var(--accent)] rounded shrink-0" />
                     <span className={`flex-1 text-sm ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</span>
-                    <button onClick={() => deleteItem(item.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+                      {item.text.length > 100 && <button onClick={() => splitItem(item.id)} className="rounded px-1.5 py-0.5 text-[9px] border text-amber-600 border-amber-200 hover:bg-amber-50" title="Dividir en items">Dividir</button>}
+                      <button onClick={() => deleteItem(item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                    </div>
                   </div>
                 ))}
                 {checklist.items.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sin items. Agrega uno abajo o pega una lista.</p>}
