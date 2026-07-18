@@ -203,6 +203,7 @@ export function AppNav({
           { href: "/labels", label: "Etiquetas", icon: Tag },
           { href: "/team", label: "Equipo", icon: UsersRound },
           { href: "/team-chat", label: "Chat interno", icon: MessageSquare },
+          { href: "/vault", label: "Boveda", icon: Database },
           { href: "/lab", label: "Laboratorio", icon: FlaskConical },
         ].map((item) => {
           const href2 = `${prefix}${item.href}`;
