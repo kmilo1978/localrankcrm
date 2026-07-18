@@ -22,7 +22,7 @@ type Conversation = {
   id: string;
   contactName: string;
   phone: string;
-  channel: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "gmail" | "sms";
+  channel: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "tiktok" | "gmail" | "sms";
   lastMessage: string;
   unread: number;
   messages: Message[];
@@ -32,7 +32,7 @@ type Conversation = {
 
 type ChannelConfig = {
   id: string;
-  type: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "gmail";
+  type: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "tiktok" | "gmail";
   label: string;
   connected: boolean;
   account: string;
@@ -50,6 +50,7 @@ const CHANNEL_ICONS: Record<string, typeof MessageSquare> = {
   quora: MessageSquare,
   reddit: MessageSquare,
   telegram: Send,
+  tiktok: MessageSquare,
   gmail: Mail,
   sms: MessageSquare,
 };
@@ -66,6 +67,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   quora: "text-red-600 bg-red-50",
   reddit: "text-orange-600 bg-orange-50",
   telegram: "text-cyan-600 bg-cyan-50",
+  tiktok: "text-gray-900 bg-gray-100",
   gmail: "text-red-500 bg-red-50",
   sms: "text-gray-600 bg-gray-50",
 };
@@ -82,6 +84,7 @@ const CHANNEL_LABELS: Record<string, string> = {
   quora: "Quora",
   reddit: "Reddit",
   telegram: "Telegram",
+  tiktok: "TikTok",
   gmail: "Gmail",
   sms: "SMS",
 };
@@ -98,7 +101,8 @@ const SEED_CHANNELS: ChannelConfig[] = [
   { id: "ch9", type: "quora", label: "Quora Messages", connected: false, account: "" },
   { id: "ch10", type: "reddit", label: "Reddit Chat", connected: false, account: "" },
   { id: "ch11", type: "telegram", label: "Telegram Bot", connected: false, account: "" },
-  { id: "ch12", type: "gmail", label: "Gmail (Google)", connected: false, account: "" },
+  { id: "ch12", type: "tiktok", label: "TikTok DM", connected: false, account: "" },
+  { id: "ch13", type: "gmail", label: "Gmail (Google)", connected: false, account: "" },
 ];
 
 const SEED_CONVERSATIONS: Conversation[] = [
@@ -303,6 +307,7 @@ export default function InboxPreviewPage() {
               <option value="quora">Quora</option>
               <option value="reddit">Reddit</option>
               <option value="telegram">Telegram</option>
+              <option value="tiktok">TikTok</option>
               <option value="gmail">Gmail</option>
               <option value="sms">SMS</option>
             </select>
@@ -520,6 +525,9 @@ export default function InboxPreviewPage() {
                     )}
                     {ch.type === "telegram" && !ch.connected && (
                       <p className="mt-2 text-xs text-muted-foreground">Crea un bot con @BotFather y pega el token aquí.</p>
+                    )}
+                    {ch.type === "tiktok" && !ch.connected && (
+                      <p className="mt-2 text-xs text-muted-foreground">Conecta tu cuenta de TikTok Business para gestionar DMs y comentarios.</p>
                     )}
                     {ch.type === "gmail" && !ch.connected && (
                       <p className="mt-2 text-xs text-muted-foreground">Conecta tu cuenta de Gmail con OAuth2 para enviar/recibir emails.</p>

@@ -28,6 +28,7 @@ const CHANNEL_DEFS: { id: string; name: string; icon: typeof MessageSquare; colo
   { id: "x", name: "X (Twitter)", icon: MessageSquare, color: "text-gray-900", bgColor: "bg-gray-100" },
   { id: "quora", name: "Quora", icon: MessageSquare, color: "text-red-600", bgColor: "bg-red-50" },
   { id: "reddit", name: "Reddit", icon: MessageSquare, color: "text-orange-600", bgColor: "bg-orange-50" },
+  { id: "tiktok", name: "TikTok", icon: MessageSquare, color: "text-gray-900", bgColor: "bg-gray-100" },
 ];
 
 // Simulated activity feed
