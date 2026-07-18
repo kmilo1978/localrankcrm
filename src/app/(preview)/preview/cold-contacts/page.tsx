@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { AlertCircle, ChevronDown, ChevronRight, Download, FileSpreadsheet, Filter, Globe, GripVertical, Phone, Plus, Search, Star, Thermometer, Trash2, Upload, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
+type FollowUp = { id: string; channel: string; date: string; note: string; done: boolean };
+
 type ColdContact = {
   id: string;
   name: string;
@@ -21,6 +23,8 @@ type ColdContact = {
   notes: string;
   addedAt: string;
   customFields: { id: string; label: string; value: string }[];
+  outreachChannel: string;
+  followUps: FollowUp[];
 };
 
 type ColdStage = { id: string; name: string; color: string };
@@ -37,16 +41,16 @@ const COLD_STAGES: ColdStage[] = [
 
 // Pre-loaded from the Excel data
 const IMPORTED_DATA: ColdContact[] = [
-  { id: "cc1", name: "Oral Studio", phone: "312 7093687", website: "oralstudio.com.co", category: "Clínica dental", rating: 5, reviews: 924, address: "Cl. 19a #44-25, El Poblado, Medellín", description: "Diseño de sonrisa, implantes, blanqueamiento", clase: "No verificado", motivo: "Ficha no verificada", score: 103, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc2", name: "Dental Expertos", phone: "300 8938020", website: "instagram.com/dentalexpertos", category: "Clínica dental", rating: 4.9, reviews: 675, address: "Cra. 52 #7-115, Guayabal, Medellín", description: "Clínica odontológica y estética", clase: "Solo red social", motivo: "Su web es un perfil de red social", score: 87, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc3", name: "Smile Odontólogos", phone: "313 7434048", website: "beacons.ai/odontologos", category: "Clínica dental", rating: 4.9, reviews: 395, address: "Mayorca Mega Plaza, Sabaneta", description: "Turismo odontológico y estética dental", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc4", name: "Nova Smile", phone: "301 3951082", website: "novasmile.com.co", category: "Clínica dental", rating: 4.9, reviews: 209, address: "Cl. 19a #44-25, El Poblado, Medellín", description: "Ortodoncia, implantes, endodoncia", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc5", name: "Dentart", phone: "301 6510868", website: "dentartodontology.com", category: "Dentista", rating: 4.8, reviews: 23, address: "Cra 50, La Estrella", description: "Dentista con web propia y can_claim", clase: "Cliente caliente", motivo: "Alta reputación y presencia digital", score: 99, stageId: "cs2", notes: "¡CALIENTE! Tiene can_claim y web propia", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc6", name: "360 Dental Group IPS", phone: "312 2177371", website: "sonrisas360.com", category: "Clínica dental", rating: 4.9, reviews: 153, address: "C.C. Mayorca Torre Médica, Sabaneta", description: "Implantes, diseño de sonrisa, rehabilitación oral", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc7", name: "Clínica Total Harmony", phone: "300 6561575", website: "clinicatotalharmony.com", category: "Dentista", rating: 5, reviews: 106, address: "Cra. 44 #72 sur 42, Sabaneta", description: "Odontología integral y estética médica", clase: "No verificado", motivo: "Ficha no verificada", score: 103, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc8", name: "Dental clinic soluciones", phone: "305 3640935", website: "instagram.com/dentalclinicsoluciones", category: "Clínica dental", rating: 5, reviews: 136, address: "Cra. 46 #74sur-16, Sabaneta", description: "Diseños de sonrisa, ortodoncia, implantes", clase: "Solo red social", motivo: "Su web es un perfil de red social", score: 88, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc9", name: "Odontics Sabaneta", phone: "311 4272131", website: "", category: "Clínica dental", rating: 4.9, reviews: 372, address: "Cra. 43B #72s 91, Sabaneta", description: "Odontología general y especializada", clase: "No página web", motivo: "No tiene website", score: 87, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
-  { id: "cc10", name: "ORAL DENT", phone: "320 4596856", website: "odontologosmedellin.com", category: "Oficinas de empresa", rating: 4, reviews: 1, address: "Cra. 43A #62sur-41, Sabaneta", description: "Consultorio con can_claim", clase: "Frío", motivo: "Pocas señales comerciales fuertes", score: 85, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [] },
+  { id: "cc1", name: "Oral Studio", phone: "312 7093687", website: "oralstudio.com.co", category: "Clínica dental", rating: 5, reviews: 924, address: "Cl. 19a #44-25, El Poblado, Medellín", description: "Diseño de sonrisa, implantes, blanqueamiento", clase: "No verificado", motivo: "Ficha no verificada", score: 103, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc2", name: "Dental Expertos", phone: "300 8938020", website: "instagram.com/dentalexpertos", category: "Clínica dental", rating: 4.9, reviews: 675, address: "Cra. 52 #7-115, Guayabal, Medellín", description: "Clínica odontológica y estética", clase: "Solo red social", motivo: "Su web es un perfil de red social", score: 87, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "instagram", followUps: [] },
+  { id: "cc3", name: "Smile Odontólogos", phone: "313 7434048", website: "beacons.ai/odontologos", category: "Clínica dental", rating: 4.9, reviews: 395, address: "Mayorca Mega Plaza, Sabaneta", description: "Turismo odontológico y estética dental", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc4", name: "Nova Smile", phone: "301 3951082", website: "novasmile.com.co", category: "Clínica dental", rating: 4.9, reviews: 209, address: "Cl. 19a #44-25, El Poblado, Medellín", description: "Ortodoncia, implantes, endodoncia", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc5", name: "Dentart", phone: "301 6510868", website: "dentartodontology.com", category: "Dentista", rating: 4.8, reviews: 23, address: "Cra 50, La Estrella", description: "Dentista con web propia y can_claim", clase: "Cliente caliente", motivo: "Alta reputación y presencia digital", score: 99, stageId: "cs2", notes: "¡CALIENTE! Tiene can_claim y web propia", addedAt: "2026-07-17", customFields: [], outreachChannel: "whatsapp", followUps: [{ id: "fu1", channel: "whatsapp", date: "2026-07-17", note: "Primer mensaje enviado", done: true }] },
+  { id: "cc6", name: "360 Dental Group IPS", phone: "312 2177371", website: "sonrisas360.com", category: "Clínica dental", rating: 4.9, reviews: 153, address: "C.C. Mayorca Torre Médica, Sabaneta", description: "Implantes, diseño de sonrisa, rehabilitación oral", clase: "No verificado", motivo: "Ficha no verificada", score: 102, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc7", name: "Clínica Total Harmony", phone: "300 6561575", website: "clinicatotalharmony.com", category: "Dentista", rating: 5, reviews: 106, address: "Cra. 44 #72 sur 42, Sabaneta", description: "Odontología integral y estética médica", clase: "No verificado", motivo: "Ficha no verificada", score: 103, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "email", followUps: [] },
+  { id: "cc8", name: "Dental clinic soluciones", phone: "305 3640935", website: "instagram.com/dentalclinicsoluciones", category: "Clínica dental", rating: 5, reviews: 136, address: "Cra. 46 #74sur-16, Sabaneta", description: "Diseños de sonrisa, ortodoncia, implantes", clase: "Solo red social", motivo: "Su web es un perfil de red social", score: 88, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc9", name: "Odontics Sabaneta", phone: "311 4272131", website: "", category: "Clínica dental", rating: 4.9, reviews: 372, address: "Cra. 43B #72s 91, Sabaneta", description: "Odontología general y especializada", clase: "No página web", motivo: "No tiene website", score: 87, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
+  { id: "cc10", name: "ORAL DENT", phone: "320 4596856", website: "odontologosmedellin.com", category: "Oficinas de empresa", rating: 4, reviews: 1, address: "Cra. 43A #62sur-41, Sabaneta", description: "Consultorio con can_claim", clase: "Frío", motivo: "Pocas señales comerciales fuertes", score: 85, stageId: "cs1", notes: "", addedAt: "2026-07-17", customFields: [], outreachChannel: "", followUps: [] },
 ];
 
 function getScoreColor(score: number) {
@@ -102,6 +106,22 @@ export default function ColdContactsPage() {
     save(contacts.map((c) => c.id === contactId ? { ...c, customFields: (c.customFields || []).filter((f) => f.id !== fieldId) } : c));
   }
 
+  // Channel & follow-up
+  function setOutreachChannel(contactId: string, channel: string) {
+    save(contacts.map((c) => c.id === contactId ? { ...c, outreachChannel: channel } : c));
+  }
+  function addFollowUp(contactId: string, channel: string, note: string) {
+    if (!note.trim()) return;
+    const fu: FollowUp = { id: generateId(), channel, date: new Date().toISOString().split("T")[0]!, note, done: false };
+    save(contacts.map((c) => c.id === contactId ? { ...c, followUps: [...(c.followUps || []), fu] } : c));
+  }
+  function toggleFollowUp(contactId: string, fuId: string) {
+    save(contacts.map((c) => c.id === contactId ? { ...c, followUps: (c.followUps || []).map((f) => f.id === fuId ? { ...f, done: !f.done } : f) } : c));
+  }
+  function removeFollowUp(contactId: string, fuId: string) {
+    save(contacts.map((c) => c.id === contactId ? { ...c, followUps: (c.followUps || []).filter((f) => f.id !== fuId) } : c));
+  }
+
   function handleFileImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -147,6 +167,8 @@ export default function ColdContactsPage() {
           notes: "",
           addedAt: new Date().toISOString().split("T")[0]!,
           customFields: [],
+          outreachChannel: "",
+          followUps: [],
         });
       }
       if (newContacts.length > 0) {
@@ -278,6 +300,7 @@ export default function ColdContactsPage() {
                         <span className="text-sm font-medium">{contact.name}</span>
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${getClaseColor(contact.clase)}`}>{contact.clase}</span>
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${getScoreColor(contact.score)}`}>Score: {contact.score}</span>
+                      {contact.outreachChannel && <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">{contact.outreachChannel}</span>}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                         <span>{contact.category}</span>
@@ -293,14 +316,53 @@ export default function ColdContactsPage() {
                   </div>
                   {isExp && (
                     <div className="border-t px-4 pb-3 pt-2">
-                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+                        {/* Info */}
                         <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div><span className="font-medium text-muted-foreground">Dirección:</span> {contact.address || "—"}</div>
-                            <div><span className="font-medium text-muted-foreground">Motivo:</span> {contact.motivo || "—"}</div>
-                          </div>
+                          <div className="text-xs"><span className="font-medium text-muted-foreground">Dirección:</span> {contact.address || "—"}</div>
+                          <div className="text-xs"><span className="font-medium text-muted-foreground">Motivo:</span> {contact.motivo || "—"}</div>
                           {contact.description && <p className="text-xs text-muted-foreground border-l-2 pl-2">{contact.description}</p>}
                         </div>
+
+                        {/* Outreach Channel */}
+                        <div>
+                          <label className="block text-xs font-medium text-muted-foreground mb-1">Canal de prospección</label>
+                          <select value={contact.outreachChannel || ""} onChange={(e) => setOutreachChannel(contact.id, e.target.value)} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none">
+                            <option value="">Sin asignar</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="email">Email</option>
+                            <option value="instagram">Instagram DM</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="phone">Llamada</option>
+                            <option value="facebook">Facebook</option>
+                            <option value="x">X (Twitter)</option>
+                          </select>
+                          {contact.outreachChannel && <span className="mt-1 inline-block rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">{contact.outreachChannel}</span>}
+
+                          {/* Follow-ups */}
+                          <div className="mt-3">
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Seguimientos</label>
+                            {(contact.followUps || []).length > 0 && (
+                              <div className="space-y-1 mb-2">
+                                {(contact.followUps || []).map((fu) => (
+                                  <div key={fu.id} className="group flex items-center gap-1.5 rounded bg-gray-50 px-2 py-1 text-[10px]">
+                                    <input type="checkbox" checked={fu.done} onChange={() => toggleFollowUp(contact.id, fu.id)} className="accent-[var(--accent)]" />
+                                    <span className="rounded bg-brand/10 px-1 py-0.5 text-brand font-medium">{fu.channel}</span>
+                                    <span className={`flex-1 ${fu.done ? "line-through text-muted-foreground" : ""}`}>{fu.note}</span>
+                                    <span className="text-muted-foreground">{fu.date}</span>
+                                    <button onClick={() => removeFollowUp(contact.id, fu.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><X className="h-3 w-3" /></button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-1">
+                              <input id={`fu-${contact.id}`} placeholder="Agregar seguimiento..." className="flex-1 rounded border px-2 py-1 text-xs focus:border-brand focus:outline-none" onKeyDown={(e) => { if (e.key === "Enter") { const inp = e.target as HTMLInputElement; addFollowUp(contact.id, contact.outreachChannel || "general", inp.value); inp.value = ""; } }} />
+                              <button onClick={() => { const inp = document.getElementById(`fu-${contact.id}`) as HTMLInputElement; if (inp?.value) { addFollowUp(contact.id, contact.outreachChannel || "general", inp.value); inp.value = ""; } }} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover">+</button>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Custom fields */}
                         <div>
                           <label className="block text-xs font-medium text-muted-foreground mb-1">Campos personalizados</label>
@@ -321,9 +383,11 @@ export default function ColdContactsPage() {
                             <button onClick={() => addCustomField(contact.id)} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover">+</button>
                           </div>
                         </div>
+
+                        {/* Notes */}
                         <div>
-                          <label className="block text-xs font-medium text-muted-foreground mb-1">Notas de seguimiento</label>
-                          <textarea value={contact.notes} onChange={(e) => updateNotes(contact.id, e.target.value)} placeholder="Agregar notas..." rows={3} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                          <label className="block text-xs font-medium text-muted-foreground mb-1">Notas</label>
+                          <textarea value={contact.notes} onChange={(e) => updateNotes(contact.id, e.target.value)} placeholder="Agregar notas..." rows={4} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
                         </div>
                       </div>
                     </div>
