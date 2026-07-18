@@ -63,7 +63,6 @@ const NAV = [
   { href: "/cartera", label: "Cartera", icon: CreditCard },
   // --- Execution ---
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/checklists", label: "Checklists", icon: CircleCheckBig },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/todo", label: "To-Do", icon: CircleCheckBig },
   { href: "/calendar", label: "Calendario", icon: Calendar },
