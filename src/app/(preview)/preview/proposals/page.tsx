@@ -19,6 +19,13 @@ type Proposal = {
   logoUrl: string;
   signatureUrl: string;
   signatureName: string;
+  // Tracking & security
+  sentVia: string;
+  utm: { source: string; medium: string; campaign: string };
+  password: string;
+  views: number;
+  lastViewedAt: string;
+  linkEnabled: boolean;
 };
 
 type Template = {
@@ -79,12 +86,12 @@ const STATUS_STYLES = {
 const STATUS_LABELS = { draft: "Borrador", sent: "Enviada", accepted: "Aceptada", rejected: "Rechazada" };
 
 const SEED_PROPOSALS: Proposal[] = [
-  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", sections: [
+  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", sentVia: "email", utm: { source: "crm", medium: "email", campaign: "propuestas_julio" }, password: "", views: 4, lastViewedAt: "Hace 2h", linkEnabled: true, sections: [
     { id: "s1", title: "Resumen Ejecutivo", content: "Estimado Carlos Ruiz,\n\nGracias por la oportunidad de presentar nuestra propuesta. A continuación detallamos nuestra solución para TechCorp Solutions.", media: [] },
     { id: "s2", title: "Alcance", content: "• Rediseño completo del sitio web\n• SEO técnico + estrategia de contenido\n• Landing pages para campañas\n• Google Ads (setup + 3 meses)", media: [] },
     { id: "s3", title: "Inversión", content: "Setup: $8,500 USD\nMantenimiento mensual: $1,500 USD\nTotal primer año: $12,500 USD", media: [] },
   ]},
-  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", signatureUrl: "", signatureName: "", sections: [
+  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", signatureUrl: "", signatureName: "", sentVia: "", utm: { source: "", medium: "", campaign: "" }, password: "demo2026", views: 0, lastViewedAt: "", linkEnabled: false, sections: [
     { id: "s4", title: "Introducción", content: "Propuesta de consultoría para optimizar la estrategia digital de MediaGroup.", media: [] },
     { id: "s5", title: "Plan", content: "4 semanas de análisis + implementación.", media: [] },
     { id: "s6", title: "Inversión", content: "$5,000 USD - pago en 2 partes", media: [] },
@@ -113,6 +120,12 @@ export default function ProposalsPage() {
       logoUrl: "",
       signatureUrl: "",
       signatureName: "",
+      sentVia: "",
+      utm: { source: "", medium: "", campaign: "" },
+      password: "",
+      views: 0,
+      lastViewedAt: "",
+      linkEnabled: true,
       sections: template.sections.map((s) => ({ id: generateId(), title: s.title, content: s.content, media: [] })),
     };
     save([p, ...proposals]);
@@ -237,7 +250,11 @@ export default function ProposalsPage() {
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{p.createdAt}</span>
-                {p.total && <span className="font-medium text-brand">{p.total}</span>}
+                <div className="flex items-center gap-2">
+                  {p.sentVia && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] text-blue-700">{p.sentVia}</span>}
+                  {p.views > 0 && <span className="text-[9px]">👁 {p.views}</span>}
+                  {p.total && <span className="font-medium text-brand">{p.total}</span>}
+                </div>
               </div>
             </div>
           ))}
@@ -251,6 +268,7 @@ export default function ProposalsPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between border-b px-5 py-3">
               <div className="flex items-center gap-3">
+                <button onClick={() => setEditing(null)} className="rounded-md border px-2 py-1.5 text-xs hover:bg-gray-50" title="Volver">← Atrás</button>
                 <select value={editing.status} onChange={(e) => updateProposal({ ...editing, status: e.target.value as Proposal["status"] })} className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${STATUS_STYLES[editing.status]}`}>
                   {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
@@ -360,6 +378,39 @@ export default function ProposalsPage() {
                         </label>
                       )}
                       <input value={editing.signatureName} onChange={(e) => updateProposal({ ...editing, signatureName: e.target.value })} placeholder="Nombre y cargo (ej: Juan Pérez — Director)" className="mt-2 w-full rounded-md border px-3 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                  </div>
+
+                  {/* Tracking, UTM, Password */}
+                  <div className="rounded-lg border bg-gray-50 p-4 space-y-3">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground">Tracking & Seguridad</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium">Enviada por canal</label>
+                        <select value={editing.sentVia} onChange={(e) => updateProposal({ ...editing, sentVia: e.target.value })} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                          <option value="">Sin enviar</option>
+                          <option value="email">Email</option>
+                          <option value="whatsapp">WhatsApp</option>
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="link">Link directo</option>
+                          <option value="presencial">Presencial</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium">🔒 Contraseña (opcional)</label>
+                        <input value={editing.password} onChange={(e) => updateProposal({ ...editing, password: e.target.value })} placeholder="Sin contraseña" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_source</label><input value={editing.utm.source} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, source: e.target.value } })} placeholder="crm" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_medium</label><input value={editing.utm.medium} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, medium: e.target.value } })} placeholder="email" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_campaign</label><input value={editing.utm.campaign} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, campaign: e.target.value } })} placeholder="propuestas_julio" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                    </div>
+                    {/* Analytics */}
+                    <div className="flex items-center gap-4 pt-2 border-t">
+                      <div className="flex items-center gap-1.5 text-xs"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10 text-brand font-bold text-[10px]">{editing.views}</span><span className="text-muted-foreground">vistas</span></div>
+                      {editing.lastViewedAt && <span className="text-[10px] text-muted-foreground">Última: {editing.lastViewedAt}</span>}
+                      <label className="ml-auto flex items-center gap-1.5 text-xs"><input type="checkbox" checked={editing.linkEnabled} onChange={(e) => updateProposal({ ...editing, linkEnabled: e.target.checked })} className="accent-[var(--accent)]" />Link activo</label>
                     </div>
                   </div>
 
