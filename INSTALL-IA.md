@@ -6,11 +6,10 @@
 >
 > **Para el humano**: abre tu asistente de IA en una carpeta vacía, pégale
 > este archivo y responde las 3 preguntas que te hará. **No necesitas clonar
-> el repo**: Coolify construye directo desde GitHub y los secretos viven como
+> el repo**: Coolify construye directo desde el repositorio y los secretos viven como
 > variables de la plataforma.
 
-**Repositorio**: `https://github.com/kmilo1978/localrankcrm` (público, rama `main`,
-`Dockerfile` en la raíz).
+**Repositorio**: privado (rama `main`, `Dockerfile` en la raíz).
 
 ## Reglas para el asistente
 
@@ -55,10 +54,9 @@
 1. **Base de datos**: crea un servicio PostgreSQL 16 en el proyecto
    (`database` tipo `postgresql`), con la contraseña generada y base `localrank`.
    Anota su host interno (algo como `<uuid>:5432`).
-2. **Aplicación**: crea una app tipo **repositorio público** apuntando a
-   `https://github.com/kmilo1978/localrankcrm` (rama `main`, build pack
-   `dockerfile`, puerto expuesto `3000`) — no requiere GitHub App ni deploy
-   keys. Asigna el dominio del usuario con HTTPS.
+2. **Aplicación**: crea una app tipo **repositorio público** apuntando al
+   repositorio del proyecto (rama `main`, build pack
+   `dockerfile`, puerto expuesto `3000`). Asigna el dominio del usuario con HTTPS.
 3. **Variables**: configura las variables de la tabla en la app (runtime, no
    build). `DATABASE_URL` apunta al host interno del paso 1.
 4. **Sin Pre-Deployment Command**: las migraciones corren solas al arrancar el
@@ -71,7 +69,7 @@
 ## Ruta B — docker compose (VPS con Docker)
 
 ```bash
-git clone https://github.com/kmilo1978/localrankcrm.git localrank && cd localrank
+git clone <URL_DEL_REPOSITORIO> localrank && cd localrank
 cp .env.example .env
 # rellena .env con el dominio del usuario y los secretos generados
 docker compose up -d --build

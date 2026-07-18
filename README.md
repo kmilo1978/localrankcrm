@@ -127,7 +127,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 ## Desarrollo local
 
 ```bash
-git clone https://github.com/kmilo1978/localrankcrm.git
+git clone <URL_DEL_REPOSITORIO>
 cd localrankcrm
 pnpm install
 cp .env.example .env  # Configura tus variables

@@ -49,4 +49,3 @@ pnpm typecheck && pnpm build
 
 - Website: localrank.com.co
 - Email: localrankmedellin@gmail.com
-- Repo: github.com/kmilo1978/localrankcrm
