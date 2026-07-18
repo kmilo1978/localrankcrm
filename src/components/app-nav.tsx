@@ -9,8 +9,10 @@ import {
   Calendar,
   CheckSquare,
   ClipboardList,
+  Database,
   FileText,
   FlaskConical,
+  FolderOpen,
   Inbox,
   Kanban,
   LayoutDashboard,
@@ -22,6 +24,7 @@ import {
   Target,
   Thermometer,
   Users,
+  UsersRound,
 } from "lucide-react";
 import type { Branding } from "@/lib/branding";
 import { cn, initials } from "@/lib/utils";
@@ -40,6 +43,9 @@ const NAV = [
   { href: "/proposals", label: "Propuestas", icon: FileText },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/forms", label: "Formularios", icon: ClipboardList },
+  { href: "/import", label: "Importar & Enriquecer", icon: Database },
+  { href: "/workspaces", label: "Espacios", icon: FolderOpen },
+  { href: "/team", label: "Equipo", icon: UsersRound },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/notes", label: "Notas", icon: StickyNote },
   { href: "/labels", label: "Etiquetas", icon: Tag },
