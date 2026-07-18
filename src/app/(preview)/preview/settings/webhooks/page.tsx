@@ -11,6 +11,8 @@ const EVENTS = ["contact.created", "contact.updated", "deal.created", "deal.stag
 
 const SEED_WEBHOOKS: Webhook[] = [
   { id: "wh1", name: "Zapier — Nuevo contacto", url: "https://hooks.zapier.com/hooks/catch/123/abc", events: ["contact.created"], active: true, createdAt: "2026-07-10" },
+  { id: "wh2", name: "n8n — Lead scoring", url: "https://n8n.localrank.co/webhook/lead-score", events: ["contact.created", "form.submitted"], active: true, createdAt: "2026-07-15" },
+  { id: "wh3", name: "n8n — Notificar equipo", url: "https://n8n.localrank.co/webhook/notify-team", events: ["deal.won", "deal.lost"], active: false, createdAt: "2026-07-12" },
 ];
 const SEED_KEYS: ApiKey[] = [
   { id: "ak1", name: "Integración interna", key: "lr_live_sk_a1b2c3d4e5f6...", permissions: ["read:contacts", "write:contacts", "read:deals"], createdAt: "2026-07-01", lastUsed: "2026-07-17" },
@@ -105,6 +107,64 @@ export default function WebhooksPage() {
             <button onClick={() => saveWh(webhooks.filter((x) => x.id !== w.id))} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
         ))}
+      </div>
+
+      {/* n8n Integration */}
+      <div className="rounded-lg border bg-white p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100">
+            <span className="text-lg font-bold text-orange-600">n8n</span>
+          </div>
+          <div>
+            <h4 className="font-medium">n8n — Automatización</h4>
+            <p className="text-xs text-muted-foreground">Conecta LocalRank CRM con n8n para automatizar workflows complejos.</p>
+          </div>
+        </div>
+
+        <div className="rounded border bg-gray-50 p-4 space-y-3 text-xs">
+          <p className="font-medium text-foreground">Guía de conexión con n8n:</p>
+          <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground">
+            <li>En n8n, agrega un nodo <strong>Webhook</strong> (trigger) o usa el nodo <strong>HTTP Request</strong></li>
+            <li>Copia la <strong>Webhook URL</strong> que genera n8n</li>
+            <li>Agrégala arriba en la sección &ldquo;Webhooks&rdquo; con los eventos que quieras escuchar</li>
+            <li>Para enviar datos a LocalRank desde n8n, usa <strong>HTTP Request</strong> con tu API Key</li>
+          </ol>
+
+          <div className="pt-3 border-t space-y-2">
+            <p className="font-medium text-foreground">Workflows sugeridos:</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="rounded border bg-white px-3 py-2">
+                <p className="font-medium">Lead Scoring automático</p>
+                <p className="text-muted-foreground">Trigger: contact.created → Enriquecer datos → Calcular score → Actualizar contacto</p>
+              </div>
+              <div className="rounded border bg-white px-3 py-2">
+                <p className="font-medium">Notificación Slack/Telegram</p>
+                <p className="text-muted-foreground">Trigger: deal.won → Enviar mensaje al equipo</p>
+              </div>
+              <div className="rounded border bg-white px-3 py-2">
+                <p className="font-medium">Secuencia Email</p>
+                <p className="text-muted-foreground">Trigger: form.submitted → Esperar 1h → Enviar email → Esperar 24h → Follow-up</p>
+              </div>
+              <div className="rounded border bg-white px-3 py-2">
+                <p className="font-medium">Sync con Google Sheets</p>
+                <p className="text-muted-foreground">Trigger: contact.created → Agregar fila a spreadsheet</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t">
+            <p className="font-medium text-foreground mb-1">Endpoints útiles para n8n HTTP Request:</p>
+            <div className="space-y-1 font-mono text-[10px]">
+              <p><span className="text-green-600">GET</span> /api/contacts — Listar contactos</p>
+              <p><span className="text-blue-600">POST</span> /api/contacts — Crear contacto</p>
+              <p><span className="text-green-600">GET</span> /api/pipeline/board — Pipeline completo</p>
+              <p><span className="text-blue-600">POST</span> /api/conversations/[id]/messages — Enviar mensaje</p>
+              <p><span className="text-amber-600">PATCH</span> /api/pipeline/leads/[id] — Mover lead de etapa</p>
+            </div>
+          </div>
+        </div>
+
+        <a href="https://docs.n8n.io/integrations/creating-nodes/build/reference/http-helpers/" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs text-brand hover:underline">Ver documentación de n8n →</a>
       </div>
 
       {/* API Docs link */}
