@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  Send,
   Settings,
   StickyNote,
   Tag,
@@ -47,6 +48,7 @@ const NAV = [
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   // --- Revenue: Close ---
   { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
+  { href: "/templates", label: "Plantillas", icon: Send },
   { href: "/proposals", label: "Propuestas", icon: FileText },
   // --- Execution ---
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
