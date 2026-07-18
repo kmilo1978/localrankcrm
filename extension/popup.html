@@ -4,25 +4,35 @@
   <meta charset="UTF-8">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, sans-serif; width: 380px; max-height: 560px; overflow-y: auto; background: #f7f9fb; color: #191c1e; font-size: 12px; }
+    body { font-family: 'Inter', -apple-system, sans-serif; width: 400px; max-height: 580px; overflow-y: auto; background: #f7f9fb; color: #191c1e; font-size: 12px; }
     .header { background: #00288e; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
     .header h1 { font-size: 13px; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .sync-indicator { display: flex; align-items: center; gap: 4px; font-size: 9px; opacity: 0.9; }
+    .sync-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .sync-dot.connected { background: #4ade80; }
+    .sync-dot.disconnected { background: #f87171; }
+    .sync-dot.syncing { background: #fbbf24; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .tabs { display: flex; border-bottom: 1px solid #e0e3e5; background: white; position: sticky; top: 44px; z-index: 9; }
-    .tabs button { flex: 1; padding: 8px; font-size: 10px; font-weight: 600; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #505f76; }
+    .tabs button { flex: 1; padding: 8px 4px; font-size: 10px; font-weight: 600; border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; color: #505f76; }
     .tabs button.active { color: #00288e; border-bottom-color: #00288e; }
     .content { padding: 12px; display: none; }
     .content.active { display: block; }
     .card { background: white; border: 1px solid #e0e3e5; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-    .card h3 { font-size: 11px; font-weight: 600; color: #505f76; text-transform: uppercase; margin-bottom: 8px; }
+    .card h3 { font-size: 11px; font-weight: 600; color: #505f76; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
     .field { margin-bottom: 8px; }
     .field label { display: block; font-size: 10px; font-weight: 600; color: #757684; margin-bottom: 3px; }
     .field input, .field select, .field textarea { width: 100%; border: 1px solid #e0e3e5; border-radius: 5px; padding: 7px 9px; font-size: 11px; outline: none; }
-    .field input:focus, .field select:focus { border-color: #00288e; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #00288e; }
     .data-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid #f0f0f0; }
     .data-row:last-child { border: none; }
     .data-label { font-size: 10px; color: #757684; width: 70px; flex-shrink: 0; }
     .data-value { font-size: 11px; font-weight: 500; flex: 1; word-break: break-all; }
     .data-value a { color: #00288e; text-decoration: none; }
+    .copy-btn { background: none; border: 1px solid #e0e3e5; border-radius: 4px; padding: 2px 6px; font-size: 9px; cursor: pointer; color: #505f76; flex-shrink: 0; }
+    .copy-btn:hover { background: #f3f5ff; border-color: #00288e; color: #00288e; }
+    .copy-btn.copied { background: #dcfce7; border-color: #16a34a; color: #16a34a; }
     .score-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     .score-high { background: #dcfce7; color: #166534; }
     .score-mid { background: #fef3c7; color: #92400e; }
@@ -36,92 +46,144 @@
     .btn:hover { background: #001d6b; }
     .btn-outline { background: white; color: #00288e; border: 1px solid #00288e; }
     .btn-outline:hover { background: #f3f5ff; }
-    .btn:disabled { opacity: 0.5; }
-    .status { padding: 12px; text-align: center; font-size: 11px; border-radius: 6px; margin: 8px 12px; }
-    .status.success { background: #dcfce7; color: #166534; }
-    .ai-window { background: #1a1f2e; color: #e8eaed; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 10px; min-height: 60px; white-space: pre-wrap; margin-top: 6px; }
+    .btn-sm { padding: 6px 10px; font-size: 10px; margin-top: 4px; }
+    .btn-green { background: #16a34a; }
+    .btn-green:hover { background: #15803d; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-row .btn { flex: 1; }
+    .status-bar { padding: 6px 12px; font-size: 10px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e0e3e5; background: white; }
+    .status-bar.success { background: #dcfce7; color: #166534; }
+    .status-bar.error { background: #fee2e2; color: #991b1b; }
+    .status-bar.syncing { background: #fef3c7; color: #92400e; }
+    .ai-window { background: #1a1f2e; color: #e8eaed; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 10px; min-height: 60px; white-space: pre-wrap; margin-top: 6px; position: relative; }
+    .ai-window .copy-ai { position: absolute; top: 6px; right: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 4px; padding: 3px 8px; font-size: 9px; cursor: pointer; }
+    .ai-window .copy-ai:hover { background: rgba(255,255,255,0.2); }
     .loading { text-align: center; padding: 20px; color: #757684; }
     .loading::after { content: ''; display: inline-block; width: 12px; height: 12px; border: 2px solid #00288e; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .toast { position: fixed; bottom: 12px; left: 12px; right: 12px; background: #1a1f2e; color: white; padding: 10px 14px; border-radius: 8px; font-size: 11px; font-weight: 500; z-index: 100; display: none; animation: slideUp 0.3s ease; }
+    .toast.show { display: flex; align-items: center; gap: 8px; }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>📌 LocalRank Radar</h1>
-    <span style="font-size:9px;opacity:0.7">v1.1</span>
+    <h1>LocalRank Radar</h1>
+    <div class="header-right">
+      <div class="sync-indicator" id="sync-status">
+        <span class="sync-dot disconnected" id="sync-dot"></span>
+        <span id="sync-text">Sin conexion</span>
+      </div>
+      <span style="font-size:9px;opacity:0.7">v1.2</span>
+    </div>
+  </div>
+
+  <div id="status-bar" class="status-bar" style="display:none;">
+    <span id="status-icon"></span>
+    <span id="status-msg"></span>
   </div>
 
   <div class="tabs">
-    <button class="active" data-tab="analyze">📊 Análisis</button>
-    <button data-tab="save">💾 Guardar</button>
-    <button data-tab="ai">🤖 IA</button>
-    <button data-tab="autofill">📝 AutoFill</button>
-    <button data-tab="settings">⚙️</button>
+    <button class="active" data-tab="analyze">Analisis</button>
+    <button data-tab="save">Guardar</button>
+    <button data-tab="ai">IA</button>
+    <button data-tab="autofill">AutoFill</button>
+    <button data-tab="settings">Config</button>
   </div>
 
   <!-- ANALYZE TAB -->
   <div class="content active" id="tab-analyze">
-    <div id="analyze-loading" class="loading">Analizando página</div>
+    <div id="analyze-loading" class="loading">Analizando pagina</div>
     <div id="analyze-results" style="display:none;">
       <div class="card">
-        <h3>Empresa detectada</h3>
-        <div class="data-row"><span class="data-label">Nombre</span><span class="data-value" id="r-company">—</span></div>
-        <div class="data-row"><span class="data-label">Categoría</span><span class="data-value" id="r-category">—</span></div>
-        <div class="data-row"><span class="data-label">URL</span><span class="data-value" id="r-url">—</span></div>
+        <h3>Empresa detectada <button class="copy-btn" id="btn-copy-all" title="Copiar todo">Copiar todo</button></h3>
+        <div class="data-row">
+          <span class="data-label">Nombre</span>
+          <span class="data-value" id="r-company">-</span>
+          <button class="copy-btn" data-copy="r-company">Copiar</button>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Categoria</span>
+          <span class="data-value" id="r-category">-</span>
+          <button class="copy-btn" data-copy="r-category">Copiar</button>
+        </div>
+        <div class="data-row">
+          <span class="data-label">URL</span>
+          <span class="data-value" id="r-url">-</span>
+          <button class="copy-btn" data-copy="r-url">Copiar</button>
+        </div>
       </div>
       <div class="card">
-        <h3>Contacto</h3>
-        <div class="data-row"><span class="data-label">Teléfonos</span><span class="data-value" id="r-phones">—</span></div>
-        <div class="data-row"><span class="data-label">Emails</span><span class="data-value" id="r-emails">—</span></div>
-        <div class="data-row"><span class="data-label">WhatsApp</span><span class="data-value" id="r-whatsapp">—</span></div>
+        <h3>Contacto <button class="copy-btn" id="btn-copy-contact" title="Copiar contacto">Copiar</button></h3>
+        <div class="data-row">
+          <span class="data-label">Telefonos</span>
+          <span class="data-value" id="r-phones">-</span>
+          <button class="copy-btn" data-copy="r-phones">Copiar</button>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Emails</span>
+          <span class="data-value" id="r-emails">-</span>
+          <button class="copy-btn" data-copy="r-emails">Copiar</button>
+        </div>
+        <div class="data-row">
+          <span class="data-label">WhatsApp</span>
+          <span class="data-value" id="r-whatsapp">-</span>
+          <button class="copy-btn" data-copy="r-whatsapp">Copiar</button>
+        </div>
       </div>
       <div class="card">
         <h3>Redes sociales</h3>
-        <div id="r-socials">—</div>
+        <div id="r-socials">-</div>
       </div>
       <div class="card">
-        <h3>Score de prospección</h3>
+        <h3>Score de prospeccion</h3>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
           <span class="score-badge" id="r-score-badge">0</span>
           <span style="font-size:10px;color:#757684">/ 100 puntos</span>
         </div>
         <div id="r-signals"></div>
       </div>
-      <button class="btn" id="btn-save-analyzed">💾 Guardar en CRM como prospecto</button>
+      <button class="btn btn-green" id="btn-save-analyzed">Guardar en CRM como prospecto</button>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" id="btn-copy-json">Copiar como JSON</button>
+        <button class="btn btn-outline btn-sm" id="btn-copy-csv">Copiar como CSV</button>
+      </div>
     </div>
   </div>
 
   <!-- SAVE TAB -->
   <div class="content" id="tab-save">
     <div class="card">
-      <h3>Guardar página</h3>
-      <div class="field"><label>Título</label><input type="text" id="save-title"></div>
+      <h3>Guardar pagina</h3>
+      <div class="field"><label>Titulo</label><input type="text" id="save-title"></div>
       <div class="field">
         <label>URL</label>
         <div style="display:flex;gap:4px;">
           <input type="text" id="save-url" readonly style="flex:1;">
-          <button id="btn-copy-url" style="background:#00288e;color:white;border:none;border-radius:5px;padding:6px 10px;font-size:10px;cursor:pointer;" title="Copiar URL">📋</button>
+          <button class="copy-btn" id="btn-copy-url" title="Copiar URL" style="padding:6px 10px;">Copiar</button>
         </div>
       </div>
-      <div class="field"><label>Carpeta</label><select id="save-folder"><option value="rf1">Prospectos LinkedIn</option><option value="rf2">Competencia</option><option value="rf3">Recursos</option><option value="rf4">Leads potenciales</option></select></div>
+      <div class="field"><label>Carpeta</label><select id="save-folder"><option value="rf1">Prospectos LinkedIn</option><option value="rf2">Competencia</option><option value="rf3">Recursos</option><option value="rf4">Leads potenciales</option><option value="rf5">Clientes actuales</option></select></div>
       <div class="field">
         <label>Etiquetas</label>
         <div class="tags" id="save-tags">
-          <span class="tag" data-tag="Prioridad alta">🔴 Prioridad alta</span>
-          <span class="tag" data-tag="Favorita">⭐ Favorita</span>
-          <span class="tag" data-tag="Revisar después">🕐 Revisar después</span>
+          <span class="tag" data-tag="Prioridad alta">Prioridad alta</span>
+          <span class="tag" data-tag="Favorita">Favorita</span>
+          <span class="tag" data-tag="Revisar despues">Revisar despues</span>
           <span class="tag" data-tag="B2B">B2B</span>
           <span class="tag" data-tag="SaaS">SaaS</span>
-          <span class="tag" data-tag="Medellín">Medellín</span>
-          <span class="tag" data-tag="Lead caliente">🔥 Lead caliente</span>
-          <span class="tag" data-tag="Competencia">👀 Competencia</span>
+          <span class="tag" data-tag="Medellin">Medellin</span>
+          <span class="tag" data-tag="Lead caliente">Lead caliente</span>
+          <span class="tag" data-tag="Competencia">Competencia</span>
         </div>
       </div>
-      <div class="field"><label>Notas</label><textarea id="save-notes" rows="2" placeholder="¿Por qué guardas esta página?"></textarea></div>
-      <button class="btn" id="btn-save">💾 Guardar en Radar</button>
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="btn btn-outline" id="btn-save-fav" style="flex:1;font-size:10px;">⭐ Guardar como favorita</button>
-        <button class="btn btn-outline" id="btn-save-review" style="flex:1;font-size:10px;">🕐 Revisar después</button>
+      <div class="field"><label>Notas</label><textarea id="save-notes" rows="2" placeholder="Por que guardas esta pagina?"></textarea></div>
+      <button class="btn btn-green" id="btn-save">Guardar y sincronizar con CRM</button>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" id="btn-save-fav">Favorita</button>
+        <button class="btn btn-outline btn-sm" id="btn-save-review">Revisar despues</button>
+        <button class="btn btn-outline btn-sm" id="btn-paste-data">Pegar datos</button>
       </div>
     </div>
   </div>
@@ -129,40 +191,67 @@
   <!-- AI TAB -->
   <div class="content" id="tab-ai">
     <div class="card">
-      <h3>🤖 Análisis con IA</h3>
-      <p style="font-size:10px;color:#757684;margin-bottom:8px;">Usa IA para analizar la página y generar un resumen de prospección.</p>
-      <div class="field"><label>Prompt</label><textarea id="ai-prompt" rows="3" placeholder="Ej: Analiza esta empresa y dime si es un buen prospecto para venderle servicios de marketing digital">Analiza esta empresa y genera un brief de prospección: ¿qué vende?, ¿quién es su cliente?, ¿qué oportunidad hay?</textarea></div>
-      <button class="btn" id="btn-ai-analyze">✨ Analizar con IA</button>
-      <div class="ai-window" id="ai-result" style="display:none;"></div>
+      <h3>Analisis con IA</h3>
+      <p style="font-size:10px;color:#757684;margin-bottom:8px;">Usa IA para analizar la pagina y generar un resumen de prospeccion.</p>
+      <div class="field"><label>Prompt</label><textarea id="ai-prompt" rows="3" placeholder="Ej: Analiza esta empresa y dime si es un buen prospecto">Analiza esta empresa y genera un brief de prospeccion: que vende?, quien es su cliente?, que oportunidad hay?</textarea></div>
+      <button class="btn" id="btn-ai-analyze">Analizar con IA</button>
+      <div class="ai-window" id="ai-result" style="display:none;">
+        <button class="copy-ai" id="btn-copy-ai">Copiar</button>
+        <div id="ai-result-text"></div>
+      </div>
     </div>
   </div>
 
   <!-- AUTOFILL TAB -->
   <div class="content" id="tab-autofill">
     <div class="card">
-      <h3>📝 Auto-llenado de formularios</h3>
-      <p style="font-size:10px;color:#757684;margin-bottom:8px;">Rellena formularios en la página actual con tus datos o los del prospecto.</p>
+      <h3>Auto-llenado de formularios</h3>
+      <p style="font-size:10px;color:#757684;margin-bottom:8px;">Rellena formularios en la pagina actual con tus datos o los del prospecto.</p>
       <div class="field"><label>Nombre</label><input type="text" id="af-name" placeholder="Tu nombre o empresa"></div>
       <div class="field"><label>Email</label><input type="text" id="af-email" placeholder="email@tuempresa.com"></div>
-      <div class="field"><label>Teléfono</label><input type="text" id="af-phone" placeholder="+57 300 123 4567"></div>
+      <div class="field"><label>Telefono</label><input type="text" id="af-phone" placeholder="+57 300 123 4567"></div>
       <div class="field"><label>Empresa</label><input type="text" id="af-company" placeholder="LocalRank"></div>
       <div class="field"><label>Mensaje</label><textarea id="af-message" rows="2" placeholder="Mensaje predeterminado para formularios"></textarea></div>
-      <button class="btn" id="btn-autofill">Rellenar formularios en esta página</button>
-      <button class="btn btn-outline" id="btn-save-af" style="margin-top:6px;">Guardar estos datos como preset</button>
+      <button class="btn" id="btn-autofill">Rellenar formularios en esta pagina</button>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" id="btn-save-af">Guardar preset</button>
+        <button class="btn btn-outline btn-sm" id="btn-paste-prospect">Pegar prospecto</button>
+      </div>
     </div>
   </div>
 
   <!-- SETTINGS TAB -->
   <div class="content" id="tab-settings">
     <div class="card">
-      <h3>⚙️ Configuración</h3>
-      <div class="field"><label>CRM Base URL</label><input type="text" id="set-url" value="https://localrankcrm-livid.vercel.app"></div>
-      <div class="field"><label>API Key</label><input type="password" id="set-apikey" placeholder="lr_live_sk_..."></div>
-      <div class="field"><label>Exportar formato</label><select id="set-format"><option value="crm">Directo al CRM</option><option value="csv">CSV local</option><option value="json">JSON local</option></select></div>
+      <h3>Conexion con CRM</h3>
+      <div class="field"><label>CRM URL</label><input type="text" id="set-url" value="https://localrankcrm-livid.vercel.app"></div>
+      <div class="field"><label>API Key (opcional)</label><input type="password" id="set-apikey" placeholder="lr_live_sk_..."></div>
+      <button class="btn btn-sm" id="btn-test-connection">Probar conexion</button>
+      <div id="connection-result" style="font-size:10px;margin-top:6px;"></div>
+    </div>
+    <div class="card">
+      <h3>Preferencias</h3>
+      <div class="field"><label>Formato de exportacion</label><select id="set-format"><option value="crm">Directo al CRM</option><option value="csv">CSV local</option><option value="json">JSON local</option></select></div>
       <div class="field"><label>AI Provider</label><select id="set-ai"><option value="openrouter">OpenRouter</option><option value="gemini">Gemini</option><option value="local">Navegador (gratis)</option></select></div>
-      <button class="btn" id="btn-save-settings">Guardar configuración</button>
+      <div class="field">
+        <label>Auto-sync</label>
+        <select id="set-autosync">
+          <option value="on">Activado (sincronizar al guardar)</option>
+          <option value="off">Desactivado (solo local)</option>
+        </select>
+      </div>
+      <button class="btn" id="btn-save-settings">Guardar configuracion</button>
+    </div>
+    <div class="card">
+      <h3>Datos</h3>
+      <button class="btn btn-outline btn-sm" id="btn-export-all">Exportar todos los clips (JSON)</button>
+      <button class="btn btn-outline btn-sm" id="btn-export-csv">Exportar todos los clips (CSV)</button>
+      <button class="btn btn-outline btn-sm" id="btn-clear-data" style="color:#dc2626;border-color:#dc2626;">Borrar datos locales</button>
     </div>
   </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
   <script src="popup.js"></script>
 </body>

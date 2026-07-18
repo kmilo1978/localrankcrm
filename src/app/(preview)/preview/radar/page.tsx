@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bookmark, ExternalLink, Folder, Globe, Plus, Search, Tag, Trash2, X } from "lucide-react";
+import { Bookmark, ClipboardCopy, ClipboardPaste, ExternalLink, Folder, Globe, Plus, RefreshCw, Search, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type ClipTag = { id: string; name: string; color: string };
@@ -78,6 +78,59 @@ export default function RadarPage() {
     saveClips(clips.map((c) => c.id === clipId ? { ...c, tags: c.tags.includes(tagName) ? c.tags.filter((t) => t !== tagName) : [...c.tags, tagName] } : c));
   }
 
+  // Copy single clip to clipboard
+  function copyClip(clip: WebClip) {
+    const text = `${clip.title}\n${clip.url}\n${clip.description || ""}\nNotas: ${clip.notes || "—"}`;
+    navigator.clipboard.writeText(text);
+    setCopyMsg("Copiado: " + clip.title);
+    setTimeout(() => setCopyMsg(""), 2000);
+  }
+  // Copy clip as JSON (for pasting into extension or other tools)
+  function copyClipJSON(clip: WebClip) {
+    navigator.clipboard.writeText(JSON.stringify(clip, null, 2));
+    setCopyMsg("JSON copiado");
+    setTimeout(() => setCopyMsg(""), 2000);
+  }
+  // Copy all filtered clips as CSV
+  function copyAllCSV() {
+    let csv = "Titulo,URL,Empresa,Carpeta,Tags,Notas,Fecha,Fuente\n";
+    filtered.forEach((c) => {
+      const folder = folders.find((f) => f.id === c.folderId);
+      csv += `"${c.title}","${c.url}","","${folder?.name || ""}","${c.tags.join("; ")}","${c.notes}","${c.savedAt}","${c.source}"\n`;
+    });
+    navigator.clipboard.writeText(csv);
+    setCopyMsg(`${filtered.length} clips copiados como CSV`);
+    setTimeout(() => setCopyMsg(""), 2500);
+  }
+  // Paste from clipboard (JSON clip or URL)
+  async function pasteClip() {
+    try {
+      const text = await navigator.clipboard.readText();
+      try {
+        const data = JSON.parse(text);
+        if (data.url) {
+          saveClips([{ id: generateId(), url: data.url, title: data.title || data.url, description: data.description || "", image: "", folderId: data.folderId || folders[0]?.id || "", tags: data.tags || [], notes: data.notes || "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
+          setCopyMsg("Clip pegado desde portapapeles");
+        } else if (Array.isArray(data)) {
+          const newClips = data.map((d: Record<string, unknown>) => ({ id: generateId(), url: (d.url as string) || "", title: (d.title as string) || "", description: (d.description as string) || "", image: "", folderId: folders[0]?.id || "", tags: (d.tags as string[]) || [], notes: (d.notes as string) || "", savedAt: new Date().toLocaleString("es"), source: "manual" as const }));
+          saveClips([...newClips, ...clips]);
+          setCopyMsg(`${newClips.length} clips pegados`);
+        }
+      } catch {
+        // Not JSON — treat as URL
+        if (text.startsWith("http")) {
+          saveClips([{ id: generateId(), url: text, title: text, description: "", image: "", folderId: folders[0]?.id || "", tags: [], notes: "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
+          setCopyMsg("URL pegada como clip");
+        } else {
+          setCopyMsg("No se reconoce el formato del portapapeles");
+        }
+      }
+      setTimeout(() => setCopyMsg(""), 2500);
+    } catch { setCopyMsg("No se pudo acceder al portapapeles"); setTimeout(() => setCopyMsg(""), 2500); }
+  }
+
+  const [copyMsg, setCopyMsg] = useState("");
+
   const filtered = clips
     .filter((c) => filterFolder === "all" || c.folderId === filterFolder)
     .filter((c) => filterTag === "all" || c.tags.includes(filterTag))
@@ -92,6 +145,8 @@ export default function RadarPage() {
             <p className="text-sm text-muted-foreground">Captura páginas web, organiza por carpetas y etiquetas. Sincronizado con la extensión del navegador.</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={pasteClip} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Pegar clip desde portapapeles"><ClipboardPaste className="h-3.5 w-3.5" />Pegar</button>
+            <button onClick={copyAllCSV} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Copiar todos como CSV"><ClipboardCopy className="h-3.5 w-3.5" />Copiar CSV</button>
             <button onClick={() => setShowAddFolder(!showAddFolder)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Folder className="h-3.5 w-3.5" />Carpeta</button>
             <button onClick={() => setShowAddClip(true)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Guardar página</button>
           </div>
@@ -154,6 +209,8 @@ export default function RadarPage() {
                     <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate text-brand hover:underline">{clip.title}</a>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                    <button onClick={() => copyClip(clip)} className="text-muted-foreground hover:text-brand" title="Copiar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => copyClipJSON(clip)} className="text-muted-foreground hover:text-brand" title="Copiar JSON"><Tag className="h-3.5 w-3.5" /></button>
                     <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand"><ExternalLink className="h-3.5 w-3.5" /></a>
                     <button onClick={() => deleteClip(clip.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
@@ -177,6 +234,9 @@ export default function RadarPage() {
         </div>
 
         {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin clips guardados. Usa el botón "Guardar página" o la extensión del navegador.</div>}
+
+        {/* Copy/paste notification */}
+        {copyMsg && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{copyMsg}</div>}
 
         {/* Extension info */}
         <div className="mt-8 rounded-lg border border-dashed bg-gray-50 p-5">
