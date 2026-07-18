@@ -9,7 +9,14 @@ const TABS = [
   { href: "/settings/ai-providers", label: "IA / APIs" },
   { href: "/settings/branding", label: "Marca" },
   { href: "/settings/templates", label: "Plantillas" },
+  { href: "/settings/sms", label: "SMS" },
+  { href: "/settings/email-marketing", label: "Email Marketing" },
+  { href: "/settings/mcp", label: "MCP" },
+  { href: "/settings/flows", label: "Flows" },
+  { href: "/settings/webhooks", label: "Webhooks" },
+  { href: "/settings/currency", label: "Moneda" },
   { href: "/settings/team", label: "Equipo" },
+  { href: "/settings/account", label: "Cuenta" },
 ] as const;
 
 export default function SettingsLayout({
@@ -30,8 +37,8 @@ export default function SettingsLayout({
               className={cn(
                 "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 pathname.startsWith(t.href)
-                  ? "bg-brand-tint text-brand-text"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  ? "bg-[var(--accent-tint)] text-[var(--accent-text)]"
+                  : "text-muted-foreground hover:bg-gray-100 hover:text-foreground"
               )}
             >
               {t.label}
