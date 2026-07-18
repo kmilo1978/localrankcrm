@@ -5,24 +5,29 @@ import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage"
 
 type VaultItem = {
   id: string; title: string; username: string; password: string; url: string;
-  category: "servicio" | "api" | "red_social" | "email" | "hosting" | "banco" | "otro";
+  category: string; icon: string; color: string;
   notes: string; createdAt: string;
 };
 
-const CATEGORIES: Record<string, { label: string; color: string }> = {
-  servicio: { label: "Servicio", color: "bg-blue-100 text-blue-700" },
-  api: { label: "API Key", color: "bg-purple-100 text-purple-700" },
-  red_social: { label: "Red social", color: "bg-pink-100 text-pink-700" },
-  email: { label: "Email", color: "bg-amber-100 text-amber-700" },
-  hosting: { label: "Hosting", color: "bg-green-100 text-green-700" },
-  banco: { label: "Banco/Pagos", color: "bg-emerald-100 text-emerald-700" },
-  otro: { label: "Otro", color: "bg-gray-100 text-gray-700" },
+const DEFAULT_CATEGORIES: Record<string, { label: string; color: string; icon: string }> = {
+  servicio: { label: "Servicio", color: "bg-blue-100 text-blue-700", icon: "🔧" },
+  api: { label: "API Key", color: "bg-purple-100 text-purple-700", icon: "🔑" },
+  red_social: { label: "Red social", color: "bg-pink-100 text-pink-700", icon: "📱" },
+  email: { label: "Email", color: "bg-amber-100 text-amber-700", icon: "📧" },
+  hosting: { label: "Hosting", color: "bg-green-100 text-green-700", icon: "☁️" },
+  banco: { label: "Banco/Pagos", color: "bg-emerald-100 text-emerald-700", icon: "💳" },
+  crm: { label: "CRM", color: "bg-indigo-100 text-indigo-700", icon: "📊" },
+  desarrollo: { label: "Desarrollo", color: "bg-orange-100 text-orange-700", icon: "💻" },
+  otro: { label: "Otro", color: "bg-gray-100 text-gray-700", icon: "📦" },
 };
 
+const SERVICE_ICONS = ["🔑", "🔧", "☁️", "📧", "💳", "📱", "💻", "🌐", "🛡️", "📊", "🚀", "⚡", "🎯", "📦", "🔒", "💚", "🟠", "🔵", "🟣", "🏦"];
+const SERVICE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#f97316", "#6366f1", "#14b8a6"];
+
 const SEED: VaultItem[] = [
-  { id: "v1", title: "OpenRouter API", username: "localrankmedellin@gmail.com", password: "sk-or-v1-xxxx...xxxx", url: "https://openrouter.ai", category: "api", notes: "API principal para IA del CRM", createdAt: "2026-07-17" },
-  { id: "v2", title: "Supabase Project", username: "localrankmedellin@gmail.com", password: "••••••••", url: "https://supabase.com/dashboard", category: "hosting", notes: "Proyecto oixeaagftrigalcazvst", createdAt: "2026-07-15" },
-  { id: "v3", title: "Vercel Deploy", username: "kmilo1978", password: "••••••••", url: "https://vercel.com", category: "hosting", notes: "Deploy automatico desde GitHub", createdAt: "2026-07-10" },
+  { id: "v1", title: "OpenRouter API", username: "localrankmedellin@gmail.com", password: "sk-or-v1-xxxx...xxxx", url: "https://openrouter.ai", category: "api", icon: "🤖", color: "#8b5cf6", notes: "API principal para IA del CRM", createdAt: "2026-07-17" },
+  { id: "v2", title: "Supabase Project", username: "localrankmedellin@gmail.com", password: "••••••••", url: "https://supabase.com/dashboard", category: "hosting", icon: "⚡", color: "#10b981", notes: "Proyecto oixeaagftrigalcazvst", createdAt: "2026-07-15" },
+  { id: "v3", title: "Vercel Deploy", username: "kmilo1978", password: "••••••••", url: "https://vercel.com", category: "hosting", icon: "🚀", color: "#000000", notes: "Deploy automatico desde GitHub", createdAt: "2026-07-10" },
 ];
 
 export default function VaultPage() {
@@ -34,7 +39,7 @@ export default function VaultPage() {
   const [filterCat, setFilterCat] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState<VaultItem | null>(null);
-  const [form, setForm] = useState({ title: "", username: "", password: "", url: "", category: "servicio" as VaultItem["category"], notes: "" });
+  const [form, setForm] = useState({ title: "", username: "", password: "", url: "", category: "servicio", icon: "🔑", color: "#3b82f6", notes: "" });
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState("");
 
@@ -82,13 +87,13 @@ export default function VaultPage() {
 
   function addItem() {
     if (!form.title.trim()) return;
-    const item: VaultItem = { id: generateId(), ...form, createdAt: new Date().toISOString().split("T")[0]! };
+    const item: VaultItem = { id: generateId(), title: form.title, username: form.username, password: form.password, url: form.url, category: form.category, icon: form.icon, color: form.color, notes: form.notes, createdAt: new Date().toISOString().split("T")[0]! };
     save([item, ...items]); resetForm(); setShowForm(false); notify("Guardado en boveda");
   }
 
   function openEdit(item: VaultItem) {
     setEditItem(item);
-    setForm({ title: item.title, username: item.username, password: item.password, url: item.url, category: item.category, notes: item.notes });
+    setForm({ title: item.title, username: item.username, password: item.password, url: item.url, category: item.category, icon: item.icon || "🔑", color: item.color || "#3b82f6", notes: item.notes });
   }
 
   function handleUpdate() {
@@ -97,7 +102,7 @@ export default function VaultPage() {
     setEditItem(null); resetForm(); notify("Actualizado");
   }
 
-  function resetForm() { setForm({ title: "", username: "", password: "", url: "", category: "servicio", notes: "" }); }
+  function resetForm() { setForm({ title: "", username: "", password: "", url: "", category: "servicio", icon: "🔑", color: "#3b82f6", notes: "" }); }
   function deleteItem(id: string) { save(items.filter(i => i.id !== id)); }
   function togglePasswordVisible(id: string) {
     const next = new Set(visiblePasswords);
@@ -157,8 +162,8 @@ export default function VaultPage() {
           <div className="relative"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-44 rounded border bg-white py-1.5 pl-8 pr-3 text-xs focus:border-brand focus:outline-none" /></div>
           <div className="flex gap-1 flex-wrap">
             <button onClick={() => setFilterCat("all")} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todas</button>
-            {Object.entries(CATEGORIES).map(([k, v]) => (
-              <button key={k} onClick={() => setFilterCat(k)} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === k ? v.color + " font-bold" : "border hover:bg-gray-50"}`}>{v.label}</button>
+            {Object.entries(DEFAULT_CATEGORIES).map(([k, v]) => (
+              <button key={k} onClick={() => setFilterCat(k)} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === k ? v.color + " font-bold" : "border hover:bg-gray-50"}`}>{v.icon} {v.label}</button>
             ))}
           </div>
         </div>
@@ -169,11 +174,11 @@ export default function VaultPage() {
             <div key={item.id} className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 shrink-0"><Key className="h-4 w-4 text-brand" /></div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0 text-lg" style={{ backgroundColor: (item.color || "#3b82f6") + "15" }}>{item.icon || "🔑"}</div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-semibold">{item.title}</h4>
-                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${CATEGORIES[item.category]?.color}`}>{CATEGORIES[item.category]?.label}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${DEFAULT_CATEGORIES[item.category]?.color || "bg-gray-100 text-gray-700"}`}>{DEFAULT_CATEGORIES[item.category]?.label || item.category}</span>
                     </div>
                     {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-brand hover:underline">{item.url}</a>}
                   </div>
@@ -219,10 +224,20 @@ export default function VaultPage() {
               </div>
               <input value={form.url} onChange={e => setForm({...form, url: e.target.value})} placeholder="URL del servicio (opcional)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <div className="grid grid-cols-2 gap-3">
-                <select value={form.category} onChange={e => setForm({...form, category: e.target.value as VaultItem["category"]})} className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none">
-                  {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                  {Object.entries(DEFAULT_CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
                 </select>
                 <input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Notas" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              </div>
+              {/* Icon picker */}
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Icono del servicio</label>
+                <div className="flex gap-1 flex-wrap mt-1">{SERVICE_ICONS.map(icon => <button key={icon} onClick={() => setForm({...form, icon})} className={`h-8 w-8 rounded-lg border text-base flex items-center justify-center ${form.icon === icon ? "border-brand bg-brand/5 scale-110" : "hover:bg-gray-50"}`}>{icon}</button>)}</div>
+              </div>
+              {/* Color picker */}
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground">Color del servicio</label>
+                <div className="flex gap-1.5 mt-1">{SERVICE_COLORS.map(c => <button key={c} onClick={() => setForm({...form, color: c})} className={`h-6 w-6 rounded-full border-2 ${form.color === c ? "border-gray-800 scale-110" : "border-transparent"}`} style={{backgroundColor: c}} />)}</div>
               </div>
               <button onClick={editItem ? handleUpdate : addItem} disabled={!form.title.trim()} className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">{editItem ? "Guardar cambios" : "Guardar en boveda"}</button>
             </div>
