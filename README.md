@@ -7,9 +7,9 @@ LocalRank CRM es un sistema todo-en-uno diseñado para equipos comerciales que n
 Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en Vercel con base de datos en Supabase (PostgreSQL).
 
 🌐 **Website:** [localrank.com.co](https://localrank.com.co)  
-🚀 **Demo Live:** [localrankcrm-livid.vercel.app](https://localrankcrm-livid.vercel.app/dashboard)  
 📧 **Contacto para desarrollos a la medida:** localrankmedellin@gmail.com  
-📦 **Stack:** Next.js 15 · React 19 · TypeScript · Tailwind CSS · Supabase · Drizzle ORM
+📦 **Stack:** Next.js 15 · React 19 · TypeScript · Tailwind CSS · Supabase · Drizzle ORM  
+🔌 **Extensión Chrome:** Incluida en `/extension` — analiza webs, extrae datos y sincroniza con el CRM
 
 ---
 
@@ -80,6 +80,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Importar & Enriquecer** | Upload CSV → enriquecimiento (email, social, tech, empresa, dominio) → exportar |
 | **Workspaces** | Multi-cliente con carpetas/subcarpetas, archivos, responsable por carpeta |
 | **Equipo** | Roles (owner/admin/manager/member/viewer), 20 permisos granulares, invitaciones, delegación |
+| **Chat Interno** | Conversaciones entre miembros: canales públicos/privados, mensajes directos, documentos compartidos, invitar miembros |
 | **Analytics** | KPIs 30d, funnel de ventas, rendimiento por rep, conversaciones por canal |
 | **Social** | Engagement: likes, comments, DMs, mentions por plataforma |
 | **Omnicanal** | Dashboard unificado con status de cada canal + actividad |

@@ -22,6 +22,7 @@ const HELP_CONTENT: Record<string, { title: string; desc: string; steps: string[
   "/import": { title: "Importar & Enriquecer", desc: "Sube archivos CSV para importar datos y enriquécelos automáticamente con email, redes sociales y más.", steps: ["Sube un archivo CSV o TSV", "Selecciona qué datos enriquecer", "Click 'Enriquecer' individual o en batch", "Exporta a Contactos o Propuestas"] },
   "/workspaces": { title: "Espacios de trabajo", desc: "Organiza proyectos por cliente con carpetas, subcarpetas y archivos. Asigna responsables.", steps: ["Crea clientes en el sidebar", "Crea workspaces asignados a un cliente", "Agrega carpetas y subcarpetas", "Sube archivos dentro de cada carpeta"] },
   "/team": { title: "Equipo", desc: "Gestiona miembros, roles, permisos y delega trabajo. Invita por email.", steps: ["Invita miembros por email", "Asigna roles (Admin, Manager, Miembro, Viewer)", "Delega tareas y contactos", "Revisa permisos en la tabla de abajo"] },
+  "/team-chat": { title: "Chat del Equipo", desc: "Conversaciones internas entre miembros del equipo. Canales públicos, privados y mensajes directos. Comparte documentos de forma segura.", steps: ["Crea canales públicos o privados", "Invita miembros específicos a cada canal", "Envía mensajes y adjunta documentos", "Los canales privados solo los ven los invitados", "Usa mensajes directos para conversaciones 1:1"] },
   "/social": { title: "Social Engagement", desc: "Monitorea comentarios, likes, DMs y menciones de todas tus redes sociales.", steps: ["Revisa métricas por plataforma", "Responde a las interacciones pendientes", "Identifica oportunidades de engagement"] },
   "/omnichannel": { title: "Omnicanal", desc: "Dashboard unificado de todos tus canales de comunicación con métricas y actividad.", steps: ["Ve el estado de cada canal conectado", "Identifica canales con mensajes sin leer", "Revisa la actividad reciente cross-channel"] },
   "/labels": { title: "Etiquetas", desc: "Crea etiquetas ilimitadas con colores para organizar contactos, empresas y oportunidades.", steps: ["Crea etiquetas con nombre y color", "Usa el color hex para personalizar", "Asigna etiquetas en contactos y pipeline"] },
@@ -39,9 +40,9 @@ export function PageHelp() {
   if (!help) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-30">
+    <div className="fixed bottom-6 left-[270px] z-50">
       {open && (
-        <div className="absolute bottom-14 right-0 w-80 rounded-lg border bg-white p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute bottom-14 left-0 w-80 rounded-lg border bg-white p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start justify-between mb-2">
             <h4 className="text-sm font-semibold">{help.title}</h4>
             <button onClick={() => setOpen(false)} className="rounded p-0.5 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
@@ -58,7 +59,7 @@ export function PageHelp() {
           </div>
         </div>
       )}
-      <button onClick={() => setOpen(!open)} className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all ${open ? "bg-brand text-white" : "bg-white border text-brand hover:bg-brand/5"}`}>
+      <button onClick={() => setOpen(!open)} className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all ${open ? "bg-brand text-white" : "bg-white border text-brand hover:bg-brand/5"}`} title="Ayuda de esta sección">
         <HelpCircle className="h-5 w-5" />
       </button>
     </div>
