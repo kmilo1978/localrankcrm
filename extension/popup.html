@@ -96,11 +96,33 @@
     <div class="card">
       <h3>Guardar página</h3>
       <div class="field"><label>Título</label><input type="text" id="save-title"></div>
-      <div class="field"><label>URL</label><input type="text" id="save-url" readonly></div>
+      <div class="field">
+        <label>URL</label>
+        <div style="display:flex;gap:4px;">
+          <input type="text" id="save-url" readonly style="flex:1;">
+          <button id="btn-copy-url" style="background:#00288e;color:white;border:none;border-radius:5px;padding:6px 10px;font-size:10px;cursor:pointer;" title="Copiar URL">📋</button>
+        </div>
+      </div>
       <div class="field"><label>Carpeta</label><select id="save-folder"><option value="rf1">Prospectos LinkedIn</option><option value="rf2">Competencia</option><option value="rf3">Recursos</option><option value="rf4">Leads potenciales</option></select></div>
-      <div class="field"><label>Etiquetas</label><div class="tags" id="save-tags"><span class="tag" data-tag="Prioridad alta">Prioridad alta</span><span class="tag" data-tag="B2B">B2B</span><span class="tag" data-tag="SaaS">SaaS</span><span class="tag" data-tag="Medellín">Medellín</span><span class="tag" data-tag="Revisar">Revisar</span></div></div>
+      <div class="field">
+        <label>Etiquetas</label>
+        <div class="tags" id="save-tags">
+          <span class="tag" data-tag="Prioridad alta">🔴 Prioridad alta</span>
+          <span class="tag" data-tag="Favorita">⭐ Favorita</span>
+          <span class="tag" data-tag="Revisar después">🕐 Revisar después</span>
+          <span class="tag" data-tag="B2B">B2B</span>
+          <span class="tag" data-tag="SaaS">SaaS</span>
+          <span class="tag" data-tag="Medellín">Medellín</span>
+          <span class="tag" data-tag="Lead caliente">🔥 Lead caliente</span>
+          <span class="tag" data-tag="Competencia">👀 Competencia</span>
+        </div>
+      </div>
       <div class="field"><label>Notas</label><textarea id="save-notes" rows="2" placeholder="¿Por qué guardas esta página?"></textarea></div>
-      <button class="btn" id="btn-save">Guardar en Radar</button>
+      <button class="btn" id="btn-save">💾 Guardar en Radar</button>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-outline" id="btn-save-fav" style="flex:1;font-size:10px;">⭐ Guardar como favorita</button>
+        <button class="btn btn-outline" id="btn-save-review" style="flex:1;font-size:10px;">🕐 Revisar después</button>
+      </div>
     </div>
   </div>
 

@@ -136,6 +136,8 @@ export default function RadarPage() {
           </div>
           <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="rounded-md border px-2 py-1 text-xs">
             <option value="all">Etiqueta: Todas</option>
+            <option value="Favorita">⭐ Favoritas</option>
+            <option value="Revisar después">🕐 Revisar después</option>
             {tags.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
           </select>
         </div>

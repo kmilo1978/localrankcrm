@@ -110,12 +110,36 @@ document.getElementById("btn-save-analyzed").addEventListener("click", () => {
 
 // Save tab (manual)
 document.getElementById("btn-save").addEventListener("click", () => {
+  saveClip(Array.from(selectedTags));
+});
+
+// Quick save as favorite
+document.getElementById("btn-save-fav").addEventListener("click", () => {
+  saveClip(["Favorita"]);
+  document.getElementById("btn-save-fav").textContent = "✓ Favorita guardada";
+});
+
+// Quick save for review
+document.getElementById("btn-save-review").addEventListener("click", () => {
+  saveClip(["Revisar después"]);
+  document.getElementById("btn-save-review").textContent = "✓ Para revisar";
+});
+
+// Copy URL to clipboard
+document.getElementById("btn-copy-url").addEventListener("click", () => {
+  const url = document.getElementById("save-url").value;
+  navigator.clipboard.writeText(url);
+  document.getElementById("btn-copy-url").textContent = "✓";
+  setTimeout(() => { document.getElementById("btn-copy-url").textContent = "📋"; }, 1500);
+});
+
+function saveClip(tags) {
   const clip = {
     id: Date.now().toString(),
     url: document.getElementById("save-url").value,
     title: document.getElementById("save-title").value,
     folderId: document.getElementById("save-folder").value,
-    tags: Array.from(selectedTags),
+    tags: tags,
     notes: document.getElementById("save-notes").value,
     source: "extension",
     savedAt: new Date().toISOString(),
@@ -129,7 +153,7 @@ document.getElementById("btn-save").addEventListener("click", () => {
 
   document.getElementById("btn-save").textContent = "✓ Guardado";
   document.getElementById("btn-save").disabled = true;
-});
+}
 
 // AI Analysis
 document.getElementById("btn-ai-analyze").addEventListener("click", () => {
