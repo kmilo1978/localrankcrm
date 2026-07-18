@@ -25,6 +25,7 @@ import {
   Kanban,
   LayoutDashboard,
   LogOut,
+  Menu,
   MessageSquare,
   Send,
   Settings,
@@ -35,6 +36,7 @@ import {
   Thermometer,
   Users,
   UsersRound,
+  X,
   Zap,
 } from "lucide-react";
 import type { Branding } from "@/lib/branding";
@@ -85,6 +87,7 @@ export function AppNav({
   const pathname = usePathname();
   const router = useRouter();
   const [unread, setUnread] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isPreview = pathname.startsWith("/preview");
   const prefix = isPreview ? "/preview" : "";
 
@@ -107,8 +110,34 @@ export function AppNav({
     onConversationUpdated: () => void refetchUnread(),
   });
 
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r bg-[var(--sidebar-bg)] px-3 pb-3.5 pt-6">
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed left-3 top-3 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--sidebar-bg)] text-white shadow-lg md:hidden"
+        aria-label="Abrir menú"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileOpen(false)} />
+      )}
+
+      <aside className={cn(
+        "flex w-60 shrink-0 flex-col border-r bg-[var(--sidebar-bg)] px-3 pb-3.5 pt-6",
+        "fixed inset-y-0 left-0 z-50 transition-transform duration-200 md:relative md:translate-x-0",
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        {/* Mobile close button */}
+        <button onClick={() => setMobileOpen(false)} className="absolute right-2 top-2 rounded p-1 text-white/60 hover:text-white md:hidden"><X className="h-5 w-5" /></button>
       {/* Brand white-label */}
       <div className="mb-6 flex items-center gap-2.5 px-3">
         <img src="/icon.svg" alt={branding.name} className="h-[32px] w-[32px] shrink-0" />
@@ -248,5 +277,6 @@ export function AppNav({
         <p className="mt-0.5 pl-5.5 text-[9px] text-white/40">Mantiene tus datos entre visitas</p>
       </div>
     </aside>
+    </>
   );
 }

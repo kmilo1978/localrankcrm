@@ -18,7 +18,7 @@ export default function AppLayout({
         userName="Admin"
         role="owner"
       />
-      <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto pt-14 md:pt-0">{children}</main>
       <PageHelp />
       <AiAssistant />
     </div>
