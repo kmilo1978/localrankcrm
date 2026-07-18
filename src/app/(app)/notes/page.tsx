@@ -112,6 +112,19 @@ export default function NotesPage() {
   const pinned = filtered.filter((n) => n.pinned);
   const unpinned = filtered.filter((n) => !n.pinned);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 12;
+  const totalPages = Math.ceil(unpinned.length / PER_PAGE);
+  const paginatedUnpinned = unpinned.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  function clearAllNotes() {
+    if (confirm("Borrar TODAS las notas? Esta accion no se puede deshacer.")) {
+      saveNotes([]);
+      showToast("Todas las notas eliminadas");
+    }
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-5xl">
@@ -121,6 +134,7 @@ export default function NotesPage() {
             <p className="text-sm text-muted-foreground">{notes.length} notas · {categories.length} categorías</p>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={clearAllNotes} className="flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" />Borrar todas</button>
             <button onClick={() => setShowCatForm(!showCatForm)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Tag className="h-3.5 w-3.5" />Categorías</button>
             <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Nueva nota</button>
           </div>
@@ -196,8 +210,18 @@ export default function NotesPage() {
           </div>
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {unpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}
+          {paginatedUnpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Anterior</button>
+            <span className="text-xs text-muted-foreground">Pagina {page} de {totalPages} ({unpinned.length} notas)</span>
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Siguiente</button>
+          </div>
+        )}
+
         {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin notas. Crea una con el boton "Nueva nota".</div>}
       </div>
 
@@ -216,7 +240,7 @@ export default function NotesPage() {
               </div>
               <button onClick={() => setViewNote(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
             </div>
-            <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed border-t pt-4">{viewNote.content}</div>
+            <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed border-t pt-4 break-words overflow-hidden">{viewNote.content}</div>
             {viewNote.image && <img src={viewNote.image} alt="" className="mt-4 w-full max-h-64 rounded-lg border object-contain" />}
             <div className="flex gap-2 mt-6 border-t pt-4">
               <button onClick={() => openEdit(viewNote)} className="flex items-center gap-1 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" />Editar</button>
@@ -268,7 +292,7 @@ export default function NotesPage() {
 
 function NoteCard({ note, catColor, onPin, onDelete, onView, onEdit, onClone, onCopy }: { note: Note; catColor: string; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void }) {
   return (
-    <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow cursor-pointer" onClick={() => onView(note)}>
+    <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow cursor-pointer overflow-hidden" onClick={() => onView(note)}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="h-4 w-4 text-brand" />
@@ -282,7 +306,7 @@ function NoteCard({ note, catColor, onPin, onDelete, onView, onEdit, onClone, on
           <button onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-red-500" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       </div>
-      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">{note.content}</p>
+      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap break-words overflow-hidden">{note.content}</p>
       {note.image && <img src={note.image} alt="" className="mt-2 w-full max-h-32 rounded border object-cover" />}
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
