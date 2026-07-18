@@ -164,9 +164,10 @@ export default function ProposalsPage() {
 
   function addEmbed(sectionId: string) {
     if (!editing) return;
-    const url = prompt("Pega la URL del embed (YouTube, Loom, Figma, Google Slides, etc.):");
+    const url = prompt("Pega la URL o script:\n\n• URL de embed (YouTube, Loom, Figma, Google Slides)\n• URL de calendario (Calendly, Cal.com, TidyCal)\n• Código <script> o <iframe> completo");
     if (!url) return;
-    const media: MediaItem = { id: generateId(), type: "embed", url, name: url.split("/").pop() || "embed" };
+    const isScript = url.trim().startsWith("<");
+    const media: MediaItem = { id: generateId(), type: "embed", url: url.trim(), name: isScript ? "Script embed" : url.split("/").slice(2, 3).join("") || "embed" };
     updateProposal({ ...editing, sections: editing.sections.map((s) => s.id === sectionId ? { ...s, media: [...(s.media || []), media] } : s) });
   }
 
@@ -289,7 +290,9 @@ export default function ProposalsPage() {
                               {m.type === "image" && <img src={m.url} alt={m.name} className="max-h-64 rounded border" />}
                               {m.type === "audio" && <audio src={m.url} controls className="w-full" />}
                               {m.type === "embed" && (
-                                <iframe src={m.url} className="w-full h-64 rounded border" allowFullScreen />
+                                m.url.trim().startsWith("<")
+                                  ? <div className="rounded border bg-gray-50 p-2" dangerouslySetInnerHTML={{ __html: m.url }} />
+                                  : <iframe src={m.url} className="w-full h-64 rounded border" allowFullScreen />
                               )}
                             </div>
                           ))}
@@ -385,7 +388,7 @@ export default function ProposalsPage() {
                               {m.type === "embed" && (
                                 <div className="flex items-center gap-2 px-2 py-1 text-xs">
                                   <Link className="h-3.5 w-3.5 text-brand" />
-                                  <span className="truncate max-w-[150px]">{m.url}</span>
+                                  <span className="truncate max-w-[150px]">{m.url.startsWith("<") ? "Script/iframe embed" : m.url}</span>
                                 </div>
                               )}
                               <button onClick={() => removeMedia(section.id, m.id)} className="absolute -right-1 -top-1 rounded-full bg-red-500 p-0.5 text-white"><X className="h-3 w-3" /></button>
@@ -404,7 +407,7 @@ export default function ProposalsPage() {
                           <input type="file" accept="audio/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(section.id, f, "audio"); e.target.value = ""; }} />
                         </label>
                         <button onClick={() => addEmbed(section.id)} className="flex items-center gap-1 rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-gray-50">
-                          <Link className="h-3.5 w-3.5" />Embed
+                          <Link className="h-3.5 w-3.5" />Embed / Cal / Script
                         </button>
                       </div>
                     </div>
