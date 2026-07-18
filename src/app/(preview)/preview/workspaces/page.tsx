@@ -20,7 +20,7 @@ const SEED_CLIENTS: Client[] = [
 ];
 
 const SEED: Workspace[] = [
-  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del trimestre", members: ["Kevin", "Ana", "Juan"], createdAt: "2026-07-01", clientId: "cl1", folders: [
+  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del trimestre", members: ["Camilo", "Ana", "Juan"], createdAt: "2026-07-01", clientId: "cl1", folders: [
     { id: "f1", name: "Propuestas", color: "#3b82f6", responsible: "Juan Pérez", files: [
       { id: "fl1", name: "Propuesta Enterprise.pdf", type: "proposal", addedAt: "2026-07-15" },
     ], subfolders: [
@@ -30,7 +30,7 @@ const SEED: Workspace[] = [
     { id: "f2", name: "Leads", color: "#10b981", responsible: "Ana López", files: [
       { id: "fl3", name: "leads-clasificados.xlsx", type: "import", addedAt: "2026-07-17" },
     ], subfolders: [] },
-    { id: "f3", name: "Legal", color: "#f59e0b", responsible: "Kevin", files: [
+    { id: "f3", name: "Legal", color: "#f59e0b", responsible: "Camilo", files: [
       { id: "fl5", name: "Contrato SaaS.docx", type: "document", addedAt: "2026-07-10" },
     ], subfolders: [
       { id: "sf3", name: "Contratos firmados", color: "#10b981", files: [] },
@@ -89,7 +89,7 @@ export default function WorkspacesPage() {
 
   function addWorkspace() {
     if (!wsForm.name.trim()) return;
-    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Kevin"], folders: [], createdAt: new Date().toISOString().split("T")[0]!, clientId: wsForm.clientId || clients[0]?.id || "" };
+    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Camilo"], folders: [], createdAt: new Date().toISOString().split("T")[0]!, clientId: wsForm.clientId || clients[0]?.id || "" };
     save([...workspaces, ws]); setActiveWs(ws.id);
     setWsForm({ name: "", description: "", clientId: "" }); setShowNewWs(false);
   }

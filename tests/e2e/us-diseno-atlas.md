@@ -26,4 +26,4 @@
 ## Fidelidad visual (juicio humano pendiente)
 
 Capturas en `docs/screenshots/` comparadas contra el handoff: layout 4
-columnas, tokens, burbujas, stepper, chips. Revisión estética final: Kevin.
+columnas, tokens, burbujas, stepper, chips. Revisión estética final: equipo.

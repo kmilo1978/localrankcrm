@@ -6,14 +6,14 @@ type LogEntry = { id: string; type: "change" | "workflow" | "login" | "error"; u
 
 const LOGS: LogEntry[] = [
   { id: "lg1", type: "workflow", user: "Sistema", action: "Automatización ejecutada", detail: "Onboarding automático → María García", target: "Automatización", time: "Hace 2h", status: "success" },
-  { id: "lg2", type: "change", user: "Kevin Rivera", action: "Movió lead de etapa", detail: "Carlos Ruiz: Propuesta → Negociación", target: "Pipeline", time: "Hace 3h", status: "info" },
+  { id: "lg2", type: "change", user: "Camilo Rivera", action: "Movió lead de etapa", detail: "Carlos Ruiz: Propuesta → Negociación", target: "Pipeline", time: "Hace 3h", status: "info" },
   { id: "lg3", type: "change", user: "Ana López", action: "Editó contacto", detail: "Roberto Méndez: agregó campo 'Presupuesto'", target: "Contactos", time: "Hace 4h", status: "info" },
   { id: "lg4", type: "workflow", user: "Sistema", action: "Follow-up ejecutado", detail: "Email enviado a Roberto Méndez", target: "Automatización", time: "Hace 5h", status: "success" },
   { id: "lg5", type: "error", user: "Sistema", action: "Automatización falló", detail: "Error: número inválido para Lead #4521", target: "Automatización", time: "Hace 8h", status: "error" },
   { id: "lg6", type: "login", user: "Juan Pérez", action: "Inició sesión", detail: "Desde Chrome / Windows", target: "Auth", time: "Hace 10h", status: "info" },
   { id: "lg7", type: "change", user: "María Gómez", action: "Creó propuesta", detail: "Propuesta Enterprise — TechCorp", target: "Propuestas", time: "Ayer", status: "info" },
   { id: "lg8", type: "workflow", user: "Sistema", action: "Lead routing ejecutado", detail: "Nuevo lead asignado a Ana López (Round Robin)", target: "Lead Routing", time: "Ayer", status: "success" },
-  { id: "lg9", type: "change", user: "Kevin Rivera", action: "Cambió etiqueta", detail: "Dentart: agregó 'Cliente caliente'", target: "Etiquetas", time: "Ayer", status: "info" },
+  { id: "lg9", type: "change", user: "Camilo Rivera", action: "Cambió etiqueta", detail: "Dentart: agregó 'Cliente caliente'", target: "Etiquetas", time: "Ayer", status: "info" },
   { id: "lg10", type: "workflow", user: "Sistema", action: "Scoring actualizado", detail: "Carlos Ruiz: score 78 → 95 (+17)", target: "Scoring", time: "Hace 2d", status: "success" },
   { id: "lg11", type: "error", user: "Sistema", action: "Webhook falló", detail: "n8n endpoint timeout (5s)", target: "Webhooks", time: "Hace 2d", status: "error" },
   { id: "lg12", type: "change", user: "Ana López", action: "Eliminó contacto", detail: "Lead inactivo #3892 eliminado", target: "Contactos", time: "Hace 3d", status: "info" },

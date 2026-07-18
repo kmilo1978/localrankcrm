@@ -1,8 +1,11 @@
-# LocalRank CRM — Guía para Claude
+# LocalRank CRM — Guía para Kiro
 
 LocalRank CRM es una plataforma de ventas, prospección y automatización
-inteligente — White-Label & Multi-Tenant. Este archivo guía a Claude Code
-(u otro asistente) para operar y **modificar** este repositorio.
+inteligente — White-Label & Multi-Tenant. Este archivo guía a Kiro
+(u otro asistente IA) para operar y **modificar** este repositorio.
+
+**Autor:** Juan Camilo Botero — LocalRank  
+**Asistente de desarrollo:** Kiro.dev
 
 ## Stack
 
@@ -49,3 +52,4 @@ pnpm typecheck && pnpm build
 
 - Website: localrank.com.co
 - Email: localrankmedellin@gmail.com
+- Desarrollado por: Juan Camilo Botero / LocalRank Medellín

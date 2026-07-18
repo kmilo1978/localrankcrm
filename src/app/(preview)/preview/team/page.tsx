@@ -33,7 +33,7 @@ const ROLES = {
 };
 
 const SEED_MEMBERS: Member[] = [
-  { id: "mb1", name: "Kevin Rivera", email: "kevin@localrank.co", role: "owner", avatar: "KR", status: "active", joinedAt: "2026-01-15", assignedTasks: 12, assignedContacts: 45 },
+  { id: "mb1", name: "Camilo Rivera", email: "camilo@localrank.co", role: "owner", avatar: "CR", status: "active", joinedAt: "2026-01-15", assignedTasks: 12, assignedContacts: 45 },
   { id: "mb2", name: "Ana López", email: "ana@localrank.co", role: "admin", avatar: "AL", status: "active", joinedAt: "2026-03-01", assignedTasks: 8, assignedContacts: 32 },
   { id: "mb3", name: "Juan Pérez", email: "juan@localrank.co", role: "manager", avatar: "JP", status: "active", joinedAt: "2026-04-10", assignedTasks: 15, assignedContacts: 28 },
   { id: "mb4", name: "María Gómez", email: "maria@localrank.co", role: "member", avatar: "MG", status: "active", joinedAt: "2026-05-20", assignedTasks: 6, assignedContacts: 15 },

@@ -7,11 +7,11 @@ type RoutingRule = { id: string; name: string; condition: string; field: string;
 
 const FIELDS = ["fuente", "ciudad", "industria", "lead_score", "etiqueta", "canal", "idioma", "país"];
 const METHODS = [{ id: "specific", label: "Agente específico" }, { id: "round_robin", label: "Round Robin" }, { id: "least_loaded", label: "Menos cargado" }];
-const AGENTS = ["Kevin Rivera", "Ana López", "Juan Pérez", "María Gómez"];
+const AGENTS = ["Camilo Rivera", "Ana López", "Juan Pérez", "María Gómez"];
 
 const SEED: RoutingRule[] = [
   { id: "rr1", name: "Leads de formulario → Ana", condition: "es igual a", field: "fuente", value: "formulario", assignTo: "Ana López", method: "specific", active: true, assigned: 45 },
-  { id: "rr2", name: "Score alto → Round Robin ventas", condition: "mayor que", field: "lead_score", value: "80", assignTo: "Kevin Rivera, Juan Pérez", method: "round_robin", active: true, assigned: 28 },
+  { id: "rr2", name: "Score alto → Round Robin ventas", condition: "mayor que", field: "lead_score", value: "80", assignTo: "Camilo Rivera, Juan Pérez", method: "round_robin", active: true, assigned: 28 },
   { id: "rr3", name: "Industria Tech → Juan", condition: "es igual a", field: "industria", value: "tecnología", assignTo: "Juan Pérez", method: "specific", active: true, assigned: 32 },
   { id: "rr4", name: "WhatsApp entrante → Menos cargado", condition: "es igual a", field: "canal", value: "whatsapp", assignTo: "Equipo completo", method: "least_loaded", active: false, assigned: 12 },
 ];
