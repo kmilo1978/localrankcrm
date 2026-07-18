@@ -16,8 +16,30 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const branding = await getBranding().catch(() => DEFAULT_BRANDING);
   return {
-    title: `${branding.name} CRM — Gestión Inteligente`,
-    description: "LocalRank CRM — CRM inteligente con integración multi-IA, WhatsApp y gestión completa de clientes",
+    title: {
+      default: `${branding.name} CRM — Plataforma de Ventas y Prospección Inteligente`,
+      template: `%s | ${branding.name} CRM`,
+    },
+    description: "LocalRank CRM es la plataforma todo-en-uno para equipos de ventas: prospección con IA, pipeline visual, conversaciones omnicanal (WhatsApp, Email, Instagram, LinkedIn, Telegram), propuestas profesionales, analytics avanzados y automatización. Cierra más deals en menos tiempo.",
+    keywords: ["CRM", "ventas", "prospección", "WhatsApp Business", "pipeline", "leads", "inteligencia artificial", "automatización", "omnicanal", "LocalRank"],
+    authors: [{ name: "LocalRank" }],
+    creator: "LocalRank",
+    openGraph: {
+      type: "website",
+      locale: "es_CO",
+      siteName: "LocalRank CRM",
+      title: "LocalRank CRM — Plataforma de Ventas y Prospección Inteligente",
+      description: "CRM todo-en-uno: prospección IA, pipeline visual, omnicanal, propuestas, analytics. Cierra más deals en menos tiempo.",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "LocalRank CRM",
+      description: "Plataforma de ventas y prospección inteligente con IA, omnicanal y pipeline visual.",
+    },
+    icons: {
+      icon: "/favicon.svg",
+      apple: "/icon.svg",
+    },
   };
 }
 

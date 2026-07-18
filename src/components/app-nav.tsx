@@ -98,12 +98,7 @@ export function AppNav({
     <aside className="flex w-60 shrink-0 flex-col border-r bg-[var(--sidebar-bg)] px-3 pb-3.5 pt-6">
       {/* Brand white-label */}
       <div className="mb-6 flex items-center gap-2.5 px-3">
-        <span
-          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-lg bg-white/10 text-[16px] font-bold text-white"
-          aria-hidden
-        >
-          {branding.name.charAt(0).toUpperCase()}
-        </span>
+        <img src="/icon.svg" alt={branding.name} className="h-[32px] w-[32px] shrink-0" />
         <span className="min-w-0">
           <span className="block truncate text-[16px] font-[700] leading-tight tracking-tight text-white">
             {branding.name}

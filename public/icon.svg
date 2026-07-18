@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="pin-gradient" x1="128" y1="0" x2="384" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e91e8c"/>
+      <stop offset="50%" stop-color="#d946ef"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <!-- Pin shape -->
+  <path d="M256 16C156.6 16 76 96.6 76 196c0 132 180 300 180 300s180-168 180-300C436 96.6 355.4 16 256 16z" fill="url(#pin-gradient)"/>
+  <!-- Inner dark circle -->
+  <circle cx="256" cy="190" r="110" fill="#1a1a2e"/>
+  <!-- Ring -->
+  <circle cx="256" cy="190" r="110" fill="none" stroke="#e91e8c" stroke-width="12" opacity="0.6"/>
+  <!-- Chart bars -->
+  <rect x="192" y="200" width="32" height="60" rx="4" fill="white"/>
+  <rect x="240" y="172" width="32" height="88" rx="4" fill="white"/>
+  <rect x="288" y="144" width="32" height="116" rx="4" fill="white"/>
+  <!-- Trend line -->
+  <path d="M200 220 L252 180 L300 152" stroke="#e91e8c" stroke-width="8" stroke-linecap="round" fill="none"/>
+</svg>
