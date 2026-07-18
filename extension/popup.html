@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; width: 320px; background: #f7f9fb; color: #191c1e; }
+    .header { background: #00288e; color: white; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    .header h1 { font-size: 14px; font-weight: 700; }
+    .header p { font-size: 10px; opacity: 0.7; }
+    .content { padding: 16px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: #505f76; margin-bottom: 4px; }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid #e0e3e5; border-radius: 6px; padding: 8px 10px; font-size: 12px; outline: none; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #00288e; }
+    .field textarea { resize: vertical; min-height: 50px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .tag { padding: 2px 8px; border-radius: 20px; font-size: 10px; cursor: pointer; border: 1px solid #e0e3e5; }
+    .tag.selected { background: #00288e; color: white; border-color: #00288e; }
+    .btn { width: 100%; background: #00288e; color: white; border: none; padding: 10px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #001d6b; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { padding: 12px 16px; text-align: center; font-size: 12px; }
+    .status.success { background: #dcfce7; color: #166534; }
+    .status.error { background: #fef2f2; color: #991b1b; }
+    .info { font-size: 10px; color: #757684; text-align: center; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>📌 LocalRank Radar</h1>
+      <p>Guardar esta página en el CRM</p>
+    </div>
+  </div>
+
+  <div id="form" class="content">
+    <div class="field">
+      <label>Título</label>
+      <input type="text" id="title" placeholder="Se auto-detecta...">
+    </div>
+    <div class="field">
+      <label>URL</label>
+      <input type="text" id="url" readonly>
+    </div>
+    <div class="field">
+      <label>Carpeta</label>
+      <select id="folder">
+        <option value="rf1">Prospectos LinkedIn</option>
+        <option value="rf2">Competencia</option>
+        <option value="rf3">Recursos útiles</option>
+        <option value="rf4">Leads potenciales</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Etiquetas</label>
+      <div class="tags" id="tags">
+        <span class="tag" data-tag="Prioridad alta">Prioridad alta</span>
+        <span class="tag" data-tag="Revisar después">Revisar después</span>
+        <span class="tag" data-tag="B2B">B2B</span>
+        <span class="tag" data-tag="SaaS">SaaS</span>
+        <span class="tag" data-tag="Medellín">Medellín</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <textarea id="notes" placeholder="¿Por qué guardas esta página?"></textarea>
+    </div>
+    <button class="btn" id="save">Guardar en LocalRank CRM</button>
+    <p class="info">Se guardará en Radar → carpeta seleccionada</p>
+  </div>
+
+  <div id="status" class="status" style="display:none;"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

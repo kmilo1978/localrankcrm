@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  Bookmark,
   Bot,
   Building2,
   Calendar,
@@ -163,6 +164,7 @@ export function AppNav({
         {[
           { href: "/omnichannel", label: "Omnicanal", icon: Activity },
           { href: "/social", label: "Social", icon: Heart },
+          { href: "/radar", label: "Radar", icon: Bookmark },
           { href: "/forms", label: "Formularios", icon: ClipboardList },
           { href: "/import", label: "Importar", icon: Database },
           { href: "/notes", label: "Notas", icon: StickyNote },

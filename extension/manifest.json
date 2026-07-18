@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "LocalRank Radar",
+  "version": "1.0.0",
+  "description": "Guarda páginas web directamente en tu CRM LocalRank. Organiza por carpetas y etiquetas.",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://localrankcrm-livid.vercel.app/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
