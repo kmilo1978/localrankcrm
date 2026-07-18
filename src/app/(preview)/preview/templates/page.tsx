@@ -6,6 +6,8 @@ import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage"
 
 type MediaAttachment = { id: string; type: "image" | "video" | "audio" | "url"; name: string; url: string };
 
+type TemplateButton = { id: string; type: "url" | "phone" | "quick_reply"; label: string; value: string };
+
 type Template = {
   id: string;
   name: string;
@@ -13,6 +15,7 @@ type Template = {
   body: string;
   status: "draft" | "pending_approval" | "approved" | "rejected" | "active";
   media: MediaAttachment[];
+  buttons: TemplateButton[];
   labels: string[];
   sequence: { enabled: boolean; delay: string; followUp: string };
   schedule: { enabled: boolean; date: string; time: string; timezone: string };
@@ -34,10 +37,10 @@ const STATUS_STYLES: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = { draft: "Borrador", pending_approval: "Pre-aprobación", approved: "Aprobada", rejected: "Rechazada", active: "Activa" };
 
 const SEED: Template[] = [
-  { id: "tp1", name: "Bienvenida nuevo lead", category: "Onboarding", body: "Hola {{nombre}}, gracias por tu interés en {{empresa}}. Soy {{agente}} y estaré encantado de ayudarte.\n\n¿Te gustaría agendar una llamada para conocer más sobre nuestros servicios?", status: "active", media: [], labels: ["Nuevo lead"], sequence: { enabled: true, delay: "24h", followUp: "Si no responde en 24h, enviar: '¿Pudiste ver mi mensaje anterior?'" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 245, delivered: 238, read: 189, replied: 67, failed: 7 }, createdAt: "2026-06-01", updatedAt: "2026-07-15" },
-  { id: "tp2", name: "Seguimiento propuesta", category: "Ventas", body: "Hola {{nombre}}, espero que estés bien.\n\nQuería hacer seguimiento a la propuesta que te envié el {{fecha_propuesta}}. ¿Tuviste oportunidad de revisarla?\n\nQuedo atento a cualquier pregunta.", status: "active", media: [], labels: ["En negociación", "Cliente VIP"], sequence: { enabled: true, delay: "48h", followUp: "Recordatorio: propuesta pendiente de revisión" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 89, delivered: 86, read: 72, replied: 34, failed: 3 }, createdAt: "2026-06-10", updatedAt: "2026-07-12" },
-  { id: "tp3", name: "Recordatorio de pago", category: "Cobranza", body: "Hola {{nombre}}, te recordamos que tu factura #{{num_factura}} por {{monto}} vence el {{fecha_vencimiento}}.\n\nSi ya realizaste el pago, por favor ignora este mensaje.\n\nGracias.", status: "approved", media: [], labels: ["Urgente"], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: true, date: "2026-07-25", time: "09:00", timezone: "America/Bogota" }, stats: { sent: 156, delivered: 152, read: 134, replied: 12, failed: 4 }, createdAt: "2026-05-20", updatedAt: "2026-07-10" },
-  { id: "tp4", name: "Catálogo de servicios", category: "Marketing", body: "¡Hola {{nombre}}! 👋\n\nTe comparto nuestro catálogo actualizado de servicios para {{año}}.\n\n¿Hay algo que te interese? Con gusto agendo una demo personalizada.", status: "pending_approval", media: [{ id: "ma1", type: "image", name: "catalogo-2026.jpg", url: "" }], labels: ["Prospecto caliente"], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 0, delivered: 0, read: 0, replied: 0, failed: 0 }, createdAt: "2026-07-16", updatedAt: "2026-07-16" },
+  { id: "tp1", name: "Bienvenida nuevo lead", category: "Onboarding", body: "Hola {{nombre}}, gracias por tu interés en {{empresa}}. Soy {{agente}} y estaré encantado de ayudarte.\n\n¿Te gustaría agendar una llamada para conocer más sobre nuestros servicios?", status: "active", media: [], buttons: [{ id: "b1", type: "url", label: "Agendar llamada", value: "https://cal.com/localrank" }, { id: "b2", type: "quick_reply", label: "Sí, me interesa", value: "interested_yes" }], labels: ["Nuevo lead"], sequence: { enabled: true, delay: "24h", followUp: "Si no responde en 24h, enviar: '¿Pudiste ver mi mensaje anterior?'" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 245, delivered: 238, read: 189, replied: 67, failed: 7 }, createdAt: "2026-06-01", updatedAt: "2026-07-15" },
+  { id: "tp2", name: "Seguimiento propuesta", category: "Ventas", body: "Hola {{nombre}}, espero que estés bien.\n\nQuería hacer seguimiento a la propuesta que te envié el {{fecha_propuesta}}. ¿Tuviste oportunidad de revisarla?\n\nQuedo atento a cualquier pregunta.", status: "active", media: [], buttons: [{ id: "b3", type: "url", label: "Ver propuesta", value: "https://localrankcrm.com/p/{{propuesta_id}}" }, { id: "b4", type: "phone", label: "Llamar ahora", value: "+573001234567" }], labels: ["En negociación", "Cliente VIP"], sequence: { enabled: true, delay: "48h", followUp: "Recordatorio: propuesta pendiente de revisión" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 89, delivered: 86, read: 72, replied: 34, failed: 3 }, createdAt: "2026-06-10", updatedAt: "2026-07-12" },
+  { id: "tp3", name: "Recordatorio de pago", category: "Cobranza", body: "Hola {{nombre}}, te recordamos que tu factura #{{num_factura}} por {{monto}} vence el {{fecha_vencimiento}}.\n\nSi ya realizaste el pago, por favor ignora este mensaje.\n\nGracias.", status: "approved", media: [], buttons: [{ id: "b5", type: "url", label: "Pagar ahora", value: "https://pay.localrank.com/{{factura_id}}" }, { id: "b6", type: "quick_reply", label: "Ya pagué", value: "already_paid" }, { id: "b7", type: "quick_reply", label: "Necesito más tiempo", value: "need_time" }], labels: ["Urgente"], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: true, date: "2026-07-25", time: "09:00", timezone: "America/Bogota" }, stats: { sent: 156, delivered: 152, read: 134, replied: 12, failed: 4 }, createdAt: "2026-05-20", updatedAt: "2026-07-10" },
+  { id: "tp4", name: "Catálogo de servicios", category: "Marketing", body: "¡Hola {{nombre}}! 👋\n\nTe comparto nuestro catálogo actualizado de servicios para {{año}}.\n\n¿Hay algo que te interese? Con gusto agendo una demo personalizada.", status: "pending_approval", media: [{ id: "ma1", type: "image", name: "catalogo-2026.jpg", url: "" }], buttons: [{ id: "b8", type: "url", label: "Ver catálogo completo", value: "https://localrank.com/catalogo" }, { id: "b9", type: "quick_reply", label: "Quiero una demo", value: "want_demo" }], labels: ["Prospecto caliente"], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 0, delivered: 0, read: 0, replied: 0, failed: 0 }, createdAt: "2026-07-16", updatedAt: "2026-07-16" },
 ];
 
 export default function TemplatesPage() {
@@ -53,7 +56,7 @@ export default function TemplatesPage() {
 
   function createTemplate() {
     if (!form.name.trim()) return;
-    const t: Template = { id: generateId(), name: form.name, category: form.category, body: form.body, status: "draft", media: [], labels: [], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 0, delivered: 0, read: 0, replied: 0, failed: 0 }, createdAt: new Date().toISOString().split("T")[0]!, updatedAt: new Date().toISOString().split("T")[0]! };
+    const t: Template = { id: generateId(), name: form.name, category: form.category, body: form.body, status: "draft", media: [], buttons: [], labels: [], sequence: { enabled: false, delay: "", followUp: "" }, schedule: { enabled: false, date: "", time: "", timezone: "" }, stats: { sent: 0, delivered: 0, read: 0, replied: 0, failed: 0 }, createdAt: new Date().toISOString().split("T")[0]!, updatedAt: new Date().toISOString().split("T")[0]! };
     save([t, ...templates]); setEditing(t); setForm({ name: "", category: CATEGORIES[0]!, body: "" }); setShowNew(false);
   }
 
@@ -184,6 +187,31 @@ export default function TemplatesPage() {
                 <button onClick={() => addMedia("audio")} className="flex items-center gap-1 rounded border px-2 py-1.5 text-xs hover:bg-gray-50"><Mic className="h-3.5 w-3.5" />Audio</button>
                 <button onClick={() => addMedia("url")} className="flex items-center gap-1 rounded border px-2 py-1.5 text-xs hover:bg-gray-50"><Link className="h-3.5 w-3.5" />URL</button>
               </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="rounded-lg border bg-white p-4">
+              <label className="mb-2 block text-xs font-semibold uppercase text-muted-foreground">Botones (máx. 3)</label>
+              {(editing.buttons || []).length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {(editing.buttons || []).map((btn) => (
+                    <div key={btn.id} className="flex items-center gap-2 rounded border bg-gray-50 px-3 py-2">
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${btn.type === "url" ? "bg-blue-100 text-blue-700" : btn.type === "phone" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>{btn.type === "url" ? "URL" : btn.type === "phone" ? "Llamar" : "Respuesta"}</span>
+                      <span className="flex-1 text-xs font-medium">{btn.label}</span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{btn.value}</span>
+                      <button onClick={() => updateTemplate({ ...editing, buttons: editing.buttons.filter((b) => b.id !== btn.id) })} className="text-muted-foreground hover:text-red-500"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {(editing.buttons || []).length < 3 && (
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => { const label = prompt("Texto del botón:"); const url = prompt("URL destino:"); if (label && url) updateTemplate({ ...editing, buttons: [...(editing.buttons || []), { id: generateId(), type: "url", label, value: url }] }); }} className="flex items-center gap-1 rounded border px-2 py-1.5 text-xs hover:bg-gray-50">🔗 Botón URL</button>
+                  <button onClick={() => { const label = prompt("Texto del botón:"); const phone = prompt("Número de teléfono:"); if (label && phone) updateTemplate({ ...editing, buttons: [...(editing.buttons || []), { id: generateId(), type: "phone", label, value: phone }] }); }} className="flex items-center gap-1 rounded border px-2 py-1.5 text-xs hover:bg-gray-50">📞 Botón Llamar</button>
+                  <button onClick={() => { const label = prompt("Texto de respuesta rápida:"); if (label) updateTemplate({ ...editing, buttons: [...(editing.buttons || []), { id: generateId(), type: "quick_reply", label, value: label.toLowerCase().replace(/\s/g, "_") }] }); }} className="flex items-center gap-1 rounded border px-2 py-1.5 text-xs hover:bg-gray-50">💬 Respuesta rápida</button>
+                </div>
+              )}
+              <p className="mt-2 text-[10px] text-muted-foreground">URL: abre un link · Llamar: inicia llamada · Respuesta rápida: el usuario toca para responder</p>
             </div>
 
             {/* Labels (for auto-sequence) */}
