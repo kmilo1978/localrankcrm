@@ -57,6 +57,29 @@
     /* Densidad de filas de conversación */
     --row-py: 11px;
   }
+
+  /* Dark mode overrides */
+  .dark {
+    --bg: #0f1419;
+    --bg-subtle: #1a1f2e;
+    --bg-panel: #1e2433;
+    --bg-hover: #252b3b;
+    --text: #e8eaed;
+    --text-2: #9aa0a6;
+    --text-3: #6b7280;
+    --text-4: #4b5563;
+    --border: #2d3748;
+    --border-strong: #374151;
+    --chat-bg: #1a1f2e;
+    --bubble-out: #1e3a5f;
+    --bubble-out-text: #b8c4ff;
+    --sidebar-bg: #0a0f1a;
+    --sidebar-hover: #1a2540;
+    --sidebar-active: #1a2540;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
 }
 
 @layer base {

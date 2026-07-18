@@ -1,5 +1,6 @@
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { AppNav } from "@/components/app-nav";
+import { PageHelp } from "@/components/page-help";
 
 /**
  * App layout — funciona sin autenticación.
@@ -17,6 +18,7 @@ export default function AppLayout({
         role="owner"
       />
       <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+      <PageHelp />
     </div>
   );
 }

@@ -40,9 +40,11 @@ export default function DashboardPage() {
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Resumen general de tu CRM</p>
+        <div className="mb-6 flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Resumen general de tu CRM</p>
+          </div>
         </div>
 
         {/* Stats Grid */}
