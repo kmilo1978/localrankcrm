@@ -53,6 +53,27 @@ const PLATFORMS = {
   },
 };
 
+const COMPOSIO_APPS = [
+  { id: "ca1", name: "Gmail", icon: "📧", category: "Email", active: true },
+  { id: "ca2", name: "Google Calendar", icon: "📅", category: "Calendario", active: true },
+  { id: "ca3", name: "Google Sheets", icon: "📊", category: "Datos", active: true },
+  { id: "ca4", name: "Google Drive", icon: "📁", category: "Archivos", active: true },
+  { id: "ca5", name: "Slack", icon: "💬", category: "Mensajeria", active: true },
+  { id: "ca6", name: "HubSpot", icon: "🟠", category: "CRM", active: false },
+  { id: "ca7", name: "Notion", icon: "📝", category: "Productividad", active: true },
+  { id: "ca8", name: "Trello", icon: "📋", category: "Proyectos", active: false },
+  { id: "ca9", name: "GitHub", icon: "🐙", category: "Desarrollo", active: true },
+  { id: "ca10", name: "LinkedIn", icon: "💼", category: "Redes", active: true },
+  { id: "ca11", name: "Twitter/X", icon: "🐦", category: "Redes", active: false },
+  { id: "ca12", name: "WhatsApp", icon: "💚", category: "Mensajeria", active: true },
+  { id: "ca13", name: "Salesforce", icon: "☁️", category: "CRM", active: false },
+  { id: "ca14", name: "Zapier", icon: "⚡", category: "Automatizacion", active: false },
+  { id: "ca15", name: "Stripe", icon: "💳", category: "Pagos", active: false },
+  { id: "ca16", name: "Airtable", icon: "📊", category: "Datos", active: false },
+  { id: "ca17", name: "Discord", icon: "🎮", category: "Mensajeria", active: false },
+  { id: "ca18", name: "Telegram", icon: "✈️", category: "Mensajeria", active: true },
+];
+
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
@@ -172,6 +193,41 @@ export default function IntegrationsPage() {
               <a href={platform.docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-brand hover:underline">
                 <ExternalLink className="h-3 w-3" />Ver documentación de {platform.name}
               </a>
+
+              {/* Connected Apps Panel (Composio) */}
+              {isConnected && key === "composio" && (
+                <div className="rounded-lg border bg-white p-4 mt-2">
+                  <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1"><Zap className="h-3 w-3 text-violet-600" />Conexiones disponibles ({COMPOSIO_APPS.length})</h5>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {COMPOSIO_APPS.map(app => (
+                      <div key={app.id} className="flex items-center gap-2 rounded border px-2.5 py-2 text-xs hover:bg-gray-50">
+                        <span className="text-base">{app.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{app.name}</p>
+                          <p className="text-[9px] text-muted-foreground">{app.category}</p>
+                        </div>
+                        <span className={`h-2 w-2 rounded-full shrink-0 ${app.active ? "bg-green-500" : "bg-gray-300"}`} />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-[10px] text-muted-foreground text-center">Estas apps se activan automaticamente cuando tu agente IA las necesita · <a href="https://app.composio.dev/apps" target="_blank" rel="noopener noreferrer" className="text-brand hover:underline">Ver todas las apps en Composio</a></p>
+                </div>
+              )}
+
+              {/* Connected Apps Panel (WithOne) */}
+              {isConnected && key === "withone" && (
+                <div className="rounded-lg border bg-white p-4 mt-2">
+                  <h5 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1"><Zap className="h-3 w-3 text-emerald-600" />Agentes disponibles</h5>
+                  <div className="space-y-2">
+                    {[{ name: "Research Agent", desc: "Busqueda web + analisis", active: true }, { name: "Writer Agent", desc: "Redaccion de contenido", active: true }, { name: "Scraper Agent", desc: "Extraccion de datos web", active: false }].map((a, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded border px-3 py-2 text-xs">
+                        <span className={`h-2 w-2 rounded-full ${a.active ? "bg-green-500" : "bg-gray-300"}`} />
+                        <div><p className="font-medium">{a.name}</p><p className="text-[9px] text-muted-foreground">{a.desc}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
