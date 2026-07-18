@@ -451,7 +451,7 @@ export default function InboxPreviewPage() {
       {/* Connection modal */}
       {showConnect && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowConnect(false)}>
-          <div className="w-full max-w-lg rounded-lg border bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-lg border bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-tint">
@@ -459,7 +459,7 @@ export default function InboxPreviewPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Canales de comunicación</h3>
-                  <p className="text-xs text-muted-foreground">Conecta WhatsApp, Email, Instagram y Facebook</p>
+                  <p className="text-xs text-muted-foreground">Conecta todos tus canales de comunicación</p>
                 </div>
               </div>
               <button onClick={() => setShowConnect(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
