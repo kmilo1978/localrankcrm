@@ -125,6 +125,11 @@ export default function NotesPage() {
     }
   }
 
+  function moveNote(noteId: string, newCategory: string) {
+    saveNotes(notes.map(n => n.id === noteId ? { ...n, category: newCategory } : n));
+    showToast("Movida a " + newCategory);
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-5xl">
@@ -206,11 +211,11 @@ export default function NotesPage() {
         {pinned.length > 0 && (
           <div className="mb-4">
             <h3 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground"><Pin className="h-3 w-3" />Fijadas</h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}</div>
           </div>
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {paginatedUnpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}
+          {paginatedUnpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}
         </div>
 
         {/* Pagination */}
@@ -290,15 +295,19 @@ export default function NotesPage() {
   );
 }
 
-function NoteCard({ note, catColor, onPin, onDelete, onView, onEdit, onClone, onCopy }: { note: Note; catColor: string; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void }) {
+function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: Category[]; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
   return (
     <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow cursor-pointer overflow-hidden" onClick={() => onView(note)}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="h-4 w-4 text-brand" />
-          <h4 className="text-sm font-semibold">{note.title}</h4>
+          <h4 className="text-sm font-semibold truncate">{note.title}</h4>
         </div>
         <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+          {/* Move to category dropdown */}
+          <select value={note.category} onChange={e => onMove(note.id, e.target.value)} className="opacity-0 group-hover:opacity-100 rounded border px-1 py-0.5 text-[9px] max-w-[80px] focus:outline-none cursor-pointer" title="Mover a categoria">
+            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+          </select>
           <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-brand"}`} title="Fijar"><Pin className="h-3.5 w-3.5" /></button>
           <button onClick={() => onEdit(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
           <button onClick={() => onClone(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-gray-700" title="Clonar"><Copy className="h-3.5 w-3.5" /></button>
