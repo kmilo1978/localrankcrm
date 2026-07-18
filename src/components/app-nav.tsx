@@ -210,6 +210,27 @@ export function AppNav({
           <LogOut className="h-4 w-4" strokeWidth={1.7} />
         </button>
       </div>
+
+      {/* Save session checklist */}
+      <div className="mx-3 mb-2 mt-1 rounded-lg bg-white/5 px-3 py-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            defaultChecked={typeof window !== "undefined" && localStorage.getItem("localrank_save_session") === "true"}
+            onChange={(e) => {
+              if (typeof window !== "undefined") {
+                localStorage.setItem("localrank_save_session", String(e.target.checked));
+                if (e.target.checked) {
+                  localStorage.setItem("localrank_session_saved_at", new Date().toISOString());
+                }
+              }
+            }}
+            className="accent-[var(--sidebar-active-text)] h-3.5 w-3.5 rounded"
+          />
+          <span className="text-[11px] text-white/70">Guardar sesión</span>
+        </label>
+        <p className="mt-0.5 pl-5.5 text-[9px] text-white/40">Mantiene tus datos entre visitas</p>
+      </div>
     </aside>
   );
 }
