@@ -228,6 +228,55 @@ export default function TeamPage() {
         )}
       </div>
 
+      {/* Advanced Permissions */}
+      <div className="mt-6 rounded-lg border bg-white p-5">
+        <h3 className="mb-4 font-semibold flex items-center gap-2"><Shield className="h-4 w-4 text-brand" />Permisos avanzados por rol</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead><tr className="border-b">
+              <th className="pb-2 text-left font-medium text-muted-foreground w-40">Permiso</th>
+              <th className="pb-2 text-center font-medium text-amber-700">Owner</th>
+              <th className="pb-2 text-center font-medium text-purple-700">Admin</th>
+              <th className="pb-2 text-center font-medium text-blue-700">Manager</th>
+              <th className="pb-2 text-center font-medium text-green-700">Miembro</th>
+              <th className="pb-2 text-center font-medium text-gray-700">Viewer</th>
+            </tr></thead>
+            <tbody>
+              {[
+                { perm: "Ver dashboard y analytics", roles: [true, true, true, true, true] },
+                { perm: "Ver contactos y empresas", roles: [true, true, true, true, true] },
+                { perm: "Crear/editar contactos", roles: [true, true, true, true, false] },
+                { perm: "Eliminar contactos", roles: [true, true, true, false, false] },
+                { perm: "Ver pipeline completo", roles: [true, true, true, false, false] },
+                { perm: "Mover deals entre etapas", roles: [true, true, true, true, false] },
+                { perm: "Crear/editar propuestas", roles: [true, true, true, true, false] },
+                { perm: "Enviar propuestas", roles: [true, true, true, false, false] },
+                { perm: "Ver conversaciones (todos)", roles: [true, true, true, false, false] },
+                { perm: "Ver solo sus conversaciones", roles: [true, true, true, true, false] },
+                { perm: "Enviar mensajes", roles: [true, true, true, true, false] },
+                { perm: "Importar datos/archivos", roles: [true, true, true, false, false] },
+                { perm: "Exportar datos", roles: [true, true, false, false, false] },
+                { perm: "Gestionar equipo", roles: [true, true, false, false, false] },
+                { perm: "Enviar invitaciones", roles: [true, true, true, false, false] },
+                { perm: "Configurar integraciones", roles: [true, true, false, false, false] },
+                { perm: "Configurar marca/branding", roles: [true, true, false, false, false] },
+                { perm: "API keys y webhooks", roles: [true, true, false, false, false] },
+                { perm: "Eliminar workspace", roles: [true, false, false, false, false] },
+                { perm: "Transferir ownership", roles: [true, false, false, false, false] },
+              ].map((row) => (
+                <tr key={row.perm} className="border-b last:border-0">
+                  <td className="py-2 text-xs">{row.perm}</td>
+                  {row.roles.map((v, i) => (
+                    <td key={i} className="py-2 text-center">{v ? <Check className="inline h-3.5 w-3.5 text-green-500" /> : <X className="inline h-3.5 w-3.5 text-gray-300" />}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Los permisos se aplican automáticamente según el rol asignado. Para permisos personalizados por usuario, contacta soporte.</p>
+      </div>
+
       {/* Delegate modal */}
       {showDelegate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowDelegate(null)}>

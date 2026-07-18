@@ -6,12 +6,19 @@ import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage"
 
 type WorkspaceFile = { id: string; name: string; type: "proposal" | "import" | "document" | "image"; addedAt: string };
 type FolderItem = { id: string; name: string; color: string; files: WorkspaceFile[]; responsible: string };
-type Workspace = { id: string; name: string; description: string; members: string[]; folders: FolderItem[]; createdAt: string };
+type Brand = { id: string; name: string; color: string };
+type Workspace = { id: string; name: string; description: string; members: string[]; folders: FolderItem[]; createdAt: string; brandId: string };
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#e91e8c", "#8b5cf6", "#ef4444", "#06b6d4", "#6366f1"];
 
+const SEED_BRANDS: Brand[] = [
+  { id: "br1", name: "LocalRank", color: "#e91e8c" },
+  { id: "br2", name: "Cliente: TechCorp", color: "#3b82f6" },
+  { id: "br3", name: "Cliente: MediaGroup", color: "#10b981" },
+];
+
 const SEED: Workspace[] = [
-  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del tercer trimestre", members: ["Kevin Rivera", "Ana López", "Juan Pérez"], createdAt: "2026-07-01", folders: [
+  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del tercer trimestre", members: ["Kevin Rivera", "Ana López", "Juan Pérez"], createdAt: "2026-07-01", brandId: "br1", folders: [
     { id: "f1", name: "Propuestas enviadas", color: "#3b82f6", responsible: "Juan Pérez", files: [
       { id: "fl1", name: "Propuesta TechCorp Enterprise.pdf", type: "proposal", addedAt: "2026-07-15" },
       { id: "fl2", name: "Cotización MediaGroup.pdf", type: "proposal", addedAt: "2026-07-17" },
@@ -24,7 +31,7 @@ const SEED: Workspace[] = [
       { id: "fl5", name: "Contrato modelo SaaS.docx", type: "document", addedAt: "2026-07-10" },
     ]},
   ]},
-  { id: "ws2", name: "Marketing & Contenido", description: "Materiales de marketing y redes sociales", members: ["María Gómez", "Ana López"], createdAt: "2026-06-15", folders: [
+  { id: "ws2", name: "Marketing & Contenido", description: "Materiales de marketing y redes sociales", members: ["María Gómez", "Ana López"], createdAt: "2026-06-15", brandId: "br2", folders: [
     { id: "f4", name: "Branding", color: "#e91e8c", responsible: "María Gómez", files: [
       { id: "fl6", name: "Logo LocalRank.png", type: "image", addedAt: "2026-06-20" },
     ]},
@@ -34,11 +41,15 @@ const SEED: Workspace[] = [
 
 export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [activeWs, setActiveWs] = useState<string | null>(null);
+  const [filterBrand, setFilterBrand] = useState("all");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [showNewWs, setShowNewWs] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState<string | null>(null);
-  const [wsForm, setWsForm] = useState({ name: "", description: "" });
+  const [showNewBrand, setShowNewBrand] = useState(false);
+  const [wsForm, setWsForm] = useState({ name: "", description: "", brandId: "" });
+  const [brandForm, setBrandForm] = useState({ name: "", color: COLORS[0]! });
   const [folderForm, setFolderForm] = useState({ name: "", color: COLORS[0]!, responsible: "" });
   const [showAddFile, setShowAddFile] = useState<string | null>(null);
   const [fileForm, setFileForm] = useState({ name: "", type: "document" as WorkspaceFile["type"] });
@@ -46,18 +57,21 @@ export default function WorkspacesPage() {
   useEffect(() => {
     const data = loadFromStorage("workspaces", SEED);
     setWorkspaces(data);
+    setBrands(loadFromStorage("workspace_brands", SEED_BRANDS));
     if (data.length > 0) setActiveWs(data[0]!.id);
   }, []);
   function save(u: Workspace[]) { setWorkspaces(u); saveToStorage("workspaces", u); }
+  function saveBrands(u: Brand[]) { setBrands(u); saveToStorage("workspace_brands", u); }
 
+  const filteredWs = filterBrand === "all" ? workspaces : workspaces.filter((w) => w.brandId === filterBrand);
   const active = workspaces.find((w) => w.id === activeWs);
 
   function addWorkspace() {
     if (!wsForm.name.trim()) return;
-    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Kevin Rivera"], folders: [], createdAt: new Date().toISOString().split("T")[0]! };
+    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Kevin Rivera"], folders: [], createdAt: new Date().toISOString().split("T")[0]!, brandId: wsForm.brandId || brands[0]?.id || "" };
     save([...workspaces, ws]);
     setActiveWs(ws.id);
-    setWsForm({ name: "", description: "" });
+    setWsForm({ name: "", description: "", brandId: "" });
     setShowNewWs(false);
   }
 
@@ -102,10 +116,37 @@ export default function WorkspacesPage() {
           <h3 className="text-xs font-semibold uppercase text-muted-foreground">Espacios</h3>
           <button onClick={() => setShowNewWs(true)} className="rounded p-1 hover:bg-gray-100 text-muted-foreground"><Plus className="h-3.5 w-3.5" /></button>
         </div>
+
+        {/* Brand filter */}
+        <div className="border-b px-3 py-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-semibold uppercase text-muted-foreground">Cliente / Marca</span>
+            <button onClick={() => setShowNewBrand(!showNewBrand)} className="text-[10px] text-brand hover:underline">+ Nueva</button>
+          </div>
+          {showNewBrand && (
+            <div className="mb-2 flex gap-1">
+              <input value={brandForm.name} onChange={(e) => setBrandForm({ ...brandForm, name: e.target.value })} placeholder="Nombre" className="flex-1 rounded border px-1.5 py-1 text-[10px] focus:border-brand focus:outline-none" />
+              <button onClick={() => { if (brandForm.name.trim()) { saveBrands([...brands, { id: generateId(), name: brandForm.name, color: brandForm.color }]); setBrandForm({ name: "", color: COLORS[(brands.length + 1) % COLORS.length]! }); setShowNewBrand(false); } }} className="rounded bg-brand px-1.5 py-1 text-[10px] text-white">+</button>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1">
+            <button onClick={() => setFilterBrand("all")} className={`rounded-full px-2 py-0.5 text-[10px] ${filterBrand === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todos</button>
+            {brands.map((b) => (
+              <button key={b.id} onClick={() => setFilterBrand(b.id)} className={`rounded-full px-2 py-0.5 text-[10px] ${filterBrand === b.id ? "text-white" : "border hover:bg-gray-50"}`} style={filterBrand === b.id ? { backgroundColor: b.color } : {}}>
+                {b.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {showNewWs && (
           <div className="border-b p-3 space-y-2">
             <input value={wsForm.name} onChange={(e) => setWsForm({ ...wsForm, name: e.target.value })} placeholder="Nombre *" className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
             <input value={wsForm.description} onChange={(e) => setWsForm({ ...wsForm, description: e.target.value })} placeholder="Descripción" className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+            <select value={wsForm.brandId} onChange={(e) => setWsForm({ ...wsForm, brandId: e.target.value })} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none">
+              <option value="">Marca / Cliente...</option>
+              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
             <div className="flex gap-1">
               <button onClick={addWorkspace} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover">Crear</button>
               <button onClick={() => setShowNewWs(false)} className="rounded border px-2 py-1 text-xs hover:bg-gray-50">✕</button>
@@ -113,16 +154,19 @@ export default function WorkspacesPage() {
           </div>
         )}
         <div className="flex-1 overflow-y-auto py-1">
-          {workspaces.map((ws) => (
+          {filteredWs.map((ws) => {
+            const brand = brands.find((b) => b.id === ws.brandId);
+            return (
             <div key={ws.id} onClick={() => setActiveWs(ws.id)} className={`group flex items-center gap-2 px-3 py-2 cursor-pointer ${activeWs === ws.id ? "bg-brand-tint" : "hover:bg-gray-50"}`}>
               <Folder className="h-4 w-4 text-brand shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{ws.name}</p>
-                <p className="text-[10px] text-muted-foreground">{ws.folders.length} carpetas · {ws.members.length} miembros</p>
+                <p className="text-[10px] text-muted-foreground">{brand ? brand.name : ""} · {ws.folders.length} carpetas</p>
               </div>
               <button onClick={(e) => { e.stopPropagation(); deleteWorkspace(ws.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
