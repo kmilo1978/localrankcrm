@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  Bot,
   Building2,
   Calendar,
   CheckSquare,
@@ -20,6 +21,8 @@ import {
   Kanban,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
+  Search,
   Settings,
   Sparkles,
   StickyNote,
@@ -34,29 +37,27 @@ import { cn, initials } from "@/lib/utils";
 import { signOut } from "@/lib/auth/client";
 import { useEvents } from "@/components/use-events";
 
+// Navigation organized by: Context → Revenue Ops → Execution → Intelligence → Admin
 const NAV = [
+  // --- Context ---
+  { href: "/workspaces", label: "Workspace", icon: FolderOpen },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/omnichannel", label: "Omnicanal", icon: Activity },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/inbox", label: "Bandeja", icon: Inbox, badge: true },
-  { href: "/social", label: "Social", icon: Heart },
-  { href: "/pipeline", label: "Pipeline", icon: Kanban },
+  // --- Revenue: Capture & Qualify ---
+  { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
   { href: "/contacts", label: "Contactos", icon: Users },
-  { href: "/cold-contacts", label: "Contactos Fríos", icon: Thermometer },
   { href: "/companies", label: "Compañías", icon: Building2 },
   { href: "/opportunities", label: "Oportunidades", icon: Target },
+  { href: "/pipeline", label: "Pipeline", icon: Kanban },
+  // --- Revenue: Close ---
+  { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
   { href: "/proposals", label: "Propuestas", icon: FileText },
-  { href: "/calendar", label: "Calendario", icon: Calendar },
-  { href: "/forms", label: "Formularios", icon: ClipboardList },
-  { href: "/import", label: "Importar", icon: Database },
-  { href: "/workspaces", label: "Espacios", icon: FolderOpen },
-  { href: "/team", label: "Equipo", icon: UsersRound },
+  // --- Execution ---
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/todo", label: "To-Do", icon: CircleCheckBig },
-  { href: "/notes", label: "Notas", icon: StickyNote },
-  { href: "/labels", label: "Etiquetas", icon: Tag },
-  { href: "/agent", label: "Agente IA", icon: Sparkles },
-  { href: "/lab", label: "Laboratorio", icon: FlaskConical },
+  { href: "/calendar", label: "Calendario", icon: Calendar },
+  // --- Intelligence ---
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/agent", label: "IA & Automatización", icon: Bot },
 ] as const;
 
 export function AppNav({
@@ -149,6 +150,29 @@ export function AppNav({
       </nav>
 
       <div className="flex-1" />
+
+      {/* Secondary modules */}
+      <div className="mb-1 border-t border-white/10 pt-2 space-y-0.5">
+        {[
+          { href: "/omnichannel", label: "Omnicanal", icon: Activity },
+          { href: "/social", label: "Social", icon: Heart },
+          { href: "/forms", label: "Formularios", icon: ClipboardList },
+          { href: "/import", label: "Importar", icon: Database },
+          { href: "/notes", label: "Notas", icon: StickyNote },
+          { href: "/labels", label: "Etiquetas", icon: Tag },
+          { href: "/team", label: "Equipo", icon: UsersRound },
+          { href: "/lab", label: "Laboratorio", icon: FlaskConical },
+        ].map((item) => {
+          const href2 = `${prefix}${item.href}`;
+          const active2 = pathname === href2 || pathname.startsWith(`${href2}/`) || pathname === item.href || pathname.startsWith(`${item.href}/`);
+          return (
+            <Link key={item.href} href={href2} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", active2 ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+              <item.icon className="h-[14px] w-[14px]" strokeWidth={1.5} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
 
       <Link
         href={`${prefix}/settings`}
