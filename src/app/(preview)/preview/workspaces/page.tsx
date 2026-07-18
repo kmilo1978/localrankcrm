@@ -62,6 +62,7 @@ export default function WorkspacesPage() {
   const [clientForm, setClientForm] = useState({ name: "", color: COLORS[0]!, industry: "" });
   const [folderForm, setFolderForm] = useState({ name: "", color: COLORS[0]!, responsible: "" });
   const [subForm, setSubForm] = useState({ name: "", color: COLORS[2]! });
+  const [showRecommendation, setShowRecommendation] = useState(true);
   const [showAddFile, setShowAddFile] = useState<string | null>(null);
   const [fileForm, setFileForm] = useState({ name: "", type: "document" });
 
@@ -220,6 +221,32 @@ export default function WorkspacesPage() {
               </div>
               <button onClick={() => setShowNewFolder(active.id)} className="flex items-center gap-2 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><FolderPlus className="h-3.5 w-3.5" />Nueva carpeta</button>
             </div>
+
+            {/* Recommendation banner */}
+            {showRecommendation && (
+              <div className="mb-5 rounded-lg border border-violet-200 bg-gradient-to-r from-violet-50 to-emerald-50 p-4 relative">
+                <button onClick={() => setShowRecommendation(false)} className="absolute top-2 right-2 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-white/50"><X className="h-3.5 w-3.5" /></button>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💡</span>
+                  <div>
+                    <p className="text-sm font-semibold text-violet-800">Recomendación: Conecta tus herramientas</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Para automatizar este workspace y conectar Gmail, Slack, Sheets y 250+ herramientas sin configurar cada una, te recomendamos crear una cuenta gratuita en:</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <a href="https://composio.dev" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity">
+                        ⚡ Composio.dev <span className="rounded bg-white/20 px-1 py-0.5 text-[9px]">Recomendado</span>
+                      </a>
+                      <a href="https://withone.ai" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity">
+                        🤖 WithOne.ai
+                      </a>
+                      <a href="/settings/integrations" className="flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-white/50">
+                        Configurar →
+                      </a>
+                    </div>
+                    <p className="mt-2 text-[10px] text-muted-foreground">Una sola API key conecta todas tus herramientas. No necesitas ser técnico.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* New folder form */}
             {showNewFolder === active.id && (
