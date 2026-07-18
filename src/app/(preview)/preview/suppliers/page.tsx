@@ -1,20 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Building2, ClipboardCopy, Copy, Edit3, Mail, Phone, Plus, Search, Tag, Trash2, X } from "lucide-react";
+import { Building2, ClipboardCopy, Copy, Edit3, ImagePlus, Mail, Phone, Plus, Search, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { openImagePicker } from "@/lib/image-upload";
 
 type SupplierNote = { id: string; text: string; date: string };
 type Supplier = {
   id: string; name: string; contact: string; phone: string; email: string; website: string;
-  category: string; rating: number; notes: SupplierNote[]; tags: string[]; createdAt: string;
+  category: string; rating: number; logo: string; notes: SupplierNote[]; tags: string[]; createdAt: string;
 };
 
 const CATEGORIES = ["Tecnologia", "Marketing", "Logistica", "Legal", "Financiero", "Diseno", "Desarrollo", "Hosting", "Otro"];
 
 const SEED: Supplier[] = [
-  { id: "sp1", name: "CloudServ Hosting", contact: "Pedro Martinez", phone: "+57 300 555 1234", email: "pedro@cloudserv.co", website: "https://cloudserv.co", category: "Hosting", rating: 5, tags: ["Premium", "Soporte 24/7"], notes: [{ id: "sn1", text: "Excelente uptime. Contrato renovado hasta dic 2026.", date: "2026-07-15" }], createdAt: "2026-06-01" },
-  { id: "sp2", name: "DigitalBoost Agency", contact: "Laura Gomez", phone: "+57 311 888 4567", email: "laura@digitalboost.co", website: "https://digitalboost.co", category: "Marketing", rating: 4, tags: ["SEO", "Ads"], notes: [{ id: "sn2", text: "Maneja campanas Google Ads y Meta. Buenos resultados Q2.", date: "2026-07-10" }], createdAt: "2026-05-15" },
-  { id: "sp3", name: "LegalPro Abogados", contact: "Dr. Andres Rios", phone: "+57 4 444 3322", email: "arios@legalpro.com", website: "", category: "Legal", rating: 4, tags: ["Contratos", "RGPD"], notes: [], createdAt: "2026-04-20" },
+  { id: "sp1", name: "CloudServ Hosting", contact: "Pedro Martinez", phone: "+57 300 555 1234", email: "pedro@cloudserv.co", website: "https://cloudserv.co", category: "Hosting", rating: 5, logo: "", tags: ["Premium", "Soporte 24/7"], notes: [{ id: "sn1", text: "Excelente uptime. Contrato renovado hasta dic 2026.", date: "2026-07-15" }], createdAt: "2026-06-01" },
+  { id: "sp2", name: "DigitalBoost Agency", contact: "Laura Gomez", phone: "+57 311 888 4567", email: "laura@digitalboost.co", website: "https://digitalboost.co", category: "Marketing", rating: 4, logo: "", tags: ["SEO", "Ads"], notes: [{ id: "sn2", text: "Maneja campanas Google Ads y Meta. Buenos resultados Q2.", date: "2026-07-10" }], createdAt: "2026-05-15" },
+  { id: "sp3", name: "LegalPro Abogados", contact: "Dr. Andres Rios", phone: "+57 4 444 3322", email: "arios@legalpro.com", website: "", category: "Legal", rating: 4, logo: "", tags: ["Contratos", "RGPD"], notes: [], createdAt: "2026-04-20" },
 ];
 
 export default function SuppliersPage() {
@@ -34,7 +35,7 @@ export default function SuppliersPage() {
 
   function addSupplier() {
     if (!form.name.trim()) return;
-    const s: Supplier = { id: generateId(), name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, rating: 3, tags: form.tags.split(",").map(t => t.trim()).filter(Boolean), notes: [], createdAt: new Date().toISOString().split("T")[0]! };
+    const s: Supplier = { id: generateId(), name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, rating: 3, logo: "", tags: form.tags.split(",").map(t => t.trim()).filter(Boolean), notes: [], createdAt: new Date().toISOString().split("T")[0]! };
     save([s, ...suppliers]); resetForm(); setShowForm(false); notify("Proveedor agregado");
   }
 
@@ -105,7 +106,9 @@ export default function SuppliersPage() {
           {filtered.map(sup => (
             <div key={sup.id} className="rounded-lg border bg-white overflow-hidden">
               <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50" onClick={() => setExpanded(expanded === sup.id ? null : sup.id)}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 shrink-0"><Building2 className="h-4 w-4 text-brand" /></div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 shrink-0">
+                  {sup.logo ? <img src={sup.logo} alt="" className="h-9 w-9 rounded-lg object-cover" /> : <Building2 className="h-4 w-4 text-brand" />}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-semibold truncate">{sup.name}</h4>
@@ -131,6 +134,11 @@ export default function SuppliersPage() {
               {/* Expanded: tags + notes */}
               {expanded === sup.id && (
                 <div className="border-t px-4 py-3 space-y-3">
+                  {/* Logo upload */}
+                  <div className="flex items-center gap-2">
+                    <button onClick={async () => { const img = await openImagePicker(); if (img) save(suppliers.map(s => s.id === sup.id ? {...s, logo: img} : s)); }} className="flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Logo</button>
+                    {sup.logo && <><img src={sup.logo} alt="" className="h-8 w-8 rounded object-cover border" /><button onClick={() => save(suppliers.map(s => s.id === sup.id ? {...s, logo: ""} : s))} className="text-[9px] text-red-500">Quitar</button></>}
+                  </div>
                   {sup.tags.length > 0 && <div className="flex gap-1 flex-wrap">{sup.tags.map((t, i) => <span key={i} className="rounded-full bg-brand/10 px-2 py-0.5 text-[9px] font-medium text-brand">{t}</span>)}</div>}
                   {sup.website && <a href={sup.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand hover:underline">{sup.website}</a>}
                   <div>

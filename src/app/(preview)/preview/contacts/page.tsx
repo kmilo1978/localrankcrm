@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Archive, ArchiveRestore, Bell, ChevronDown, ChevronRight, Mail, Phone, Plus, Search, StickyNote, Trash2, Users, X } from "lucide-react";
+import { Archive, ArchiveRestore, Bell, ChevronDown, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Trash2, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { openImagePicker } from "@/lib/image-upload";
 
 type CustomField = { id: string; label: string; value: string };
 type ContactNote = { id: string; content: string; createdAt: string };
@@ -15,6 +16,7 @@ type Contact = {
   email: string;
   company: string;
   role: string;
+  image: string;
   archived: boolean;
   createdAt: string;
   customFields: CustomField[];
@@ -23,11 +25,11 @@ type Contact = {
 };
 
 const SEED: Contact[] = [
-  { id: "ct1", name: "Carlos Ruiz", phone: "+52 55 1234 5678", email: "carlos@techcorp.com", company: "TechCorp Solutions", role: "CTO", archived: false, createdAt: "2026-07-10", customFields: [{ id: "f1", label: "LinkedIn", value: "linkedin.com/in/cruiz" }], notes: [{ id: "n1", content: "Decisor principal. Interesado en plan Enterprise.", createdAt: "2026-07-17" }], reminders: [{ id: "r1", text: "Llamar para confirmar propuesta", date: "2026-07-18", done: false }] },
-  { id: "ct2", name: "María García", phone: "+1 305 555 0123", email: "maria@loginext.io", company: "LogiNext International", role: "VP Operaciones", archived: false, createdAt: "2026-07-08", customFields: [], notes: [{ id: "n2", content: "Prefiere comunicación por email.", createdAt: "2026-07-15" }], reminders: [] },
-  { id: "ct3", name: "Roberto Méndez", phone: "+52 33 9876 5432", email: "roberto@mediagroup.mx", company: "MediaGroup Digital", role: "Director Marketing", archived: false, createdAt: "2026-07-05", customFields: [{ id: "f2", label: "Presupuesto anual", value: "$200K" }], notes: [], reminders: [{ id: "r2", text: "Enviar demo grabada", date: "2026-07-20", done: false }] },
-  { id: "ct4", name: "Ana Sofía Torres", phone: "+52 81 2345 6789", email: "ana@innovatelab.co", company: "InnovateLab", role: "CEO", archived: false, createdAt: "2026-06-28", customFields: [], notes: [], reminders: [] },
-  { id: "ct5", name: "Jorge Hernández", phone: "+52 55 8765 4321", email: "jorge@retailmax.com.mx", company: "RetailMax", role: "Gerente Compras", archived: true, createdAt: "2026-06-15", customFields: [], notes: [{ id: "n3", content: "Sin respuesta últimas 2 semanas", createdAt: "2026-07-01" }], reminders: [] },
+  { id: "ct1", name: "Carlos Ruiz", phone: "+52 55 1234 5678", email: "carlos@techcorp.com", company: "TechCorp Solutions", role: "CTO", image: "", archived: false, createdAt: "2026-07-10", customFields: [{ id: "f1", label: "LinkedIn", value: "linkedin.com/in/cruiz" }], notes: [{ id: "n1", content: "Decisor principal. Interesado en plan Enterprise.", createdAt: "2026-07-17" }], reminders: [{ id: "r1", text: "Llamar para confirmar propuesta", date: "2026-07-18", done: false }] },
+  { id: "ct2", name: "María García", phone: "+1 305 555 0123", email: "maria@loginext.io", company: "LogiNext International", role: "VP Operaciones", image: "", archived: false, createdAt: "2026-07-08", customFields: [], notes: [{ id: "n2", content: "Prefiere comunicación por email.", createdAt: "2026-07-15" }], reminders: [] },
+  { id: "ct3", name: "Roberto Méndez", phone: "+52 33 9876 5432", email: "roberto@mediagroup.mx", company: "MediaGroup Digital", role: "Director Marketing", image: "", archived: false, createdAt: "2026-07-05", customFields: [{ id: "f2", label: "Presupuesto anual", value: "$200K" }], notes: [], reminders: [{ id: "r2", text: "Enviar demo grabada", date: "2026-07-20", done: false }] },
+  { id: "ct4", name: "Ana Sofía Torres", phone: "+52 81 2345 6789", email: "ana@innovatelab.co", company: "InnovateLab", role: "CEO", image: "", archived: false, createdAt: "2026-06-28", customFields: [], notes: [], reminders: [] },
+  { id: "ct5", name: "Jorge Hernández", phone: "+52 55 8765 4321", email: "jorge@retailmax.com.mx", company: "RetailMax", role: "Gerente Compras", image: "", archived: true, createdAt: "2026-06-15", customFields: [], notes: [{ id: "n3", content: "Sin respuesta últimas 2 semanas", createdAt: "2026-07-01" }], reminders: [] },
 ];
 
 export default function ContactsPreviewPage() {
@@ -49,7 +51,7 @@ export default function ContactsPreviewPage() {
   function handleAdd() {
     if (!form.name.trim()) return;
     const extraFields = formExtraFields.filter((f) => f.label.trim()).map((f) => ({ id: generateId(), label: f.label, value: f.value }));
-    save([{ id: generateId(), ...form, archived: false, createdAt: new Date().toISOString().split("T")[0]!, customFields: extraFields, notes: [], reminders: [] }, ...contacts]);
+    save([{ id: generateId(), ...form, image: "", archived: false, createdAt: new Date().toISOString().split("T")[0]!, customFields: extraFields, notes: [], reminders: [] }, ...contacts]);
     setForm({ name: "", phone: "", email: "", company: "", role: "" });
     setFormExtraFields([]);
     setShowForm(false);
@@ -185,9 +187,13 @@ export default function ContactsPreviewPage() {
                   {/* Row */}
                   <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50" onClick={() => setExpanded(isExpanded ? null : contact.id)}>
                     {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand-text">
-                      {contact.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                    </div>
+                    {contact.image ? (
+                      <img src={contact.image} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover border" />
+                    ) : (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold text-brand-text">
+                        {contact.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium truncate">{contact.name}</span>
@@ -215,6 +221,12 @@ export default function ContactsPreviewPage() {
                   {/* Expanded detail */}
                   {isExpanded && (
                     <div className="border-t px-4 pb-4 pt-3">
+                      {/* Profile image upload */}
+                      <div className="mb-3 flex items-center gap-3">
+                        {contact.image ? <img src={contact.image} alt="" className="h-14 w-14 rounded-full object-cover border" /> : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-lg font-bold text-gray-400">{contact.name.charAt(0)}</div>}
+                        <button onClick={async () => { const img = await openImagePicker(); if (img) save(contacts.map(c => c.id === contact.id ? {...c, image: img} : c)); }} className="flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Cambiar foto</button>
+                        {contact.image && <button onClick={() => save(contacts.map(c => c.id === contact.id ? {...c, image: ""} : c))} className="text-[10px] text-red-500 hover:underline">Eliminar</button>}
+                      </div>
                       {/* Editable main fields */}
                       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         <div><label className="text-[10px] font-medium text-muted-foreground">Nombre</label><input defaultValue={contact.name} onBlur={e => { if (e.target.value !== contact.name) save(contacts.map(c => c.id === contact.id ? {...c, name: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>

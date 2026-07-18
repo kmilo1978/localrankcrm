@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ClipboardCopy, Copy, Edit3, Filter, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
+import { ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { openImagePicker } from "@/lib/image-upload";
 
 type Note = {
   id: string;
   title: string;
   content: string;
+  image: string;
   relatedTo: string;
   category: string;
   pinned: boolean;
@@ -27,9 +29,9 @@ const SEED_CATEGORIES: Category[] = [
 ];
 
 const SEED_NOTES: Note[] = [
-  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", pinned: true, relatedTo: "TechCorp", category: "Reunión", createdAt: "2026-07-17" },
-  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", pinned: false, relatedTo: "LogiNext", category: "Seguimiento", createdAt: "2026-07-16" },
-  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", pinned: false, relatedTo: "MediaGroup", category: "Ideas", createdAt: "2026-07-15" },
+  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", image: "", pinned: true, relatedTo: "TechCorp", category: "Reunión", createdAt: "2026-07-17" },
+  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", image: "", pinned: false, relatedTo: "LogiNext", category: "Seguimiento", createdAt: "2026-07-16" },
+  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", image: "", pinned: false, relatedTo: "MediaGroup", category: "Ideas", createdAt: "2026-07-15" },
 ];
 
 export default function NotesPage() {
@@ -39,11 +41,11 @@ export default function NotesPage() {
   const [filterCat, setFilterCat] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [showCatForm, setShowCatForm] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", relatedTo: "", category: "" });
+  const [form, setForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "" });
   const [catForm, setCatForm] = useState({ name: "", color: PRESET_COLORS[0]! });
   const [viewNote, setViewNote] = useState<Note | null>(null);
   const [editNote, setEditNote] = useState<Note | null>(null);
-  const [editForm, setEditForm] = useState({ title: "", content: "", relatedTo: "", category: "" });
+  const [editForm, setEditForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "" });
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -55,8 +57,8 @@ export default function NotesPage() {
 
   function handleAdd() {
     if (!form.title.trim()) return;
-    saveNotes([{ id: generateId(), title: form.title, content: form.content, relatedTo: form.relatedTo, category: form.category || "General", pinned: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
-    setForm({ title: "", content: "", relatedTo: "", category: "" });
+    saveNotes([{ id: generateId(), title: form.title, content: form.content, image: form.image, relatedTo: form.relatedTo, category: form.category || "General", pinned: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
+    setForm({ title: "", content: "", image: "", relatedTo: "", category: "" });
     setShowForm(false);
   }
 
@@ -75,7 +77,7 @@ export default function NotesPage() {
 
   function openEdit(note: Note) {
     setEditNote(note);
-    setEditForm({ title: note.title, content: note.content, relatedTo: note.relatedTo, category: note.category });
+    setEditForm({ title: note.title, content: note.content, image: note.image || "", relatedTo: note.relatedTo, category: note.category });
     setViewNote(null);
   }
 
@@ -150,6 +152,11 @@ export default function NotesPage() {
             <div className="space-y-3">
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título *" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
               <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Contenido..." rows={4} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              {/* Image attachment */}
+              <div className="flex items-center gap-2">
+                <button onClick={async () => { const img = await openImagePicker(); if (img) setForm({...form, image: img}); }} className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Adjuntar imagen</button>
+                {form.image && <div className="relative"><img src={form.image} alt="" className="h-12 w-12 rounded border object-cover" /><button onClick={() => setForm({...form, image: ""})} className="absolute -top-1 -right-1 rounded-full bg-red-500 p-0.5 text-white"><X className="h-2.5 w-2.5" /></button></div>}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <input value={form.relatedTo} onChange={(e) => setForm({ ...form, relatedTo: e.target.value })} placeholder="Relacionado con" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
                 <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
@@ -210,6 +217,7 @@ export default function NotesPage() {
               <button onClick={() => setViewNote(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
             </div>
             <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed border-t pt-4">{viewNote.content}</div>
+            {viewNote.image && <img src={viewNote.image} alt="" className="mt-4 w-full max-h-64 rounded-lg border object-contain" />}
             <div className="flex gap-2 mt-6 border-t pt-4">
               <button onClick={() => openEdit(viewNote)} className="flex items-center gap-1 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" />Editar</button>
               <button onClick={() => { cloneNote(viewNote); setViewNote(null); }} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Copy className="h-3.5 w-3.5" />Clonar</button>
@@ -231,6 +239,10 @@ export default function NotesPage() {
             <div className="space-y-3">
               <div><label className="text-xs font-medium text-muted-foreground">Titulo</label><input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Contenido</label><textarea value={editForm.content} onChange={e => setEditForm({...editForm, content: e.target.value})} rows={8} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div className="flex items-center gap-2">
+                <button onClick={async () => { const img = await openImagePicker(); if (img) setEditForm({...editForm, image: img}); }} className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Imagen</button>
+                {editForm.image && <div className="relative"><img src={editForm.image} alt="" className="h-12 w-12 rounded border object-cover" /><button onClick={() => setEditForm({...editForm, image: ""})} className="absolute -top-1 -right-1 rounded-full bg-red-500 p-0.5 text-white"><X className="h-2.5 w-2.5" /></button></div>}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-muted-foreground">Relacionado con</label><input value={editForm.relatedTo} onChange={e => setEditForm({...editForm, relatedTo: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
                 <div><label className="text-xs font-medium text-muted-foreground">Categoria</label>
@@ -271,6 +283,7 @@ function NoteCard({ note, catColor, onPin, onDelete, onView, onEdit, onClone, on
         </div>
       </div>
       <p className="mt-2 line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">{note.content}</p>
+      {note.image && <img src={note.image} alt="" className="mt-2 w-full max-h-32 rounded border object-cover" />}
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
         {note.relatedTo && <><span>·</span><span>{note.relatedTo}</span></>}
