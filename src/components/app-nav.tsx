@@ -4,12 +4,23 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  Activity,
+  Building2,
+  Calendar,
+  CheckSquare,
+  ClipboardList,
+  FileText,
   FlaskConical,
   Inbox,
   Kanban,
+  LayoutDashboard,
   LogOut,
   Settings,
   Sparkles,
+  StickyNote,
+  Tag,
+  Target,
+  Thermometer,
   Users,
 } from "lucide-react";
 import type { Branding } from "@/lib/branding";
@@ -18,10 +29,21 @@ import { signOut } from "@/lib/auth/client";
 import { useEvents } from "@/components/use-events";
 
 const NAV = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/omnichannel", label: "Omnicanal", icon: Activity },
   { href: "/inbox", label: "Bandeja", icon: Inbox, badge: true },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/contacts", label: "Contactos", icon: Users },
-  { href: "/agent", label: "Agente", icon: Sparkles },
+  { href: "/cold-contacts", label: "Contactos Fríos", icon: Thermometer },
+  { href: "/companies", label: "Compañías", icon: Building2 },
+  { href: "/opportunities", label: "Oportunidades", icon: Target },
+  { href: "/proposals", label: "Propuestas", icon: FileText },
+  { href: "/calendar", label: "Calendario", icon: Calendar },
+  { href: "/forms", label: "Formularios", icon: ClipboardList },
+  { href: "/tasks", label: "Tareas", icon: CheckSquare },
+  { href: "/notes", label: "Notas", icon: StickyNote },
+  { href: "/labels", label: "Etiquetas", icon: Tag },
+  { href: "/agent", label: "Agente IA", icon: Sparkles },
   { href: "/lab", label: "Laboratorio", icon: FlaskConical },
 ] as const;
 
@@ -37,8 +59,11 @@ export function AppNav({
   const pathname = usePathname();
   const router = useRouter();
   const [unread, setUnread] = useState(0);
+  const isPreview = pathname.startsWith("/preview");
+  const prefix = isPreview ? "/preview" : "";
 
   async function refetchUnread() {
+    if (isPreview) return;
     const res = await fetch("/api/conversations").catch(() => null);
     if (!res?.ok) return;
     const data = (await res.json()) as {
@@ -70,18 +95,20 @@ export function AppNav({
           <span className="block truncate text-[16px] font-[650] leading-tight tracking-tight">
             {branding.name}
           </span>
-          <span className="block text-[11px] text-text-3">CRM · WhatsApp</span>
+          <span className="block text-[11px] text-text-3">CRM · IA</span>
         </span>
       </div>
 
-      <nav className="flex flex-col gap-0.5">
+      <nav className="flex flex-col gap-0.5 overflow-y-auto">
         {NAV.map((item) => {
+          const href = `${prefix}${item.href}`;
           const active =
+            pathname === href || pathname.startsWith(`${href}/`) ||
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={href}
               className={cn(
                 "flex items-center gap-[11px] rounded-sm px-2.5 py-2 text-sm font-medium transition-colors",
                 active
@@ -112,10 +139,10 @@ export function AppNav({
       <div className="flex-1" />
 
       <Link
-        href="/settings"
+        href={`${prefix}/settings`}
         className={cn(
           "flex items-center gap-[11px] rounded-sm px-2.5 py-2 text-sm font-medium transition-colors",
-          pathname.startsWith("/settings")
+          pathname.startsWith("/settings") || pathname.startsWith("/preview/settings")
             ? "bg-brand-tint font-semibold text-brand-text"
             : "text-text-2 hover:bg-accent"
         )}
@@ -123,7 +150,7 @@ export function AppNav({
         <Settings
           className={cn(
             "h-[18px] w-[18px]",
-            pathname.startsWith("/settings") ? "text-brand" : "text-text-3"
+            pathname.startsWith("/settings") || pathname.startsWith("/preview/settings") ? "text-brand" : "text-text-3"
           )}
           strokeWidth={1.7}
         />
@@ -145,8 +172,8 @@ export function AppNav({
           title="Cerrar sesión"
           className="rounded p-1 text-text-3 hover:text-foreground"
           onClick={async () => {
-            await signOut();
-            router.push("/login");
+            if (!isPreview) await signOut();
+            router.push(isPreview ? "/preview/dashboard" : "/login");
             router.refresh();
           }}
         >
