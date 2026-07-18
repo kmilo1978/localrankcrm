@@ -1,8 +1,10 @@
 {
   "name": "localrank-crm",
-  "version": "1.0.0",
-  "description": "LocalRank CRM — CRM inteligente con integración multi-IA, WhatsApp y gestión completa de clientes",
+  "version": "2.0.0",
+  "description": "LocalRank CRM — Plataforma de ventas y prospección inteligente con IA, omnicanal y automatización",
   "license": "MIT",
+  "author": "LocalRank <localrankmedellin@gmail.com>",
+  "homepage": "https://localrank.com.co",
   "type": "module",
   "private": true,
   "packageManager": "pnpm@11.5.0",
