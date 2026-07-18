@@ -13,6 +13,7 @@ import {
   CircleCheckBig,
   ClipboardList,
   Clock,
+  CreditCard,
   Database,
   FileText,
   FlaskConical,
@@ -55,6 +56,7 @@ const NAV = [
   { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
   { href: "/templates", label: "Plantillas", icon: Send },
   { href: "/proposals", label: "Propuestas", icon: FileText },
+  { href: "/cartera", label: "Cartera", icon: CreditCard },
   // --- Execution ---
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/todo", label: "To-Do", icon: CircleCheckBig },
