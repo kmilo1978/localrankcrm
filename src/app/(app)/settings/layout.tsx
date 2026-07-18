@@ -9,6 +9,7 @@ const TABS = [
   { href: "/settings/ai-providers", label: "IA / APIs" },
   { href: "/settings/branding", label: "Marca" },
   { href: "/settings/templates", label: "Plantillas" },
+  { href: "/settings/quick-replies", label: "Resp. Rápidas" },
   { href: "/settings/sms", label: "SMS" },
   { href: "/settings/email-marketing", label: "Email Marketing" },
   { href: "/settings/mcp", label: "MCP" },
