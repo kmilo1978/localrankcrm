@@ -12,6 +12,7 @@ const TABS = [
   { href: "/preview/settings/sms", label: "SMS" },
   { href: "/preview/settings/email-marketing", label: "Email" },
   { href: "/preview/settings/mcp", label: "MCP" },
+  { href: "/preview/settings/flows", label: "Flows" },
   { href: "/preview/settings/webhooks", label: "Webhooks" },
   { href: "/preview/settings/currency", label: "Moneda" },
   { href: "/preview/settings/team", label: "Equipo" },
