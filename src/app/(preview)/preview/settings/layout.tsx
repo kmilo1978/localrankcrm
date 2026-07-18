@@ -5,11 +5,16 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/preview/settings/ai-providers", label: "IA / APIs" },
   { href: "/preview/settings/whatsapp", label: "WhatsApp" },
+  { href: "/preview/settings/ai-providers", label: "IA / APIs" },
   { href: "/preview/settings/branding", label: "Marca" },
+  { href: "/preview/settings/templates", label: "Plantillas" },
+  { href: "/preview/settings/sms", label: "SMS" },
+  { href: "/preview/settings/email-marketing", label: "Email" },
+  { href: "/preview/settings/mcp", label: "MCP" },
   { href: "/preview/settings/webhooks", label: "Webhooks" },
   { href: "/preview/settings/currency", label: "Moneda" },
+  { href: "/preview/settings/team", label: "Equipo" },
 ] as const;
 
 export default function PreviewSettingsLayout({
