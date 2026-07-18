@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Bot, CalendarDays, Check, CheckCircle2, Circle, Clock, Copy, Edit3, FolderKanban, MessageSquare, Plus, Send, Share2, StickyNote, Target, Trash2, UserPlus, Users, X, XCircle } from "lucide-react";
+import { Bot, CalendarDays, Check, CheckCircle2, Circle, Clock, Copy, Edit3, FolderKanban, GitBranch, Kanban, LayoutList, MessageSquare, Network, Plus, Send, Share2, StickyNote, Target, Trash2, UserPlus, Users, X, XCircle } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type ProjectNote = { id: string; text: string; author: string; date: string };
@@ -43,6 +43,7 @@ const SEED: Project[] = [
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "board" | "table" | "mindmap">("list");
   const [tab, setTab] = useState<"tasks" | "notes" | "sub" | "shared" | "log" | "ai">("tasks");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", priority: "medium" as Project["priority"], endDate: "", color: COLORS[0]! });
@@ -160,7 +161,117 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex h-full flex-col md:flex-row">
+    <div className="flex h-full flex-col">
+      {/* View mode toggle bar */}
+      <div className="flex items-center justify-between border-b px-4 py-2 bg-white shrink-0">
+        <div className="flex items-center gap-1">
+          {([["list", LayoutList, "Lista"], ["board", Kanban, "Tablero"], ["table", LayoutList, "Mesa"], ["mindmap", Network, "Mapa mental"]] as const).map(([mode, Icon, label]) => (
+            <button key={mode} onClick={() => setViewMode(mode)} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${viewMode === mode ? "bg-brand text-white" : "hover:bg-gray-100 text-muted-foreground"}`}>
+              <Icon className="h-3.5 w-3.5" /><span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" />Nuevo</button>
+      </div>
+
+      {/* BOARD VIEW */}
+      {viewMode === "board" && (
+        <div className="flex-1 overflow-x-auto p-4">
+          <div className="flex gap-3 min-h-full">
+            {(["planning","active","on_hold","completed"] as const).map(status => {
+              const statusProjects = projects.filter(p => p.status === status);
+              return (
+                <div key={status} className="w-64 shrink-0">
+                  <div className="mb-2 flex items-center justify-between"><span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[status]}`}>{STATUS_LABELS[status]}</span><span className="text-[10px] text-muted-foreground">{statusProjects.length}</span></div>
+                  <div className="space-y-2 min-h-[200px] rounded-lg border border-dashed p-2 bg-gray-50/30">
+                    {statusProjects.map(p => (
+                      <div key={p.id} onClick={() => { setSelected(p.id); setViewMode("list"); }} className="rounded-lg border bg-white p-3 cursor-pointer hover:shadow-sm">
+                        <div className="flex items-center gap-2 mb-1"><span className="h-2 w-2 rounded-full" style={{backgroundColor: p.color}} /><span className="text-xs font-medium">{p.name}</span></div>
+                        <div className="flex items-center gap-2"><div className="flex-1 h-1 rounded-full bg-gray-200"><div className="h-full rounded-full" style={{width: p.progress+"%", backgroundColor: p.color}} /></div><span className="text-[9px]">{p.progress}%</span></div>
+                        <div className="mt-1.5 flex gap-1 text-[9px] text-muted-foreground"><span>{p.tasks.length} tareas</span><span>·</span><span>{p.sharedWith.length} miembros</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* TABLE VIEW */}
+      {viewMode === "table" && (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="rounded-lg border bg-white overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b bg-gray-50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase text-muted-foreground">Proyecto</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase text-muted-foreground">Estado</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-medium uppercase text-muted-foreground">Progreso</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-medium uppercase text-muted-foreground">Tareas</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-medium uppercase text-muted-foreground">Subcuentas</th>
+                  <th className="px-3 py-2 text-center text-[10px] font-medium uppercase text-muted-foreground">Equipo</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase text-muted-foreground">Fecha fin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map(p => (
+                  <tr key={p.id} onClick={() => { setSelected(p.id); setViewMode("list"); }} className="border-b hover:bg-gray-50 cursor-pointer">
+                    <td className="px-3 py-2.5"><div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{backgroundColor: p.color}} /><span className="text-sm font-medium">{p.name}</span></div></td>
+                    <td className="px-3 py-2.5"><span className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${STATUS_COLORS[p.status]}`}>{STATUS_LABELS[p.status]}</span></td>
+                    <td className="px-3 py-2.5 text-center"><div className="flex items-center gap-2 justify-center"><div className="w-16 h-1.5 rounded-full bg-gray-200"><div className="h-full rounded-full" style={{width: p.progress+"%", backgroundColor: p.color}} /></div><span className="text-xs">{p.progress}%</span></div></td>
+                    <td className="px-3 py-2.5 text-center text-xs">{p.tasks.filter(t=>t.done).length}/{p.tasks.length}</td>
+                    <td className="px-3 py-2.5 text-center text-xs">{p.subAccounts.length}</td>
+                    <td className="px-3 py-2.5 text-center text-xs">{p.sharedWith.length}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{p.endDate || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* MIND MAP VIEW */}
+      {viewMode === "mindmap" && (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex flex-col items-center gap-6">
+            {projects.map(p => (
+              <div key={p.id} className="w-full max-w-3xl">
+                {/* Project node */}
+                <div onClick={() => { setSelected(p.id); setViewMode("list"); }} className="cursor-pointer mx-auto w-fit rounded-xl border-2 px-5 py-3 bg-white shadow-sm hover:shadow-md transition-shadow" style={{borderColor: p.color}}>
+                  <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full" style={{backgroundColor: p.color}} /><span className="text-sm font-bold">{p.name}</span><span className={`rounded-full px-2 py-0.5 text-[8px] font-medium ${STATUS_COLORS[p.status]}`}>{STATUS_LABELS[p.status]}</span></div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{p.progress}% · {p.tasks.length} tareas · {p.subAccounts.length} subcuentas</p>
+                </div>
+                {/* Branches */}
+                {(p.subAccounts.length > 0 || p.tasks.filter(t => !t.done).length > 0) && (
+                  <div className="mt-2 flex justify-center"><div className="w-px h-4 bg-gray-300" /></div>
+                )}
+                <div className="flex flex-wrap justify-center gap-3 mt-1">
+                  {p.subAccounts.map(sa => (
+                    <div key={sa.id} className="rounded-lg border bg-blue-50 px-3 py-2 text-center min-w-[120px]">
+                      <p className="text-[10px] font-semibold text-blue-700">{sa.name}</p>
+                      <p className="text-[8px] text-blue-500">{sa.responsible}</p>
+                    </div>
+                  ))}
+                  {p.tasks.filter(t => !t.done).slice(0, 4).map(t => (
+                    <div key={t.id} className="rounded-lg border bg-amber-50 px-3 py-2 text-center min-w-[100px]">
+                      <p className="text-[10px] font-medium text-amber-700 truncate max-w-[120px]">{t.title}</p>
+                      <p className="text-[8px] text-amber-500">{t.assignee || "Sin asignar"}</p>
+                    </div>
+                  ))}
+                  {p.tasks.filter(t => !t.done).length > 4 && <div className="rounded-lg border bg-gray-50 px-3 py-2 text-center"><p className="text-[10px] text-muted-foreground">+{p.tasks.filter(t => !t.done).length - 4} mas</p></div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LIST VIEW (original sidebar + detail) */}
+      {viewMode === "list" && (
+      <div className="flex flex-1 flex-col md:flex-row min-h-0">
       {/* Sidebar */}
       <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r bg-gray-50 flex flex-col max-h-48 md:max-h-none">
         <div className="p-3 border-b flex items-center justify-between">
@@ -339,6 +450,8 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+      </div>
+      )}
 
       {/* New Project Modal */}
       {showForm && (
