@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Filter, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
+import { ClipboardCopy, Copy, Edit3, Filter, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type Note = {
@@ -41,6 +41,10 @@ export default function NotesPage() {
   const [showCatForm, setShowCatForm] = useState(false);
   const [form, setForm] = useState({ title: "", content: "", relatedTo: "", category: "" });
   const [catForm, setCatForm] = useState({ name: "", color: PRESET_COLORS[0]! });
+  const [viewNote, setViewNote] = useState<Note | null>(null);
+  const [editNote, setEditNote] = useState<Note | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", content: "", relatedTo: "", category: "" });
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     setNotes(loadFromStorage("notes", SEED_NOTES));
@@ -65,7 +69,38 @@ export default function NotesPage() {
 
   function deleteCategory(id: string) { saveCats(categories.filter((c) => c.id !== id)); }
   function togglePin(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, pinned: !n.pinned } : n)); }
-  function deleteNote(id: string) { saveNotes(notes.filter((n) => n.id !== id)); }
+  function deleteNote(id: string) { saveNotes(notes.filter((n) => n.id !== id)); if (viewNote?.id === id) setViewNote(null); }
+
+  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2500); }
+
+  function openEdit(note: Note) {
+    setEditNote(note);
+    setEditForm({ title: note.title, content: note.content, relatedTo: note.relatedTo, category: note.category });
+    setViewNote(null);
+  }
+
+  function handleUpdate() {
+    if (!editNote || !editForm.title.trim()) return;
+    saveNotes(notes.map(n => n.id === editNote.id ? { ...n, ...editForm } : n));
+    setEditNote(null);
+    showToast("Nota actualizada");
+  }
+
+  function cloneNote(note: Note) {
+    const copy: Note = { ...note, id: generateId(), title: note.title + " (copia)", pinned: false, createdAt: new Date().toISOString().split("T")[0]! };
+    saveNotes([copy, ...notes]);
+    showToast("Nota clonada");
+  }
+
+  function copyNote(note: Note) {
+    navigator.clipboard.writeText(note.title + "\n\n" + note.content);
+    showToast("Nota copiada al portapapeles");
+  }
+
+  function copyNoteJSON(note: Note) {
+    navigator.clipboard.writeText(JSON.stringify(note, null, 2));
+    showToast("JSON copiado");
+  }
 
   function getCatColor(name: string) { return categories.find((c) => c.name === name)?.color || "#78716c"; }
 
@@ -150,32 +185,92 @@ export default function NotesPage() {
         {pinned.length > 0 && (
           <div className="mb-4">
             <h3 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground"><Pin className="h-3 w-3" />Fijadas</h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} />)}</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}</div>
           </div>
         )}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {unpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} />)}
+          {unpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} />)}
         </div>
-        {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin notas. Crea una con el botón "Nueva nota".</div>}
+        {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin notas. Crea una con el boton "Nueva nota".</div>}
       </div>
+
+      {/* View Note Modal */}
+      {viewNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setViewNote(null)}>
+          <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold">{viewNote.title}</h3>
+                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                  <span className="rounded-full px-2 py-0.5 text-white text-[10px] font-medium" style={{ backgroundColor: getCatColor(viewNote.category) }}>{viewNote.category}</span>
+                  {viewNote.relatedTo && <span>{viewNote.relatedTo}</span>}
+                  <span>{viewNote.createdAt}</span>
+                </div>
+              </div>
+              <button onClick={() => setViewNote(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed border-t pt-4">{viewNote.content}</div>
+            <div className="flex gap-2 mt-6 border-t pt-4">
+              <button onClick={() => openEdit(viewNote)} className="flex items-center gap-1 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" />Editar</button>
+              <button onClick={() => { cloneNote(viewNote); setViewNote(null); }} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Copy className="h-3.5 w-3.5" />Clonar</button>
+              <button onClick={() => copyNote(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />Copiar texto</button>
+              <button onClick={() => copyNoteJSON(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />JSON</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Note Modal */}
+      {editNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold">Editar nota</h3>
+              <button onClick={() => setEditNote(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Titulo</label><input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Contenido</label><textarea value={editForm.content} onChange={e => setEditForm({...editForm, content: e.target.value})} rows={8} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Relacionado con</label><input value={editForm.relatedTo} onChange={e => setEditForm({...editForm, relatedTo: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Categoria</label>
+                  <select value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">
+                    {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={handleUpdate} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar cambios</button>
+                <button onClick={() => setEditNote(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
   );
 }
 
-function NoteCard({ note, catColor, onPin, onDelete }: { note: Note; catColor: string; onPin: (id: string) => void; onDelete: (id: string) => void }) {
+function NoteCard({ note, catColor, onPin, onDelete, onView, onEdit, onClone, onCopy }: { note: Note; catColor: string; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void }) {
   return (
-    <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow">
+    <div className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow cursor-pointer" onClick={() => onView(note)}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="h-4 w-4 text-brand" />
           <h4 className="text-sm font-semibold">{note.title}</h4>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-brand"}`}><Pin className="h-3.5 w-3.5" /></button>
-          <button onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+        <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+          <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-brand"}`} title="Fijar"><Pin className="h-3.5 w-3.5" /></button>
+          <button onClick={() => onEdit(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
+          <button onClick={() => onClone(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-gray-700" title="Clonar"><Copy className="h-3.5 w-3.5" /></button>
+          <button onClick={() => onCopy(note)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-gray-700" title="Copiar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
+          <button onClick={() => onDelete(note.id)} className="opacity-0 group-hover:opacity-100 rounded p-1 text-muted-foreground hover:text-red-500" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       </div>
-      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{note.content}</p>
+      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">{note.content}</p>
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="rounded-full px-2 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
         {note.relatedTo && <><span>·</span><span>{note.relatedTo}</span></>}
