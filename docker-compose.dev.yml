@@ -1,6 +1,6 @@
 # Postgres local para desarrollo. Uso: docker compose -f docker-compose.dev.yml up -d
 # `name` propio: evita colisionar con el proyecto del docker-compose.yml (Ruta B).
-name: vocero-dev
+name: localrank-dev
 
 services:
   postgres:
@@ -9,16 +9,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: vocero
+      POSTGRES_DB: localrank
     ports:
       - "5432:5432"
     volumes:
-      - vocero_dev_pg:/var/lib/postgresql/data
+      - localrank_dev_pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d vocero"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d localrank"]
       interval: 5s
       timeout: 3s
       retries: 10
 
 volumes:
-  vocero_dev_pg:
+  localrank_dev_pg:

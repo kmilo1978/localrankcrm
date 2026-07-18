@@ -17,8 +17,8 @@ desde Configuración.
   Linear/Notion, neutros fríos, un solo acento azul acero apagado `#3f5972`,
   tipografía Geist, radios 7/10/14, sombras suaves). Se RECREA con el stack del
   repo (Tailwind + variables CSS); no se copia el código del prototipo.
-- Vocero es genérico: cada instancia lo opera un negocio distinto → la marca
-  visible (nombre + acento) debe ser suya, no "Vocero".
+- LocalRank es genérico: cada instancia lo opera un negocio distinto → la marca
+  visible (nombre + acento) debe ser suya, no "LocalRank".
 
 ## User Stories
 
@@ -58,7 +58,7 @@ stepper del pipeline + notas + toggle IA + handoff).
    check con color de acento según estado (read).
 3. Stepper vertical de etapas del pipeline en el panel (hecho/actual/pendiente
    según la etapa del lead), reemplaza al badge estático.
-4. Filtros: "Todas" y "No leídas" con conteos (Vocero no tiene asignación de
+4. Filtros: "Todas" y "No leídas" con conteos (LocalRank no tiene asignación de
    agentes en v1 — se omite "Sin asignar/Mías").
 5. Búsqueda por nombre/teléfono/preview.
 6. Toda la funcionalidad existente se conserva (SSE, ventana 24h, plantillas,
@@ -71,7 +71,7 @@ el **color de acento**, y toda la UI los refleja al instante (brand de la nav,
 título del documento, acentos, botones, badges).
 
 **Aceptación**:
-1. Nueva pestaña Configuración → Marca: input de nombre (default "Vocero") y
+1. Nueva pestaña Configuración → Marca: input de nombre (default "LocalRank") y
    selector de acento con las 4 opciones sobrias del handoff (Azul acero,
    Grafito, Verde apagado, Ciruela) + opción de color personalizado (color
    picker) del que se derivan hover/soft/tint/text automáticamente.
@@ -80,7 +80,7 @@ título del documento, acentos, botones, badges).
    (SSR, sin flash).
 3. El nombre aparece en: brand de la nav, `<title>`, página de login (que es
    pública: usa el nombre de la única org de la instancia).
-4. Sin configurar → defaults (nombre "Vocero", acento azul acero `#3f5972`).
+4. Sin configurar → defaults (nombre "LocalRank", acento azul enterprise `#00288e`).
 
 ## Edge cases
 
@@ -105,4 +105,4 @@ título del documento, acentos, botones, badges).
 
 Modo oscuro, asignación de conversaciones a agentes ("Sin asignar/Mías"),
 negocios/deals con valor monetario (el panel muestra contacto+lead reales de
-Vocero), logo por imagen (v1: inicial sobre acento), densidad configurable.
+LocalRank), logo por imagen (v1: inicial sobre acento), densidad configurable.

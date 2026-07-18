@@ -64,7 +64,7 @@ export async function GET(req: Request, ctx: Params) {
   if (path.length === 1) {
     return Response.json({
       display_phone_number: "+52 55 0000 0000",
-      verified_name: "Número de prueba Vocero",
+      verified_name: "Número de prueba LocalRank",
       id: path[0],
     });
   }

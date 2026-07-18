@@ -1,6 +1,13 @@
 // LocalRank Radar — Popup Script v1.2
 // Features: CRM Sync, Copy/Paste, Analysis, AI, AutoFill
 
+// ============ SECURITY: HTML Escaping ============
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
 // ============ UTILITIES ============
 function showToast(msg, duration) {
   const toast = document.getElementById("toast");
@@ -263,21 +270,62 @@ function displayAnalysis(data) {
 
   document.getElementById("r-company").textContent = data.company || "No detectado";
   document.getElementById("r-category").textContent = data.category || "General";
-  document.getElementById("r-url").innerHTML = '<a href="' + data.url + '" target="_blank">' + data.domain + '</a>';
+  
+  // Sanitize URL before inserting as link
+  var safeUrl = escapeHtml(data.url || "");
+  var safeDomain = escapeHtml(data.domain || "");
+  var urlEl = document.getElementById("r-url");
+  urlEl.textContent = "";
+  var urlLink = document.createElement("a");
+  urlLink.href = safeUrl;
+  urlLink.target = "_blank";
+  urlLink.textContent = safeDomain;
+  urlEl.appendChild(urlLink);
+  
   document.getElementById("r-phones").textContent = data.phones.length > 0 ? data.phones.join(", ") : "No encontrado";
   document.getElementById("r-emails").textContent = data.emails.length > 0 ? data.emails.join(", ") : "No encontrado";
 
   // WhatsApp
   var wa = data.socials.whatsapp;
-  document.getElementById("r-whatsapp").innerHTML = wa ? '<a href="' + wa + '" target="_blank">Si</a>' : "No";
+  var waEl = document.getElementById("r-whatsapp");
+  if (wa) {
+    waEl.textContent = "";
+    var waLink = document.createElement("a");
+    waLink.href = escapeHtml(wa);
+    waLink.target = "_blank";
+    waLink.textContent = "Si";
+    waEl.appendChild(waLink);
+  } else {
+    waEl.textContent = "No";
+  }
 
-  // Socials
+  // Socials (safe DOM creation)
   var socialsEl = document.getElementById("r-socials");
   var socialEntries = Object.entries(data.socials);
   if (socialEntries.length > 0) {
-    socialsEl.innerHTML = socialEntries.map(function(entry) {
-      return '<div class="data-row"><span class="data-label">' + entry[0] + '</span><span class="data-value"><a href="' + entry[1] + '" target="_blank">' + entry[0] + '</a></span><button class="copy-btn" onclick="navigator.clipboard.writeText(\'' + entry[1] + '\')">Copiar</button></div>';
-    }).join("");
+    socialsEl.textContent = "";
+    socialEntries.forEach(function(entry) {
+      var row = document.createElement("div");
+      row.className = "data-row";
+      var label = document.createElement("span");
+      label.className = "data-label";
+      label.textContent = entry[0];
+      var val = document.createElement("span");
+      val.className = "data-value";
+      var link = document.createElement("a");
+      link.href = entry[1];
+      link.target = "_blank";
+      link.textContent = entry[0];
+      val.appendChild(link);
+      var copyBtn = document.createElement("button");
+      copyBtn.className = "copy-btn";
+      copyBtn.textContent = "Copiar";
+      copyBtn.addEventListener("click", function() { navigator.clipboard.writeText(entry[1]); });
+      row.appendChild(label);
+      row.appendChild(val);
+      row.appendChild(copyBtn);
+      socialsEl.appendChild(row);
+    });
   } else {
     socialsEl.textContent = "Ninguna detectada";
   }
@@ -288,10 +336,15 @@ function displayAnalysis(data) {
   badge.textContent = score;
   badge.className = "score-badge " + (score >= 80 ? "score-high" : score >= 50 ? "score-mid" : "score-low");
 
-  // Signals
-  document.getElementById("r-signals").innerHTML = data.signals.details.map(function(s) {
-    return '<div class="signal">' + s + '</div>';
-  }).join("");
+  // Signals (safe DOM)
+  var signalsEl = document.getElementById("r-signals");
+  signalsEl.textContent = "";
+  data.signals.details.forEach(function(s) {
+    var div = document.createElement("div");
+    div.className = "signal";
+    div.textContent = s;
+    signalsEl.appendChild(div);
+  });
 
   // Store for saving
   window._analyzedData = data;
@@ -485,9 +538,11 @@ document.getElementById("btn-test-connection").addEventListener("click", async f
   
   var result = await testCRMConnection();
   if (result.ok) {
-    resultEl.innerHTML = '<span style="color:#16a34a">Conectado a ' + result.data.app + ' v' + result.data.version + '</span>';
+    resultEl.textContent = "Conectado a " + result.data.app + " v" + result.data.version;
+    resultEl.style.color = "#16a34a";
   } else {
-    resultEl.innerHTML = '<span style="color:#dc2626">No se pudo conectar. Verifica la URL.</span>';
+    resultEl.textContent = "No se pudo conectar. Verifica la URL.";
+    resultEl.style.color = "#dc2626";
   }
 });
 

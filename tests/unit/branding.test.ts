@@ -34,9 +34,9 @@ describe("white-label: acento", () => {
 });
 
 describe("white-label: normalización", () => {
-  it("nombre vacío o nulo → default 'Vocero'; se recorta a 30", () => {
-    expect(normalizeBranding(null).name).toBe("Vocero");
-    expect(normalizeBranding({ name: "   " }).name).toBe("Vocero");
+  it("nombre vacío o nulo → default 'LocalRank'; se recorta a 30", () => {
+    expect(normalizeBranding(null).name).toBe("LocalRank");
+    expect(normalizeBranding({ name: "   " }).name).toBe("LocalRank");
     expect(normalizeBranding({ name: "x".repeat(50) }).name).toHaveLength(30);
   });
 

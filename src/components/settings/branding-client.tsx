@@ -76,7 +76,7 @@ export function BrandingClient() {
               maxLength={30}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Vocero"
+              placeholder="LocalRank"
               className="max-w-xs"
             />
           </div>
@@ -132,11 +132,11 @@ export function BrandingClient() {
                 className="flex h-[30px] w-[30px] items-center justify-center rounded-sm text-[15px] font-bold text-white"
                 style={{ background: previewSet.accent }}
               >
-                {(name.trim() || "Vocero").charAt(0).toUpperCase()}
+                {(name.trim() || "LocalRank").charAt(0).toUpperCase()}
               </span>
               <span>
                 <span className="block text-[15px] font-[650] leading-tight">
-                  {name.trim() || "Vocero"}
+                  {name.trim() || "LocalRank"}
                 </span>
                 <span className="block text-[11px] text-text-3">CRM · WhatsApp</span>
               </span>

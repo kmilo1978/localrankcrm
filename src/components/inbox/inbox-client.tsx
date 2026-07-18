@@ -24,11 +24,11 @@ export function InboxClient() {
   const [detailRev, setDetailRev] = useState(0);
 
   useEffect(() => {
-    setPanelOpen(localStorage.getItem("vocero.panelOpen") !== "false");
+    setPanelOpen(localStorage.getItem("localrank.panelOpen") !== "false");
   }, []);
   const togglePanel = useCallback((open: boolean) => {
     setPanelOpen(open);
-    localStorage.setItem("vocero.panelOpen", String(open));
+    localStorage.setItem("localrank.panelOpen", String(open));
   }, []);
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedId;

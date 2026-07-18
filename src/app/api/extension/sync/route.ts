@@ -32,10 +32,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action, data, apiKey } = body;
 
-    // Optional API key validation (if configured)
-    // For now we accept all — user can add key later in settings
-    if (apiKey && apiKey !== "" && apiKey !== "lr_live_sk_demo") {
-      // Future: validate against stored keys
+    // API key validation — if the environment has a key configured, enforce it
+    const expectedKey = process.env.EXTENSION_API_KEY || "";
+    if (expectedKey && apiKey !== expectedKey) {
+      return Response.json(
+        { ok: false, error: "Invalid or missing API key", code: "unauthorized" },
+        { status: 401 }
+      );
     }
 
     switch (action) {
