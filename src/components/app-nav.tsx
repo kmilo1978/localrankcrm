@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
+  BarChart3,
   Building2,
   Calendar,
   CheckSquare,
@@ -14,6 +15,7 @@ import {
   FileText,
   FlaskConical,
   FolderOpen,
+  Heart,
   Inbox,
   Kanban,
   LayoutDashboard,
@@ -35,7 +37,9 @@ import { useEvents } from "@/components/use-events";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/omnichannel", label: "Omnicanal", icon: Activity },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/inbox", label: "Bandeja", icon: Inbox, badge: true },
+  { href: "/social", label: "Social", icon: Heart },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/contacts", label: "Contactos", icon: Users },
   { href: "/cold-contacts", label: "Contactos Fríos", icon: Thermometer },
@@ -44,7 +48,7 @@ const NAV = [
   { href: "/proposals", label: "Propuestas", icon: FileText },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/forms", label: "Formularios", icon: ClipboardList },
-  { href: "/import", label: "Importar & Enriquecer", icon: Database },
+  { href: "/import", label: "Importar", icon: Database },
   { href: "/workspaces", label: "Espacios", icon: FolderOpen },
   { href: "/team", label: "Equipo", icon: UsersRound },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },

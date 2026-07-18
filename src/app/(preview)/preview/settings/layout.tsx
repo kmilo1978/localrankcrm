@@ -8,6 +8,8 @@ const TABS = [
   { href: "/preview/settings/ai-providers", label: "IA / APIs" },
   { href: "/preview/settings/whatsapp", label: "WhatsApp" },
   { href: "/preview/settings/branding", label: "Marca" },
+  { href: "/preview/settings/webhooks", label: "Webhooks" },
+  { href: "/preview/settings/currency", label: "Moneda" },
 ] as const;
 
 export default function PreviewSettingsLayout({

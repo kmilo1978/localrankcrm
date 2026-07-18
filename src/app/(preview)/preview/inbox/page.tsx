@@ -22,7 +22,7 @@ type Conversation = {
   id: string;
   contactName: string;
   phone: string;
-  channel: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "sms";
+  channel: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "gmail" | "sms";
   lastMessage: string;
   unread: number;
   messages: Message[];
@@ -32,7 +32,7 @@ type Conversation = {
 
 type ChannelConfig = {
   id: string;
-  type: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit";
+  type: "whatsapp" | "whatsapp2" | "whatsapp3" | "email" | "instagram" | "facebook" | "linkedin" | "x" | "quora" | "reddit" | "telegram" | "gmail";
   label: string;
   connected: boolean;
   account: string;
@@ -49,6 +49,8 @@ const CHANNEL_ICONS: Record<string, typeof MessageSquare> = {
   x: MessageSquare,
   quora: MessageSquare,
   reddit: MessageSquare,
+  telegram: Send,
+  gmail: Mail,
   sms: MessageSquare,
 };
 
@@ -63,6 +65,8 @@ const CHANNEL_COLORS: Record<string, string> = {
   x: "text-gray-900 bg-gray-100",
   quora: "text-red-600 bg-red-50",
   reddit: "text-orange-600 bg-orange-50",
+  telegram: "text-cyan-600 bg-cyan-50",
+  gmail: "text-red-500 bg-red-50",
   sms: "text-gray-600 bg-gray-50",
 };
 
@@ -77,6 +81,8 @@ const CHANNEL_LABELS: Record<string, string> = {
   x: "X (Twitter)",
   quora: "Quora",
   reddit: "Reddit",
+  telegram: "Telegram",
+  gmail: "Gmail",
   sms: "SMS",
 };
 
@@ -91,6 +97,8 @@ const SEED_CHANNELS: ChannelConfig[] = [
   { id: "ch8", type: "x", label: "X (Twitter) DM", connected: false, account: "" },
   { id: "ch9", type: "quora", label: "Quora Messages", connected: false, account: "" },
   { id: "ch10", type: "reddit", label: "Reddit Chat", connected: false, account: "" },
+  { id: "ch11", type: "telegram", label: "Telegram Bot", connected: false, account: "" },
+  { id: "ch12", type: "gmail", label: "Gmail (Google)", connected: false, account: "" },
 ];
 
 const SEED_CONVERSATIONS: Conversation[] = [
@@ -135,6 +143,16 @@ const SEED_CONVERSATIONS: Conversation[] = [
     messages: [
       { id: "m13", direction: "in", text: "Hola @LocalRank, ¿tienen API pública para integrar con nuestro sistema?", timestamp: "Hace 2h", channel: "x" },
       { id: "m14", direction: "out", text: "¡Hola! Sí, tenemos API REST y webhooks. Te comparto la documentación por DM.", timestamp: "Hace 1h", channel: "x" },
+    ],
+    reminders: [],
+  },
+  {
+    id: "cv6", contactName: "Soporte Telegram", phone: "@localrank_bot", channel: "telegram", lastMessage: "Bot configurado correctamente ✓", unread: 0, aiEnabled: true,
+    messages: [
+      { id: "m15", direction: "in", text: "/start", timestamp: "Ayer", channel: "telegram" },
+      { id: "m16", direction: "out", text: "¡Bienvenido al bot de LocalRank! ¿En qué puedo ayudarte?", timestamp: "Ayer", channel: "telegram", aiGenerated: true },
+      { id: "m17", direction: "in", text: "Quiero información de precios", timestamp: "Ayer", channel: "telegram" },
+      { id: "m18", direction: "out", text: "Bot configurado correctamente ✓", timestamp: "Ayer", channel: "telegram", aiGenerated: true },
     ],
     reminders: [],
   },
@@ -282,6 +300,8 @@ export default function InboxPreviewPage() {
               <option value="x">X (Twitter)</option>
               <option value="quora">Quora</option>
               <option value="reddit">Reddit</option>
+              <option value="telegram">Telegram</option>
+              <option value="gmail">Gmail</option>
               <option value="sms">SMS</option>
             </select>
             <div className="flex gap-2">
@@ -490,6 +510,12 @@ export default function InboxPreviewPage() {
                     )}
                     {ch.type === "reddit" && !ch.connected && (
                       <p className="mt-2 text-xs text-muted-foreground">Conecta tu cuenta de Reddit para gestionar chats.</p>
+                    )}
+                    {ch.type === "telegram" && !ch.connected && (
+                      <p className="mt-2 text-xs text-muted-foreground">Crea un bot con @BotFather y pega el token aquí.</p>
+                    )}
+                    {ch.type === "gmail" && !ch.connected && (
+                      <p className="mt-2 text-xs text-muted-foreground">Conecta tu cuenta de Gmail con OAuth2 para enviar/recibir emails.</p>
                     )}
                   </div>
                 );
