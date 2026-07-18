@@ -111,3 +111,35 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ===== Mobile Responsive Fixes ===== */
+@layer base {
+  /* Prevent horizontal overflow on mobile */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Mobile-first spacing */
+  @media (max-width: 767px) {
+    /* Reduce padding on small screens */
+    .p-6 { padding: 1rem; }
+    .px-6 { padding-left: 1rem; padding-right: 1rem; }
+    .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+
+    /* Make headings smaller */
+    h1 { font-size: 1.25rem !important; }
+    h2 { font-size: 1.1rem !important; }
+
+    /* Full-width cards */
+    .max-w-5xl, .max-w-6xl, .max-w-7xl {
+      max-width: 100% !important;
+    }
+
+    /* Fix tables to scroll horizontally */
+    table { display: block; overflow-x: auto; }
+
+    /* Fix fixed elements not to go offscreen */
+    .fixed { max-width: 100vw; }
+  }
+}

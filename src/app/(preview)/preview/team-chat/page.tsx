@@ -138,9 +138,9 @@ export default function TeamChatPage() {
   const filteredChannels = channels.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Sidebar: Channels */}
-      <div className="w-64 shrink-0 border-r bg-gray-50 flex flex-col">
+      <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r bg-gray-50 flex flex-col max-h-48 md:max-h-none overflow-y-auto md:overflow-y-visible">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold">Chat Equipo</h2>

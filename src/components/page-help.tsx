@@ -41,9 +41,9 @@ export function PageHelp() {
   if (!help) return null;
 
   return (
-    <div className="fixed bottom-6 left-[270px] z-50">
+    <div className="fixed bottom-4 left-4 md:bottom-6 md:left-[270px] z-50">
       {open && (
-        <div className="absolute bottom-14 left-0 w-80 rounded-lg border bg-white p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
+        <div className="absolute bottom-14 left-0 w-72 md:w-80 rounded-lg border bg-white p-4 md:p-5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start justify-between mb-2">
             <h4 className="text-sm font-semibold">{help.title}</h4>
             <button onClick={() => setOpen(false)} className="rounded p-0.5 text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
