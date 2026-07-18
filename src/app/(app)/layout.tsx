@@ -1,6 +1,7 @@
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { AppNav } from "@/components/app-nav";
 import { PageHelp } from "@/components/page-help";
+import { AiAssistant } from "@/components/ai-assistant";
 
 /**
  * App layout — funciona sin autenticación.
@@ -19,6 +20,7 @@ export default function AppLayout({
       />
       <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
       <PageHelp />
+      <AiAssistant />
     </div>
   );
 }
