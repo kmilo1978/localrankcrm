@@ -54,12 +54,41 @@ export default function ChecklistsPage() {
   // PASTE LIST — converts text lines to checklist items
   function handlePasteList() {
     if (!pasteTitle.trim() || !pasteText.trim()) return;
-    const lines = pasteText.split("\n").map(l => l.replace(/^[\s\-\*\•\d\.]+/, "").trim()).filter(l => l.length > 0);
-    const items: CheckItem[] = lines.map(text => ({ id: generateId(), text, done: false }));
+    const items = parseTextToItems(pasteText);
+    if (items.length === 0) return;
     const cl: Checklist = { id: generateId(), title: pasteTitle, description: "Creado desde lista pegada (" + items.length + " items)", items, category: "General", client: pasteClient, createdAt: new Date().toISOString().split("T")[0]! };
     save([cl, ...checklists]); setSelected(cl.id);
     setPasteText(""); setPasteTitle(""); setPasteClient(""); setShowPaste(false);
     showToast(items.length + " items importados");
+  }
+
+  // Smart parser: handles newlines, " - ", " · ", numbered lists, bullets
+  function parseTextToItems(text: string): CheckItem[] {
+    let lines: string[];
+    // If text has newlines, split by newlines
+    if (text.includes("\n")) {
+      lines = text.split("\n");
+    }
+    // If text uses " - " as separator (common in pasted documents)
+    else if (text.includes(" - ")) {
+      lines = text.split(" - ");
+    }
+    // If text uses " · " as separator
+    else if (text.includes(" · ")) {
+      lines = text.split(" · ");
+    }
+    // If text uses ". " followed by uppercase (numbered items like "1. Item 2. Item")
+    else if (/\d+\.\s/.test(text)) {
+      lines = text.split(/(?=\d+\.\s)/);
+    }
+    // Fallback: treat as single item
+    else {
+      lines = [text];
+    }
+    return lines
+      .map(l => l.replace(/^[\s\-\*\•\–\—\d\.]+/, "").trim())
+      .filter(l => l.length > 2)
+      .map(text => ({ id: generateId(), text, done: false }));
   }
 
   // Paste from clipboard directly
@@ -100,8 +129,8 @@ export default function ChecklistsPage() {
   // Add multiple items at once (paste into the input)
   function addBulkItems(text: string) {
     if (!text.trim() || !checklist) return;
-    const lines = text.split("\n").map(l => l.replace(/^[\s\-\*\•\d\.]+/, "").trim()).filter(l => l.length > 0);
-    const newItems = lines.map(t => ({ id: generateId(), text: t, done: false }));
+    const newItems = parseTextToItems(text);
+    if (newItems.length === 0) return;
     save(checklists.map(c => c.id === selected ? { ...c, items: [...c.items, ...newItems] } : c));
     showToast(newItems.length + " items agregados");
   }
@@ -250,7 +279,7 @@ export default function ChecklistsPage() {
               <input value={pasteClient} onChange={e => setPasteClient(e.target.value)} placeholder="Cliente (opcional)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={"Pega tu lista aqui...\n\nEjemplo:\n- Revisar H1 y H2\n- Verificar meta descriptions\n- Analizar velocidad\n- Revisar mobile"} rows={10} className="w-full rounded border px-3 py-2 text-sm font-mono focus:border-brand focus:outline-none" />
               {pasteText.trim() && (
-                <p className="text-xs text-muted-foreground">{pasteText.split("\n").filter(l => l.trim().length > 0).length} items detectados</p>
+                <p className="text-xs text-muted-foreground">{parseTextToItems(pasteText).length} items detectados</p>
               )}
               <button onClick={handlePasteList} disabled={!pasteTitle.trim() || !pasteText.trim()} className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">Crear checklist desde lista</button>
             </div>
