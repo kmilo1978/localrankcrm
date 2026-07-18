@@ -492,10 +492,59 @@ export default function InboxPreviewPage() {
                         <button onClick={() => toggleChannel(ch.id, "")} className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">Desconectar</button>
                       ) : (
                         connectingChannel === ch.id ? (
-                          <div className="flex items-center gap-2">
-                            <input value={connectInput} onChange={(e) => setConnectInput(e.target.value)} placeholder={ch.type.includes("whatsapp") ? "+52 55 1234 5678" : ch.type === "email" || ch.type === "gmail" ? "tu@email.com" : "@usuario"} className="w-36 rounded border px-2 py-1 text-xs focus:border-brand focus:outline-none" onKeyDown={(e) => { if (e.key === "Enter" && connectInput.trim()) { toggleChannel(ch.id, connectInput.trim()); setConnectInput(""); setConnectingChannel(null); } }} autoFocus />
-                            <button onClick={() => { if (connectInput.trim()) { toggleChannel(ch.id, connectInput.trim()); setConnectInput(""); setConnectingChannel(null); } }} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover">OK</button>
-                            <button onClick={() => { setConnectingChannel(null); setConnectInput(""); }} className="text-xs text-muted-foreground">✕</button>
+                          <div className="flex flex-col gap-2">
+                            {/* OAuth-style buttons for social platforms */}
+                            {(ch.type === "instagram" || ch.type === "facebook") && (
+                              <button onClick={() => { toggleChannel(ch.id, `@${ch.type}_connected`); setConnectingChannel(null); }} className="flex items-center gap-2 rounded-md bg-[#1877F2] px-3 py-2 text-xs font-medium text-white hover:opacity-90">
+                                <Facebook className="h-3.5 w-3.5" />Conectar con Meta Business
+                              </button>
+                            )}
+                            {ch.type === "linkedin" && (
+                              <button onClick={() => { toggleChannel(ch.id, "linkedin_oauth"); setConnectingChannel(null); }} className="flex items-center gap-2 rounded-md bg-[#0A66C2] px-3 py-2 text-xs font-medium text-white hover:opacity-90">
+                                <Linkedin className="h-3.5 w-3.5" />Conectar con LinkedIn
+                              </button>
+                            )}
+                            {ch.type === "x" && (
+                              <button onClick={() => { toggleChannel(ch.id, "@x_connected"); setConnectingChannel(null); }} className="flex items-center gap-2 rounded-md bg-black px-3 py-2 text-xs font-medium text-white hover:opacity-90">
+                                <span className="text-sm font-bold">𝕏</span>Conectar con X
+                              </button>
+                            )}
+                            {ch.type === "tiktok" && (
+                              <button onClick={() => { toggleChannel(ch.id, "@tiktok_business"); setConnectingChannel(null); }} className="flex items-center gap-2 rounded-md bg-black px-3 py-2 text-xs font-medium text-white hover:opacity-90">
+                                <span className="text-sm">♪</span>Conectar con TikTok Business
+                              </button>
+                            )}
+                            {ch.type.includes("whatsapp") && (
+                              <div className="space-y-2">
+                                <button onClick={() => { toggleChannel(ch.id, "Cloud API"); setConnectingChannel(null); }} className="flex w-full items-center gap-2 rounded-md bg-[#25D366] px-3 py-2 text-xs font-medium text-white hover:opacity-90">
+                                  <Phone className="h-3.5 w-3.5" />Conectar vía Cloud API (Meta)
+                                </button>
+                                <button onClick={() => { toggleChannel(ch.id, "QR Coexist"); setConnectingChannel(null); }} className="flex w-full items-center gap-2 rounded-md border border-[#25D366] px-3 py-2 text-xs font-medium text-[#25D366] hover:bg-green-50">
+                                  <span className="text-sm">📱</span>Vincular dispositivo (QR — Coexistencia)
+                                </button>
+                                <p className="text-[9px] text-muted-foreground">Coexistencia: usa el mismo número sin cerrar sesión en tu teléfono.</p>
+                              </div>
+                            )}
+                            {(ch.type === "email" || ch.type === "gmail") && (
+                              <div className="space-y-2">
+                                <button onClick={() => { toggleChannel(ch.id, "gmail_oauth"); setConnectingChannel(null); }} className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50">
+                                  <span className="text-sm">G</span>Conectar con Google (Gmail)
+                                </button>
+                                <button onClick={() => { toggleChannel(ch.id, "outlook_oauth"); setConnectingChannel(null); }} className="flex w-full items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50">
+                                  <Mail className="h-3.5 w-3.5 text-blue-500" />Conectar con Outlook
+                                </button>
+                              </div>
+                            )}
+                            {ch.type === "telegram" && (
+                              <div className="space-y-1.5">
+                                <input value={connectInput} onChange={(e) => setConnectInput(e.target.value)} placeholder="Bot Token de @BotFather" className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                                <button onClick={() => { if (connectInput.trim()) { toggleChannel(ch.id, connectInput.trim()); setConnectInput(""); setConnectingChannel(null); } }} className="flex w-full items-center justify-center gap-2 rounded-md bg-[#0088cc] px-3 py-2 text-xs font-medium text-white hover:opacity-90">Conectar Bot</button>
+                              </div>
+                            )}
+                            {(ch.type === "quora" || ch.type === "reddit") && (
+                              <button onClick={() => { toggleChannel(ch.id, `${ch.type}_connected`); setConnectingChannel(null); }} className="flex items-center gap-2 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover">Autorizar acceso</button>
+                            )}
+                            <button onClick={() => { setConnectingChannel(null); setConnectInput(""); }} className="text-[10px] text-muted-foreground hover:text-foreground text-center">Cancelar</button>
                           </div>
                         ) : (
                           <button onClick={() => setConnectingChannel(ch.id)} className="rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover">Conectar</button>
