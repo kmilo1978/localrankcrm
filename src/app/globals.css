@@ -9,35 +9,42 @@
 */
 @layer base {
   :root {
-    /* Neutros (valores exactos del handoff) */
-    --bg: #ffffff;
-    --bg-subtle: #fbfbfc;
-    --bg-panel: #f8f8f9;
-    --bg-hover: #f4f4f5;
-    --text: #1a1a1e;
-    --text-2: #56565e;
-    --text-3: #8c8c95;
-    --text-4: #aeaeb6;
-    --border: #ecedf0;
-    --border-strong: #e0e1e6;
+    /* Neutros (Enterprise theme — Material Design 3) */
+    --bg: #f7f9fb;
+    --bg-subtle: #f2f4f6;
+    --bg-panel: #eceef0;
+    --bg-hover: #e6e8ea;
+    --text: #191c1e;
+    --text-2: #505f76;
+    --text-3: #757684;
+    --text-4: #94a3b8;
+    --border: #e0e3e5;
+    --border-strong: #c4c5d5;
 
     /* Chat */
-    --chat-bg: #f4f5f7;
-    --bubble-out: #f2f5f8;
-    --bubble-out-text: #33414f;
+    --chat-bg: #f2f4f6;
+    --bubble-out: #dde1ff;
+    --bubble-out-text: #001453;
 
-    /* Acento (default: azul acero apagado; white-label lo sobreescribe) */
-    --accent: #3f5972;
-    --accent-hover: #334a60;
-    --accent-soft: #dde5ee;
-    --accent-tint: #f3f6f9;
-    --accent-text: #2b4056;
+    /* Acento (Enterprise blue; white-label lo sobreescribe) */
+    --accent: #00288e;
+    --accent-hover: #001d6b;
+    --accent-soft: #dde1ff;
+    --accent-tint: #f3f5ff;
+    --accent-text: #001453;
     --bg-active: var(--accent-tint);
 
+    /* Enterprise sidebar */
+    --sidebar-bg: #00288e;
+    --sidebar-text: #ffffff;
+    --sidebar-hover: #1e40af;
+    --sidebar-active: #1e40af;
+    --sidebar-active-text: #a8b8ff;
+
     /* Estado */
-    --success: #5f8f74;
-    --warning: #b08b5e;
-    --danger: #a2504c;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
 
     /* Radios y sombras */
     --radius-sm: 7px;
