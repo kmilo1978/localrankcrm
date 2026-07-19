@@ -283,11 +283,18 @@ export default function CarteraPage() {
         {/* Cancelaciones */}
         {tab === "cancelaciones" && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground mb-2">Servicios cancelados por falta de pago:</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-muted-foreground">Servicios cancelados por falta de pago:</p>
+              <button onClick={() => { const client = prompt("Cliente a cancelar:"); if (client) { const inv = invoices.find(i => i.client.toLowerCase().includes(client.toLowerCase()) && i.status !== "cancelled"); if (inv) { saveInv(invoices.map(i => i.id === inv.id ? { ...i, status: "cancelled" as const } : i)); } else { saveInv([{ id: generateId(), number: "FAC-" + (1046 + invoices.length), client, amount: 0, currency: "USD", status: "cancelled", issuedAt: new Date().toISOString().split("T")[0]!, dueDate: "" }, ...invoices]); } } }} className="flex items-center gap-1 rounded bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700"><Plus className="h-3 w-3" />Cancelar servicio</button>
+            </div>
             {invoices.filter((i) => i.status === "cancelled").map((inv) => (
               <div key={inv.id} className="rounded-lg border border-gray-300 bg-gray-50 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3"><Ban className="h-5 w-5 text-gray-500" /><div><p className="text-sm font-semibold line-through text-muted-foreground">{inv.client}</p><p className="text-xs text-muted-foreground">{inv.number} · Cancelado por mora</p></div></div>
-                <p className="text-lg font-bold text-gray-500">{fmt(inv.amount)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold text-gray-500">{fmt(inv.amount)}</p>
+                  <button onClick={() => saveInv(invoices.map(i => i.id === inv.id ? { ...i, status: "pending" as const } : i))} className="rounded border px-2 py-1 text-[9px] text-blue-600 hover:bg-blue-50">Reactivar</button>
+                  <button onClick={() => deleteInv(inv.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                </div>
               </div>
             ))}
             {invoices.filter((i) => i.status === "cancelled").length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Sin cancelaciones.</p>}
