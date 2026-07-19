@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { AlertTriangle, Ban, Calendar, CheckCircle2, Clock, CreditCard, DollarSign, FileText, HandCoins, History, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, Calendar, CheckCircle2, Clock, Copy, CreditCard, DollarSign, Edit3, FileText, HandCoins, History, Plus, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type Invoice = { id: string; number: string; client: string; amount: number; currency: string; status: "paid" | "pending" | "overdue" | "cancelled"; issuedAt: string; dueDate: string; paidAt?: string };
@@ -63,6 +63,11 @@ export default function CarteraPage() {
   }
   function markPaid(id: string) { saveInv(invoices.map((i) => i.id === id ? { ...i, status: "paid" as const, paidAt: new Date().toISOString().split("T")[0]! } : i)); }
   function deleteInv(id: string) { saveInv(invoices.filter((i) => i.id !== id)); }
+  function duplicateInv(inv: Invoice) { saveInv([{ ...inv, id: generateId(), number: `FAC-${1046 + invoices.length}`, status: "pending", paidAt: undefined }, ...invoices]); }
+  const [editInv, setEditInv] = useState<Invoice | null>(null);
+  const [editForm, setEditForm] = useState({ client: "", amount: "", dueDate: "", status: "pending" as Invoice["status"] });
+  function openEditInv(inv: Invoice) { setEditInv(inv); setEditForm({ client: inv.client, amount: String(inv.amount), dueDate: inv.dueDate, status: inv.status }); }
+  function handleEditInv() { if (!editInv) return; saveInv(invoices.map(i => i.id === editInv.id ? { ...i, client: editForm.client, amount: Number(editForm.amount) || 0, dueDate: editForm.dueDate, status: editForm.status } : i)); setEditInv(null); }
 
   const totalPending = invoices.filter((i) => i.status === "pending").reduce((s, i) => s + i.amount, 0);
   const totalOverdue = invoices.filter((i) => i.status === "overdue").reduce((s, i) => s + i.amount, 0);
@@ -125,8 +130,10 @@ export default function CarteraPage() {
                     <td className="px-4 py-3 text-xs text-muted-foreground">{inv.dueDate}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {inv.status !== "paid" && inv.status !== "cancelled" && <button onClick={() => markPaid(inv.id)} className="rounded px-2 py-1 text-[10px] text-green-600 hover:bg-green-50">Marcar pagada</button>}
-                        <button onClick={() => deleteInv(inv.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                        {inv.status !== "paid" && inv.status !== "cancelled" && <button onClick={() => markPaid(inv.id)} className="rounded px-2 py-1 text-[10px] text-green-600 hover:bg-green-50">Pagada</button>}
+                        <button onClick={() => openEditInv(inv)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-100" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => duplicateInv(inv)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-100" title="Duplicar"><Copy className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => deleteInv(inv.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -235,6 +242,26 @@ export default function CarteraPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Invoice Modal */}
+      {editInv && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl mx-4">
+            <div className="flex justify-between mb-3"><h3 className="text-sm font-bold">Editar factura {editInv.number}</h3><button onClick={() => setEditInv(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button></div>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Cliente</label><input value={editForm.client} onChange={e => setEditForm({...editForm, client: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Monto</label><input value={editForm.amount} onChange={e => setEditForm({...editForm, amount: e.target.value})} type="number" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Fecha vencimiento</label><input value={editForm.dueDate} onChange={e => setEditForm({...editForm, dueDate: e.target.value})} type="date" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Estado</label>
+                <select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value as Invoice["status"]})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">
+                  <option value="pending">Pendiente</option><option value="overdue">Vencida</option><option value="paid">Pagada</option><option value="cancelled">Cancelada</option>
+                </select>
+              </div>
+              <button onClick={handleEditInv} className="w-full rounded bg-brand py-2 text-sm text-white hover:bg-brand-hover">Guardar cambios</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
