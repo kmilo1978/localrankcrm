@@ -65,6 +65,7 @@ const NAV = [
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/checklists", label: "Checklists", icon: CircleCheckBig },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
+  { href: "/reminders", label: "Recordatorios", icon: Clock },
   { href: "/todo", label: "To-Do", icon: CircleCheckBig },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   // --- Intelligence ---
