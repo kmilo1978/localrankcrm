@@ -175,6 +175,21 @@ export default function CalendarPage() {
             ))}
           </div>
         </div>
+
+        {/* Google Calendar Sync */}
+        <div className="border-t pt-3 mt-3">
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Sincronizar</h4>
+          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Google Calendar")) { const gc: CalendarGroup = { id: generateId(), name: "Google Calendar", color: "#4285f4" }; saveCals([...calendars, gc]); setVisibleCalendars(new Set([...visibleCalendars, gc.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50 mb-1">
+            <span className="text-base">📅</span>Google Calendar
+          </button>
+          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Outlook")) { const oc: CalendarGroup = { id: generateId(), name: "Outlook", color: "#0078d4" }; saveCals([...calendars, oc]); setVisibleCalendars(new Set([...visibleCalendars, oc.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50 mb-1">
+            <span className="text-base">📧</span>Outlook / Microsoft
+          </button>
+          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Apple Calendar")) { const ac: CalendarGroup = { id: generateId(), name: "Apple Calendar", color: "#ff3b30" }; saveCals([...calendars, ac]); setVisibleCalendars(new Set([...visibleCalendars, ac.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50">
+            <span className="text-base">🍎</span>Apple Calendar
+          </button>
+          <p className="mt-2 text-[9px] text-muted-foreground">La sincronizacion real requiere conexion OAuth. Por ahora crea el calendario para organizar eventos de ese origen.</p>
+        </div>
       </div>
 
       {/* Main area */}

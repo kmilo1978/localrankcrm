@@ -111,6 +111,26 @@ export default function ColdContactsPage() {
     localStorage.setItem("extension_leads", JSON.stringify(updated));
   }
 
+  function deleteExtLead(lead: Record<string, unknown>) {
+    const updated = extLeads.filter(l => l.id !== lead.id);
+    setExtLeads(updated);
+    localStorage.setItem("extension_leads", JSON.stringify(updated));
+  }
+
+  function sendExtToContacts(lead: Record<string, unknown>) {
+    const contacts2 = JSON.parse(localStorage.getItem("contacts") || "[]");
+    contacts2.unshift({ id: generateId(), name: (lead.company as string) || (lead.title as string) || "Sin nombre", phone: ((lead.phones as string[]) || [])[0] || "", email: ((lead.emails as string[]) || [])[0] || "", company: (lead.company as string) || "", role: "", image: "", archived: false, createdAt: new Date().toISOString().split("T")[0]!, customFields: [], notes: [], reminders: [] });
+    localStorage.setItem("contacts", JSON.stringify(contacts2));
+    deleteExtLead(lead);
+  }
+
+  function sendExtToCompanies(lead: Record<string, unknown>) {
+    const companies = JSON.parse(localStorage.getItem("companies") || "[]");
+    companies.unshift({ id: generateId(), name: (lead.company as string) || (lead.title as string) || "Sin nombre", website: (lead.url as string) || "", industry: (lead.category as string) || "", notes: [], customFields: [] });
+    localStorage.setItem("companies", JSON.stringify(companies));
+    deleteExtLead(lead);
+  }
+
   function importAllExtLeads() {
     const newContacts = extLeads.map((lead) => ({
       id: generateId(), name: (lead.company as string) || (lead.title as string) || "Sin nombre", phone: ((lead.phones as string[]) || [])[0] || "", website: (lead.url as string) || "", category: (lead.category as string) || "General", rating: 0, reviews: 0, address: "", description: "", clase: "", motivo: "", score: (lead.score as number) || 50, stageId: "cs1", notes: "Importado desde extension", addedAt: new Date().toISOString().split("T")[0]!, customFields: [], outreachChannel: "", followUps: [],
@@ -331,7 +351,12 @@ export default function ColdContactsPage() {
                     <p className="text-sm font-medium truncate">{(lead.company as string) || (lead.title as string) || "Sin nombre"}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{(lead.url as string) || ""} · Score: {(lead.score as number) || 0}</p>
                   </div>
-                  <button onClick={() => importExtLead(lead)} className="shrink-0 rounded bg-brand px-2.5 py-1 text-[10px] text-white hover:bg-brand-hover">Importar</button>
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => importExtLead(lead)} className="rounded bg-brand px-2 py-1 text-[9px] text-white hover:bg-brand-hover">Prospeccion</button>
+                    <button onClick={() => sendExtToContacts(lead)} className="rounded border px-2 py-1 text-[9px] hover:bg-gray-50">Contactos</button>
+                    <button onClick={() => sendExtToCompanies(lead)} className="rounded border px-2 py-1 text-[9px] hover:bg-gray-50">Compania</button>
+                    <button onClick={() => deleteExtLead(lead)} className="rounded px-1.5 py-1 text-[9px] text-red-500 hover:bg-red-50">✕</button>
+                  </div>
                 </div>
               ))}
             </div>
