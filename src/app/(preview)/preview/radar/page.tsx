@@ -59,7 +59,38 @@ export default function RadarPage() {
     setClips(loadFromStorage("radar_clips", SEED_CLIPS));
     setFolders(loadFromStorage("radar_folders", SEED_FOLDERS));
     setTags(loadFromStorage("radar_tags", SEED_TAGS));
+    // Auto-sync extension leads into radar
+    syncExtensionLeads();
   }, []);
+
+  function syncExtensionLeads() {
+    try {
+      const extLeads: Record<string, unknown>[] = JSON.parse(localStorage.getItem("extension_leads") || "[]");
+      if (extLeads.length === 0) return;
+      const currentClips: WebClip[] = loadFromStorage("radar_clips", SEED_CLIPS);
+      const existingUrls = new Set(currentClips.map(c => c.url));
+      const newClips: WebClip[] = extLeads
+        .filter(l => l.url && !existingUrls.has(l.url as string))
+        .map(l => ({
+          id: generateId(),
+          url: (l.url as string) || "",
+          title: (l.company as string) || (l.title as string) || "Sin titulo",
+          description: (l.description as string) || "",
+          image: "",
+          folderId: "rf4",
+          tags: ((l.tags as string[]) || []),
+          notes: `Score: ${(l.score as number) || 0} · Importado desde extension`,
+          savedAt: (l.savedAt as string) || new Date().toLocaleString("es"),
+          source: "extension" as const,
+        }));
+      if (newClips.length > 0) {
+        const merged = [...newClips, ...currentClips];
+        setClips(merged);
+        saveToStorage("radar_clips", merged);
+      }
+    } catch {}
+  }
+
   function saveClips(u: WebClip[]) { setClips(u); saveToStorage("radar_clips", u); }
   function saveFolders(u: ClipFolder[]) { setFolders(u); saveToStorage("radar_folders", u); }
 
@@ -145,6 +176,7 @@ export default function RadarPage() {
             <p className="text-sm text-muted-foreground">Captura páginas web, organiza por carpetas y etiquetas. Sincronizado con la extensión del navegador.</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => { syncExtensionLeads(); setCopyMsg("Extensión sincronizada"); }} className="flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100" title="Sincronizar leads de la extensión"><RefreshCw className="h-3.5 w-3.5" />Sync ext</button>
             <button onClick={pasteClip} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Pegar clip desde portapapeles"><ClipboardPaste className="h-3.5 w-3.5" />Pegar</button>
             <button onClick={copyAllCSV} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Copiar todos como CSV"><ClipboardCopy className="h-3.5 w-3.5" />Copiar CSV</button>
             <button onClick={() => setShowAddFolder(!showAddFolder)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Folder className="h-3.5 w-3.5" />Carpeta</button>
