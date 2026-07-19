@@ -51,6 +51,10 @@ export default function CarteraPage() {
   const [agreements, setAgreements] = useState<PaymentAgreement[]>([]);
   const [history] = useState<CollectionEntry[]>(SEED_HISTORY);
   const [showNew, setShowNew] = useState(false);
+  const [showNewAgreement, setShowNewAgreement] = useState(false);
+  const [showNewReminder, setShowNewReminder] = useState(false);
+  const [agreementForm, setAgreementForm] = useState({ client: "", totalDebt: "", installments: "3", monthlyAmount: "", startDate: "" });
+  const [reminderForm, setReminderForm] = useState({ client: "", message: "", channel: "WhatsApp", date: "" });
   const [form, setForm] = useState({ number: "", client: "", amount: "", dueDate: "" });
 
   useEffect(() => { setInvoices(loadFromStorage("cartera_invoices", SEED_INVOICES)); setAgreements(loadFromStorage("cartera_agreements", SEED_AGREEMENTS)); }, []);
@@ -68,6 +72,17 @@ export default function CarteraPage() {
   const [editForm, setEditForm] = useState({ client: "", amount: "", dueDate: "", status: "pending" as Invoice["status"] });
   function openEditInv(inv: Invoice) { setEditInv(inv); setEditForm({ client: inv.client, amount: String(inv.amount), dueDate: inv.dueDate, status: inv.status }); }
   function handleEditInv() { if (!editInv) return; saveInv(invoices.map(i => i.id === editInv.id ? { ...i, client: editForm.client, amount: Number(editForm.amount) || 0, dueDate: editForm.dueDate, status: editForm.status } : i)); setEditInv(null); }
+
+  // Agreements CRUD
+  function saveAgr(u: PaymentAgreement[]) { setAgreements(u); saveToStorage("cartera_agreements", u); }
+  function createAgreement() {
+    if (!agreementForm.client.trim()) return;
+    const a: PaymentAgreement = { id: generateId(), client: agreementForm.client, totalDebt: Number(agreementForm.totalDebt) || 0, installments: Number(agreementForm.installments) || 3, monthlyAmount: Number(agreementForm.monthlyAmount) || 0, startDate: agreementForm.startDate || new Date().toISOString().split("T")[0]!, status: "active" };
+    saveAgr([a, ...agreements]);
+    setAgreementForm({ client: "", totalDebt: "", installments: "3", monthlyAmount: "", startDate: "" }); setShowNewAgreement(false);
+  }
+  function deleteAgreement(id: string) { saveAgr(agreements.filter(a => a.id !== id)); }
+  function toggleAgreementStatus(id: string, status: PaymentAgreement["status"]) { saveAgr(agreements.map(a => a.id === id ? { ...a, status } : a)); }
 
   const totalPending = invoices.filter((i) => i.status === "pending").reduce((s, i) => s + i.amount, 0);
   const totalOverdue = invoices.filter((i) => i.status === "overdue").reduce((s, i) => s + i.amount, 0);
@@ -188,11 +203,24 @@ export default function CarteraPage() {
         {/* Recordatorios */}
         {tab === "recordatorios" && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground mb-2">Recordatorios automáticos para facturas pendientes y vencidas:</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-muted-foreground">Recordatorios de cobro programados:</p>
+              <button onClick={() => setShowNewReminder(true)} className="flex items-center gap-1 rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover"><Plus className="h-3 w-3" />Nuevo</button>
+            </div>
+            {showNewReminder && (
+              <div className="rounded border bg-white p-3 flex gap-2 flex-wrap">
+                <input value={reminderForm.client} onChange={e => setReminderForm({...reminderForm, client: e.target.value})} placeholder="Cliente *" className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                <input value={reminderForm.message} onChange={e => setReminderForm({...reminderForm, message: e.target.value})} placeholder="Mensaje" className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                <select value={reminderForm.channel} onChange={e => setReminderForm({...reminderForm, channel: e.target.value})} className="rounded border px-2 py-1.5 text-xs"><option>WhatsApp</option><option>Email</option><option>SMS</option><option>Llamada</option></select>
+                <input value={reminderForm.date} onChange={e => setReminderForm({...reminderForm, date: e.target.value})} type="date" className="rounded border px-2 py-1.5 text-xs" />
+                <button onClick={() => { if (!reminderForm.client.trim()) return; const reminders = JSON.parse(localStorage.getItem("cartera_reminders") || "[]"); reminders.unshift({ id: generateId(), ...reminderForm }); localStorage.setItem("cartera_reminders", JSON.stringify(reminders)); setReminderForm({ client: "", message: "", channel: "WhatsApp", date: "" }); setShowNewReminder(false); }} className="rounded bg-brand px-3 py-1.5 text-xs text-white">Crear</button>
+                <button onClick={() => setShowNewReminder(false)} className="text-xs text-muted-foreground">✕</button>
+              </div>
+            )}
             {invoices.filter((i) => i.status === "pending" || i.status === "overdue").map((inv) => (
               <div key={inv.id} className="rounded-lg border bg-white p-4">
                 <div className="flex items-center justify-between"><div><p className="text-sm font-semibold">{inv.client} — {inv.number}</p><p className="text-xs text-muted-foreground">{fmt(inv.amount)} · Vence: {inv.dueDate}</p></div>
-                <div className="flex gap-2"><button className="rounded bg-green-600 px-3 py-1.5 text-[10px] font-medium text-white">Enviar WhatsApp</button><button className="rounded border px-3 py-1.5 text-[10px] font-medium">Enviar Email</button></div></div>
+                <div className="flex gap-2"><button className="rounded bg-green-600 px-3 py-1.5 text-[10px] font-medium text-white">WhatsApp</button><button className="rounded border px-3 py-1.5 text-[10px] font-medium">Email</button><button className="rounded border px-3 py-1.5 text-[10px] font-medium">Llamar</button></div></div>
               </div>
             ))}
           </div>
@@ -201,9 +229,32 @@ export default function CarteraPage() {
         {/* Acuerdos de pago */}
         {tab === "acuerdos" && (
           <div className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium">Acuerdos de pago</p>
+              <button onClick={() => setShowNewAgreement(true)} className="flex items-center gap-1 rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover"><Plus className="h-3 w-3" />Nuevo acuerdo</button>
+            </div>
+            {showNewAgreement && (
+              <div className="rounded border bg-white p-4 space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <input value={agreementForm.client} onChange={e => setAgreementForm({...agreementForm, client: e.target.value})} placeholder="Cliente *" className="rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <input value={agreementForm.totalDebt} onChange={e => setAgreementForm({...agreementForm, totalDebt: e.target.value})} placeholder="Deuda total" type="number" className="rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <input value={agreementForm.installments} onChange={e => setAgreementForm({...agreementForm, installments: e.target.value})} placeholder="# Cuotas" type="number" className="rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <input value={agreementForm.monthlyAmount} onChange={e => setAgreementForm({...agreementForm, monthlyAmount: e.target.value})} placeholder="Monto mensual" type="number" className="rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <input value={agreementForm.startDate} onChange={e => setAgreementForm({...agreementForm, startDate: e.target.value})} type="date" className="rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  <div className="flex gap-1"><button onClick={createAgreement} className="rounded bg-brand px-3 py-1.5 text-xs text-white">Crear</button><button onClick={() => setShowNewAgreement(false)} className="text-xs text-muted-foreground px-2">✕</button></div>
+                </div>
+              </div>
+            )}
             {agreements.map((a) => (
               <div key={a.id} className="rounded-lg border bg-white p-4">
-                <div className="flex items-center justify-between mb-2"><p className="text-sm font-semibold">{a.client}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.status === "active" ? "bg-blue-100 text-blue-700" : a.status === "completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{a.status === "active" ? "Activo" : a.status === "completed" ? "Completado" : "Incumplido"}</span></div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold">{a.client}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.status === "active" ? "bg-blue-100 text-blue-700" : a.status === "completed" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{a.status === "active" ? "Activo" : a.status === "completed" ? "Completado" : "Incumplido"}</span>
+                    <select value={a.status} onChange={e => toggleAgreementStatus(a.id, e.target.value as PaymentAgreement["status"])} className="rounded border px-1 py-0.5 text-[9px] focus:outline-none"><option value="active">Activo</option><option value="completed">Completado</option><option value="defaulted">Incumplido</option></select>
+                    <button onClick={() => deleteAgreement(a.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-3 text-xs">
                   <div><span className="text-muted-foreground">Deuda total:</span><p className="font-semibold">{fmt(a.totalDebt)}</p></div>
                   <div><span className="text-muted-foreground">Cuotas:</span><p className="font-semibold">{a.installments}</p></div>
@@ -212,6 +263,7 @@ export default function CarteraPage() {
                 </div>
               </div>
             ))}
+            {agreements.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Sin acuerdos de pago.</p>}
           </div>
         )}
 
