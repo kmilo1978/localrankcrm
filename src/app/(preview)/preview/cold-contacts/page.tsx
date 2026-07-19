@@ -244,6 +244,12 @@ export default function ColdContactsPage() {
     .filter((c) => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search) || c.category.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => sortBy === "score" ? b.score - a.score : sortBy === "reviews" ? b.reviews - a.reviews : b.rating - a.rating);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 15;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
   const hotCount = contacts.filter((c) => c.clase === "Cliente caliente").length;
   const totalScore = contacts.length > 0 ? Math.round(contacts.reduce((s, c) => s + c.score, 0) / contacts.length) : 0;
 
@@ -404,7 +410,7 @@ export default function ColdContactsPage() {
       {view === "list" && (
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-1.5">
-            {filtered.map((contact) => {
+            {paginated.map((contact) => {
               const isExp = expanded === contact.id;
               return (
                 <div key={contact.id} className="rounded-lg border bg-white overflow-hidden">
@@ -512,6 +518,14 @@ export default function ColdContactsPage() {
               );
             })}
             {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin contactos fríos. Importa un archivo para comenzar.</div>}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t">
+                <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Anterior</button>
+                <span className="text-xs text-muted-foreground">Pagina {page} de {totalPages} ({filtered.length} contactos)</span>
+                <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Siguiente</button>
+              </div>
+            )}
           </div>
         </div>
       )}
