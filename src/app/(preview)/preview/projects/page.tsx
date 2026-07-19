@@ -1,34 +1,43 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bot, CheckCircle2, ChevronRight, Circle, Copy, Edit3, FolderKanban, FolderPlus, Plus, Send, Trash2, X } from "lucide-react";
+import { Bot, CheckCircle2, ChevronRight, Circle, Copy, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { openImagePicker } from "@/lib/image-upload";
 
 type ProjectNote = { id: string; text: string; author: string; date: string };
-type ProjectTask = { id: string; title: string; done: boolean };
-type SubProject = { id: string; name: string; description: string; tasks: ProjectTask[]; notes: ProjectNote[]; color: string };
+type ProjectTask = { id: string; title: string; done: boolean; assignee: string };
+type ProjectSection = { id: string; title: string; content: string; type: "text" | "list" | "link" };
+type ProjectFile = { id: string; name: string; data: string; addedAt: string };
+type TeamMember = { id: string; name: string; role: string };
+type SubProject = { id: string; name: string; description: string; tasks: ProjectTask[]; notes: ProjectNote[]; sections: ProjectSection[]; files: ProjectFile[]; team: TeamMember[]; color: string };
 type Project = {
   id: string; name: string; description: string; color: string;
   subProjects: SubProject[]; tasks: ProjectTask[]; notes: ProjectNote[];
+  sections: ProjectSection[]; files: ProjectFile[]; team: TeamMember[];
   createdAt: string;
 };
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4", "#ec4899", "#f97316"];
 
 const SEED: Project[] = [
-  { id: "p1", name: "Migracion CRM Enterprise", description: "Migrar datos del sistema anterior", color: "#3b82f6", createdAt: "2026-07-01",
-    tasks: [{ id: "t1", title: "Exportar CSV", done: true }, { id: "t2", title: "Mapear campos", done: true }, { id: "t3", title: "Importar contactos", done: false }],
+  { id: "p1", name: "Migracion CRM Enterprise", description: "Migrar datos del sistema anterior al nuevo CRM. Incluye contactos, empresas, pipeline y configuraciones.", color: "#3b82f6", createdAt: "2026-07-01",
+    tasks: [{ id: "t1", title: "Exportar CSV", done: true, assignee: "Juan" }, { id: "t2", title: "Mapear campos", done: true, assignee: "Ana" }, { id: "t3", title: "Importar contactos", done: false, assignee: "Juan" }],
     notes: [{ id: "n1", text: "Cliente aprobo timeline de 6 semanas", author: "Admin", date: "2026-07-15" }],
+    sections: [{ id: "sec1", title: "Objetivos", content: "1. Migrar 100% de contactos activos\n2. Preservar historial de conversaciones\n3. Mantener pipeline sin interrupciones", type: "text" }, { id: "sec2", title: "Recursos", content: "https://docs.google.com/spreadsheet/migracion\nhttps://notion.so/plan-migracion", type: "link" }],
+    files: [{ id: "f1", name: "Plan-Migracion.pdf", data: "", addedAt: "2026-07-05" }, { id: "f2", name: "Mapeo-Campos.xlsx", data: "", addedAt: "2026-07-08" }],
+    team: [{ id: "tm1", name: "Juan Perez", role: "Lider tecnico" }, { id: "tm2", name: "Ana Lopez", role: "QA" }],
     subProjects: [
-      { id: "sp1", name: "Fase 1 - Datos", description: "Contactos y empresas", color: "#06b6d4", tasks: [{ id: "st1", title: "Exportar contactos", done: true }, { id: "st2", title: "Validar duplicados", done: false }], notes: [{ id: "sn1", text: "Usar campo email como key", author: "Juan", date: "2026-07-10" }] },
-      { id: "sp2", name: "Fase 2 - Pipeline", description: "Oportunidades y deals", color: "#f59e0b", tasks: [{ id: "st3", title: "Mapear etapas", done: false }], notes: [] },
-      { id: "sp3", name: "Fase 3 - Go Live", description: "Lanzamiento", color: "#10b981", tasks: [], notes: [] },
+      { id: "sp1", name: "Fase 1 - Datos", description: "Contactos y empresas", color: "#06b6d4", tasks: [{ id: "st1", title: "Exportar contactos", done: true, assignee: "Juan" }, { id: "st2", title: "Validar duplicados", done: false, assignee: "Ana" }], notes: [{ id: "sn1", text: "Usar campo email como key", author: "Juan", date: "2026-07-10" }], sections: [], files: [], team: [] },
+      { id: "sp2", name: "Fase 2 - Pipeline", description: "Oportunidades y deals", color: "#f59e0b", tasks: [{ id: "st3", title: "Mapear etapas", done: false, assignee: "" }], notes: [], sections: [], files: [], team: [] },
     ],
   },
-  { id: "p2", name: "Campana Outbound Q3", description: "500 prospectos B2B multicanal", color: "#10b981", createdAt: "2026-07-15",
-    tasks: [{ id: "t4", title: "Definir ICP", done: true }, { id: "t5", title: "Crear secuencias", done: false }],
-    notes: [], subProjects: [
-      { id: "sp4", name: "Email", description: "Secuencia de emails frios", color: "#3b82f6", tasks: [{ id: "st4", title: "Redactar 5 emails", done: false }], notes: [] },
-      { id: "sp5", name: "LinkedIn", description: "Conexiones + mensajes", color: "#8b5cf6", tasks: [], notes: [] },
+  { id: "p2", name: "Campana Outbound Q3", description: "500 prospectos B2B multicanal — email, LinkedIn, WhatsApp", color: "#10b981", createdAt: "2026-07-15",
+    tasks: [{ id: "t4", title: "Definir ICP", done: true, assignee: "Maria" }, { id: "t5", title: "Crear secuencias", done: false, assignee: "Maria" }],
+    notes: [], sections: [{ id: "sec3", title: "Brief", content: "Objetivo: 50 reuniones agendadas en 8 semanas\nCanales: Email (primario), LinkedIn (secundario), WhatsApp (follow-up)", type: "text" }],
+    files: [], team: [{ id: "tm3", name: "Maria Gomez", role: "SDR" }],
+    subProjects: [
+      { id: "sp4", name: "Email", description: "Secuencia de emails frios", color: "#3b82f6", tasks: [{ id: "st4", title: "Redactar 5 emails", done: false, assignee: "Maria" }], notes: [], sections: [], files: [], team: [] },
+      { id: "sp5", name: "LinkedIn", description: "Conexiones + mensajes", color: "#8b5cf6", tasks: [], notes: [], sections: [], files: [], team: [] },
     ],
   },
 ];
@@ -42,8 +51,12 @@ export default function ProjectsPage() {
   const [form, setForm] = useState({ name: "", description: "", color: COLORS[0]! });
   const [taskInput, setTaskInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
+  const [sectionForm, setSectionForm] = useState({ title: "", content: "", type: "text" as ProjectSection["type"] });
+  const [showAddSection, setShowAddSection] = useState(false);
+  const [memberInput, setMemberInput] = useState({ name: "", role: "" });
   const [aiInput, setAiInput] = useState("");
   const [aiResponse, setAiResponse] = useState("");
+  const [activeTab, setActiveTab] = useState<"tasks" | "sections" | "files" | "team" | "notes" | "ai">("tasks");
   const [toast, setToast] = useState("");
 
   useEffect(() => { setProjects(loadFromStorage("projects_v3", SEED)); }, []);
@@ -56,18 +69,21 @@ export default function ProjectsPage() {
   // Current context: either sub-project or project level
   const currentTasks = selectedSub && subProject ? subProject.tasks : project?.tasks || [];
   const currentNotes = selectedSub && subProject ? subProject.notes : project?.notes || [];
+  const currentSections = selectedSub && subProject ? subProject.sections : project?.sections || [];
+  const currentFiles = selectedSub && subProject ? subProject.files : project?.files || [];
+  const currentTeam = selectedSub && subProject ? subProject.team : project?.team || [];
   const currentName = selectedSub && subProject ? subProject.name : project?.name || "";
 
   function createProject() {
     if (!form.name.trim()) return;
-    const p: Project = { id: generateId(), name: form.name, description: form.description, color: form.color, subProjects: [], tasks: [], notes: [], createdAt: new Date().toISOString().split("T")[0]! };
+    const p: Project = { id: generateId(), name: form.name, description: form.description, color: form.color, subProjects: [], tasks: [], notes: [], sections: [], files: [], team: [], createdAt: new Date().toISOString().split("T")[0]! };
     save([...projects, p]); setSelectedProject(p.id); setSelectedSub(null);
     setForm({ name: "", description: "", color: COLORS[0]! }); setShowNewProject(false); notify("Proyecto creado");
   }
 
   function createSubProject() {
     if (!form.name.trim() || !project) return;
-    const sp: SubProject = { id: generateId(), name: form.name, description: form.description, color: form.color, tasks: [], notes: [] };
+    const sp: SubProject = { id: generateId(), name: form.name, description: form.description, color: form.color, tasks: [], notes: [], sections: [], files: [], team: [] };
     save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: [...p.subProjects, sp] } : p));
     setSelectedSub(sp.id); setForm({ name: "", description: "", color: COLORS[0]! }); setShowNewSub(false); notify("Sub-proyecto creado");
   }
@@ -90,7 +106,7 @@ export default function ProjectsPage() {
   // Tasks
   function addTask() {
     if (!taskInput.trim()) return;
-    const task: ProjectTask = { id: generateId(), title: taskInput, done: false };
+    const task: ProjectTask = { id: generateId(), title: taskInput, done: false, assignee: "" };
     if (selectedSub && subProject) {
       save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: [...sp.tasks, task] } : sp) } : p));
     } else if (project) {
@@ -125,6 +141,68 @@ export default function ProjectsPage() {
       save(projects.map(p => p.id === selectedProject ? { ...p, notes: [note, ...p.notes] } : p));
     }
     setNoteInput("");
+  }
+
+  // Sections
+  function addSection() {
+    if (!sectionForm.title.trim()) return;
+    const sec: ProjectSection = { id: generateId(), title: sectionForm.title, content: sectionForm.content, type: sectionForm.type };
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: [...sp.sections, sec] } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, sections: [...p.sections, sec] } : p));
+    }
+    setSectionForm({ title: "", content: "", type: "text" }); setShowAddSection(false); notify("Seccion agregada");
+  }
+
+  function deleteSection(secId: string) {
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.filter(s => s.id !== secId) } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, sections: p.sections.filter(s => s.id !== secId) } : p));
+    }
+  }
+
+  // Files
+  async function addFile() {
+    const img = await openImagePicker();
+    if (!img) return;
+    const name = "Archivo-" + new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) + ".jpg";
+    const file: ProjectFile = { id: generateId(), name, data: img, addedAt: new Date().toISOString().split("T")[0]! };
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: [...sp.files, file] } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, files: [...p.files, file] } : p));
+    }
+    notify("Archivo agregado");
+  }
+
+  function deleteFile(fileId: string) {
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: sp.files.filter(f => f.id !== fileId) } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, files: p.files.filter(f => f.id !== fileId) } : p));
+    }
+  }
+
+  // Team
+  function addMember() {
+    if (!memberInput.name.trim()) return;
+    const m: TeamMember = { id: generateId(), name: memberInput.name, role: memberInput.role || "Miembro" };
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: [...sp.team, m] } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, team: [...p.team, m] } : p));
+    }
+    setMemberInput({ name: "", role: "" }); notify("Miembro agregado");
+  }
+
+  function removeMember(mId: string) {
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: sp.team.filter(m => m.id !== mId) } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, team: p.team.filter(m => m.id !== mId) } : p));
+    }
   }
 
   // AI
@@ -220,7 +298,15 @@ export default function ProjectsPage() {
               </div>
             )}
 
-            {/* Tasks */}
+            {/* Tabs */}
+            <div className="flex gap-1 mb-4 border-b pb-2 overflow-x-auto">
+              {([["tasks","Tareas"],["sections","Secciones"],["files","Archivos"],["team","Equipo"],["notes","Notas"],["ai","IA"]] as const).map(([k,l]) => (
+                <button key={k} onClick={() => setActiveTab(k)} className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium ${activeTab === k ? "bg-brand text-white" : "hover:bg-gray-100"}`}>{l}</button>
+              ))}
+            </div>
+
+            {/* Tasks tab */}
+            {activeTab === "tasks" && (
             <div className="rounded-lg border bg-white p-4 mb-4">
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Tareas ({currentTasks.filter(t => t.done).length}/{currentTasks.length})</h3>
               <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
@@ -228,6 +314,7 @@ export default function ProjectsPage() {
                   <div key={t.id} className="group flex items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
                     <button onClick={() => toggleTask(t.id)}>{t.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}</button>
                     <span className={`flex-1 text-sm ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.title}</span>
+                    {t.assignee && <span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{t.assignee}</span>}
                     <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
                   </div>
                 ))}
@@ -237,22 +324,95 @@ export default function ProjectsPage() {
                 <button onClick={addTask} disabled={!taskInput.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+</button>
               </div>
             </div>
+            )}
 
-            {/* Notes */}
+            {/* Sections tab */}
+            {activeTab === "sections" && (
+            <div className="space-y-3 mb-4">
+              {currentSections.map(sec => (
+                <div key={sec.id} className="rounded-lg border bg-white p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold">{sec.title}</h4>
+                    <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{sec.content}</div>
+                </div>
+              ))}
+              {!showAddSection ? (
+                <button onClick={() => setShowAddSection(true)} className="w-full rounded-lg border border-dashed p-3 text-xs text-muted-foreground hover:border-brand hover:text-brand flex items-center justify-center gap-1"><Plus className="h-3 w-3" />Agregar seccion</button>
+              ) : (
+                <div className="rounded-lg border bg-white p-4 space-y-2">
+                  <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de la seccion *" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                  <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido (texto, links, listas...)" rows={4} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                  <div className="flex gap-2">
+                    <select value={sectionForm.type} onChange={e => setSectionForm({...sectionForm, type: e.target.value as ProjectSection["type"]})} className="rounded border px-2 py-1.5 text-xs"><option value="text">Texto</option><option value="list">Lista</option><option value="link">Links</option></select>
+                    <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">Guardar</button>
+                    <button onClick={() => setShowAddSection(false)} className="rounded border px-3 py-1.5 text-xs">Cancelar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            )}
+
+            {/* Files tab */}
+            {activeTab === "files" && (
+            <div className="rounded-lg border bg-white p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold uppercase text-muted-foreground">Archivos ({currentFiles.length})</h3>
+                <button onClick={addFile} className="flex items-center gap-1 rounded border px-2.5 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3 w-3" />Subir</button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {currentFiles.map(f => (
+                  <div key={f.id} className="group rounded border p-2 text-center relative">
+                    {f.data ? <img src={f.data} alt={f.name} className="w-full h-20 object-cover rounded mb-1" /> : <Paperclip className="h-8 w-8 mx-auto text-muted-foreground mb-1" />}
+                    <p className="text-[9px] truncate">{f.name}</p>
+                    <p className="text-[8px] text-muted-foreground">{f.addedAt}</p>
+                    <button onClick={() => deleteFile(f.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 rounded-full bg-red-500 text-white p-0.5"><X className="h-2.5 w-2.5" /></button>
+                  </div>
+                ))}
+              </div>
+              {currentFiles.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sin archivos. Click "Subir" para agregar.</p>}
+            </div>
+            )}
+
+            {/* Team tab */}
+            {activeTab === "team" && (
+            <div className="rounded-lg border bg-white p-4 mb-4">
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1"><Users className="h-3.5 w-3.5" />Equipo ({currentTeam.length})</h3>
+              <div className="space-y-2 mb-3">
+                {currentTeam.map(m => (
+                  <div key={m.id} className="flex items-center justify-between rounded border px-3 py-2">
+                    <div className="flex items-center gap-2"><UserPlus className="h-3.5 w-3.5 text-brand" /><span className="text-sm font-medium">{m.name}</span><span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{m.role}</span></div>
+                    <button onClick={() => removeMember(m.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input value={memberInput.name} onChange={e => setMemberInput({...memberInput, name: e.target.value})} placeholder="Nombre *" className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+                <input value={memberInput.role} onChange={e => setMemberInput({...memberInput, role: e.target.value})} placeholder="Rol" className="w-28 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+                <button onClick={addMember} disabled={!memberInput.name.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50"><Plus className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+            )}
+
+            {/* Notes tab */}
+            {activeTab === "notes" && (
             <div className="rounded-lg border bg-white p-4 mb-4">
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Notas ({currentNotes.length})</h3>
               <div className="flex gap-2 mb-3">
                 <input value={noteInput} onChange={e => setNoteInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNote(); }} placeholder="Agregar nota..." className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
                 <button onClick={addNote} disabled={!noteInput.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+</button>
               </div>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {currentNotes.map(n => (
                   <div key={n.id} className="rounded bg-gray-50 px-3 py-2 text-xs"><p className="break-all">{n.text}</p><span className="text-[9px] text-muted-foreground">{n.author} · {n.date}</span></div>
                 ))}
               </div>
             </div>
+            )}
 
-            {/* AI */}
+            {/* AI tab */}
+            {activeTab === "ai" && (
             <div className="rounded-lg border bg-white p-4">
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Bot className="h-3.5 w-3.5 text-brand" />IA del proyecto</h3>
               <div className="flex gap-2 mb-2">
@@ -261,6 +421,7 @@ export default function ProjectsPage() {
               </div>
               {aiResponse && <div className="rounded bg-gray-50 p-3 text-xs whitespace-pre-wrap break-all">{aiResponse}</div>}
             </div>
+            )}
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-muted-foreground gap-3">
