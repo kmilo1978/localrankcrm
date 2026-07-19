@@ -298,18 +298,52 @@ export default function ProjectsPage() {
               </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-1 mb-4 border-b pb-2 overflow-x-auto">
-              {([["tasks","Tareas"],["sections","Secciones"],["files","Archivos"],["team","Equipo"],["notes","Notas"],["ai","IA"]] as const).map(([k,l]) => (
-                <button key={k} onClick={() => setActiveTab(k)} className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium ${activeTab === k ? "bg-brand text-white" : "hover:bg-gray-100"}`}>{l}</button>
+            {/* === UNIFIED VIEW: everything visible together === */}
+
+            {/* Team bar */}
+            {currentTeam.length > 0 && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                {currentTeam.map(m => <span key={m.id} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">{m.name} <span className="text-brand/60">({m.role})</span></span>)}
+                <button onClick={() => { const n = prompt("Nombre:"); const r = prompt("Rol:"); if (n) { const m2: TeamMember = { id: generateId(), name: n, role: r || "Miembro" }; if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: [...sp.team, m2] } : sp) } : p)); } else { save(projects.map(p => p.id === selectedProject ? { ...p, team: [...p.team, m2] } : p)); } } }} className="rounded-full border border-dashed px-2 py-0.5 text-[10px] text-muted-foreground hover:border-brand hover:text-brand">+ Miembro</button>
+              </div>
+            )}
+            {currentTeam.length === 0 && (
+              <button onClick={() => { const n = prompt("Nombre del miembro:"); const r = prompt("Rol:"); if (n) { addMember(); setMemberInput({ name: n, role: r || "Miembro" }); } }} className="mb-4 flex items-center gap-1 rounded border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:border-brand hover:text-brand"><UserPlus className="h-3 w-3" />Agregar equipo</button>
+            )}
+
+            {/* Custom sections (personalizable) */}
+            <div className="space-y-3 mb-4">
+              {currentSections.map(sec => (
+                <div key={sec.id} className="rounded-lg border bg-white p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                      <FileText className="h-3.5 w-3.5 text-brand" />{sec.title}
+                    </h4>
+                    <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap break-words leading-relaxed">{sec.content}</div>
+                </div>
               ))}
+              {/* Add section */}
+              {!showAddSection ? (
+                <button onClick={() => setShowAddSection(true)} className="w-full rounded-lg border border-dashed p-3 text-xs text-muted-foreground hover:border-brand hover:text-brand flex items-center justify-center gap-1"><Plus className="h-3 w-3" />Agregar seccion personalizada</button>
+              ) : (
+                <div className="rounded-lg border bg-white p-4 space-y-2">
+                  <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de la seccion (ej: Objetivos, Brief, Recursos, Notas tecnicas...)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                  <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido libre (texto, links, listas, lo que quieras...)" rows={5} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                  <div className="flex gap-2">
+                    <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">Guardar seccion</button>
+                    <button onClick={() => setShowAddSection(false)} className="rounded border px-3 py-1.5 text-xs">Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Tasks tab */}
-            {activeTab === "tasks" && (
+            {/* Tasks */}
             <div className="rounded-lg border bg-white p-4 mb-4">
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Tareas ({currentTasks.filter(t => t.done).length}/{currentTasks.length})</h3>
-              <div className="space-y-1 mb-3 max-h-48 overflow-y-auto">
+              <div className="space-y-1 mb-3 max-h-60 overflow-y-auto">
                 {currentTasks.map(t => (
                   <div key={t.id} className="group flex items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
                     <button onClick={() => toggleTask(t.id)}>{t.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}</button>
@@ -324,104 +358,53 @@ export default function ProjectsPage() {
                 <button onClick={addTask} disabled={!taskInput.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+</button>
               </div>
             </div>
-            )}
 
-            {/* Sections tab */}
-            {activeTab === "sections" && (
-            <div className="space-y-3 mb-4">
-              {currentSections.map(sec => (
-                <div key={sec.id} className="rounded-lg border bg-white p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold">{sec.title}</h4>
-                    <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
-                  </div>
-                  <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words">{sec.content}</div>
-                </div>
-              ))}
-              {!showAddSection ? (
-                <button onClick={() => setShowAddSection(true)} className="w-full rounded-lg border border-dashed p-3 text-xs text-muted-foreground hover:border-brand hover:text-brand flex items-center justify-center gap-1"><Plus className="h-3 w-3" />Agregar seccion</button>
-              ) : (
-                <div className="rounded-lg border bg-white p-4 space-y-2">
-                  <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de la seccion *" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                  <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido (texto, links, listas...)" rows={4} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                  <div className="flex gap-2">
-                    <select value={sectionForm.type} onChange={e => setSectionForm({...sectionForm, type: e.target.value as ProjectSection["type"]})} className="rounded border px-2 py-1.5 text-xs"><option value="text">Texto</option><option value="list">Lista</option><option value="link">Links</option></select>
-                    <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">Guardar</button>
-                    <button onClick={() => setShowAddSection(false)} className="rounded border px-3 py-1.5 text-xs">Cancelar</button>
-                  </div>
+            {/* Files */}
+            {(currentFiles.length > 0 || true) && (
+            <div className="rounded-lg border bg-white p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1"><Paperclip className="h-3 w-3" />Archivos ({currentFiles.length})</h3>
+                <button onClick={addFile} className="flex items-center gap-1 rounded border px-2 py-1 text-[10px] hover:bg-gray-50"><ImagePlus className="h-3 w-3" />Subir</button>
+              </div>
+              {currentFiles.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {currentFiles.map(f => (
+                    <div key={f.id} className="group relative rounded border p-1.5 w-20">
+                      {f.data ? <img src={f.data} alt={f.name} className="w-full h-14 object-cover rounded" /> : <Paperclip className="h-6 w-6 mx-auto text-muted-foreground" />}
+                      <p className="text-[8px] truncate mt-0.5">{f.name}</p>
+                      <button onClick={() => deleteFile(f.id)} className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 rounded-full bg-red-500 text-white p-0.5"><X className="h-2 w-2" /></button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
             )}
 
-            {/* Files tab */}
-            {activeTab === "files" && (
-            <div className="rounded-lg border bg-white p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold uppercase text-muted-foreground">Archivos ({currentFiles.length})</h3>
-                <button onClick={addFile} className="flex items-center gap-1 rounded border px-2.5 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3 w-3" />Subir</button>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {currentFiles.map(f => (
-                  <div key={f.id} className="group rounded border p-2 text-center relative">
-                    {f.data ? <img src={f.data} alt={f.name} className="w-full h-20 object-cover rounded mb-1" /> : <Paperclip className="h-8 w-8 mx-auto text-muted-foreground mb-1" />}
-                    <p className="text-[9px] truncate">{f.name}</p>
-                    <p className="text-[8px] text-muted-foreground">{f.addedAt}</p>
-                    <button onClick={() => deleteFile(f.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 rounded-full bg-red-500 text-white p-0.5"><X className="h-2.5 w-2.5" /></button>
-                  </div>
-                ))}
-              </div>
-              {currentFiles.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Sin archivos. Click "Subir" para agregar.</p>}
-            </div>
-            )}
-
-            {/* Team tab */}
-            {activeTab === "team" && (
-            <div className="rounded-lg border bg-white p-4 mb-4">
-              <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-1"><Users className="h-3.5 w-3.5" />Equipo ({currentTeam.length})</h3>
-              <div className="space-y-2 mb-3">
-                {currentTeam.map(m => (
-                  <div key={m.id} className="flex items-center justify-between rounded border px-3 py-2">
-                    <div className="flex items-center gap-2"><UserPlus className="h-3.5 w-3.5 text-brand" /><span className="text-sm font-medium">{m.name}</span><span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{m.role}</span></div>
-                    <button onClick={() => removeMember(m.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input value={memberInput.name} onChange={e => setMemberInput({...memberInput, name: e.target.value})} placeholder="Nombre *" className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
-                <input value={memberInput.role} onChange={e => setMemberInput({...memberInput, role: e.target.value})} placeholder="Rol" className="w-28 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
-                <button onClick={addMember} disabled={!memberInput.name.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50"><Plus className="h-3.5 w-3.5" /></button>
-              </div>
-            </div>
-            )}
-
-            {/* Notes tab */}
-            {activeTab === "notes" && (
+            {/* Notes */}
             <div className="rounded-lg border bg-white p-4 mb-4">
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Notas ({currentNotes.length})</h3>
-              <div className="flex gap-2 mb-3">
-                <input value={noteInput} onChange={e => setNoteInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNote(); }} placeholder="Agregar nota..." className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+              <div className="flex gap-2 mb-2">
+                <input value={noteInput} onChange={e => setNoteInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNote(); }} placeholder="Agregar nota rapida..." className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
                 <button onClick={addNote} disabled={!noteInput.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+</button>
               </div>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                {currentNotes.map(n => (
-                  <div key={n.id} className="rounded bg-gray-50 px-3 py-2 text-xs"><p className="break-all">{n.text}</p><span className="text-[9px] text-muted-foreground">{n.author} · {n.date}</span></div>
-                ))}
-              </div>
+              {currentNotes.length > 0 && (
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {currentNotes.map(n => (
+                    <div key={n.id} className="rounded bg-gray-50 px-2.5 py-1.5 text-xs break-all"><span>{n.text}</span> <span className="text-[9px] text-muted-foreground">— {n.author}, {n.date}</span></div>
+                  ))}
+                </div>
+              )}
             </div>
-            )}
 
-            {/* AI tab */}
-            {activeTab === "ai" && (
+            {/* AI */}
             <div className="rounded-lg border bg-white p-4">
-              <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Bot className="h-3.5 w-3.5 text-brand" />IA del proyecto</h3>
-              <div className="flex gap-2 mb-2">
-                <input value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") askAI(); }} placeholder="Pregunta sobre el proyecto..." className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Bot className="h-3.5 w-3.5 text-brand" />Preguntale a la IA</h3>
+              <div className="flex gap-2">
+                <input value={aiInput} onChange={e => setAiInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") askAI(); }} placeholder="Progreso? Tareas pendientes? Equipo?" className="flex-1 rounded border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
                 <button onClick={askAI} disabled={!aiInput.trim()} className="rounded bg-brand p-1.5 text-white hover:bg-brand-hover disabled:opacity-50"><Send className="h-3.5 w-3.5" /></button>
               </div>
-              {aiResponse && <div className="rounded bg-gray-50 p-3 text-xs whitespace-pre-wrap break-all">{aiResponse}</div>}
+              {aiResponse && <div className="mt-2 rounded bg-gray-50 p-3 text-xs whitespace-pre-wrap break-all">{aiResponse}</div>}
             </div>
-            )}
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-muted-foreground gap-3">
