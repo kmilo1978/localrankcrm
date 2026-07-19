@@ -304,13 +304,16 @@ export default function ProjectsPage() {
             {currentTeam.length > 0 && (
               <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                {currentTeam.map(m => <span key={m.id} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">{m.name} <span className="text-brand/60">({m.role})</span></span>)}
-                <button onClick={() => { const n = prompt("Nombre:"); const r = prompt("Rol:"); if (n) { const m2: TeamMember = { id: generateId(), name: n, role: r || "Miembro" }; if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: [...sp.team, m2] } : sp) } : p)); } else { save(projects.map(p => p.id === selectedProject ? { ...p, team: [...p.team, m2] } : p)); } } }} className="rounded-full border border-dashed px-2 py-0.5 text-[10px] text-muted-foreground hover:border-brand hover:text-brand">+ Miembro</button>
+                {currentTeam.map(m => <span key={m.id} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand flex items-center gap-1">{m.name} <span className="text-brand/60">({m.role})</span><button onClick={() => removeMember(m.id)} className="ml-0.5 text-red-400 hover:text-red-600"><X className="h-2.5 w-2.5" /></button></span>)}
               </div>
             )}
-            {currentTeam.length === 0 && (
-              <button onClick={() => { const n = prompt("Nombre del miembro:"); const r = prompt("Rol:"); if (n) { addMember(); setMemberInput({ name: n, role: r || "Miembro" }); } }} className="mb-4 flex items-center gap-1 rounded border border-dashed px-3 py-1.5 text-xs text-muted-foreground hover:border-brand hover:text-brand"><UserPlus className="h-3 w-3" />Agregar equipo</button>
-            )}
+            {/* Add team member inline form */}
+            <div className="mb-4 flex items-center gap-2 flex-wrap">
+              <UserPlus className="h-3.5 w-3.5 text-muted-foreground" />
+              <input value={memberInput.name} onChange={e => setMemberInput({...memberInput, name: e.target.value})} placeholder="Nombre" className="rounded border px-2 py-1 text-xs w-32 focus:border-brand focus:outline-none" />
+              <input value={memberInput.role} onChange={e => setMemberInput({...memberInput, role: e.target.value})} placeholder="Rol" className="rounded border px-2 py-1 text-xs w-24 focus:border-brand focus:outline-none" />
+              <button onClick={addMember} disabled={!memberInput.name.trim()} className="rounded bg-brand px-2 py-1 text-xs text-white hover:bg-brand-hover disabled:opacity-50">Agregar</button>
+            </div>
 
             {/* Custom sections (personalizable) */}
             <div className="space-y-3 mb-4">
@@ -325,19 +328,12 @@ export default function ProjectsPage() {
                   <div className="text-sm text-gray-700 whitespace-pre-wrap break-words leading-relaxed">{sec.content}</div>
                 </div>
               ))}
-              {/* Add section */}
-              {!showAddSection ? (
-                <button onClick={() => setShowAddSection(true)} className="w-full rounded-lg border border-dashed p-3 text-xs text-muted-foreground hover:border-brand hover:text-brand flex items-center justify-center gap-1"><Plus className="h-3 w-3" />Agregar seccion personalizada</button>
-              ) : (
-                <div className="rounded-lg border bg-white p-4 space-y-2">
-                  <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de la seccion (ej: Objetivos, Brief, Recursos, Notas tecnicas...)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                  <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido libre (texto, links, listas, lo que quieras...)" rows={5} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                  <div className="flex gap-2">
-                    <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">Guardar seccion</button>
-                    <button onClick={() => setShowAddSection(false)} className="rounded border px-3 py-1.5 text-xs">Cancelar</button>
-                  </div>
-                </div>
-              )}
+              {/* Add section — always visible */}
+              <div className="rounded-lg border border-dashed bg-gray-50/50 p-3 space-y-2">
+                <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de seccion (ej: Objetivos, Brief, Recursos...)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido libre (texto, links, listas...)" rows={3} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+ Agregar seccion</button>
+              </div>
             </div>
 
             {/* Tasks */}
