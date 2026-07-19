@@ -80,11 +80,46 @@ export default function ColdContactsPage() {
   const [sortBy, setSortBy] = useState<"score" | "reviews" | "rating">("score");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showExtLeads, setShowExtLeads] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickForm, setQuickForm] = useState({ name: "", phone: "", website: "", category: "", notes: "" });
+  const [extLeads, setExtLeads] = useState<Record<string, unknown>[]>([]);
   const [fieldForms, setFieldForms] = useState<Record<string, { label: string; value: string }>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setContacts(loadFromStorage("cold_contacts", IMPORTED_DATA)); }, []);
+  // Load extension leads from localStorage (synced by content script)
+  useEffect(() => {
+    try { setExtLeads(JSON.parse(localStorage.getItem("extension_leads") || "[]")); } catch { setExtLeads([]); }
+  }, []);
   function save(u: ColdContact[]) { setContacts(u); saveToStorage("cold_contacts", u); }
+
+  function quickAddContact() {
+    if (!quickForm.name.trim()) return;
+    const c: ColdContact = { id: generateId(), name: quickForm.name, phone: quickForm.phone, website: quickForm.website, category: quickForm.category || "General", rating: 0, reviews: 0, address: "", description: "", clase: "", motivo: "", score: 50, stageId: "cs1", notes: quickForm.notes, addedAt: new Date().toISOString().split("T")[0]!, customFields: [], outreachChannel: "", followUps: [] };
+    save([c, ...contacts]);
+    setQuickForm({ name: "", phone: "", website: "", category: "", notes: "" });
+    setShowQuickAdd(false);
+  }
+
+  function importExtLead(lead: Record<string, unknown>) {
+    const c: ColdContact = { id: generateId(), name: (lead.company as string) || (lead.title as string) || "Sin nombre", phone: ((lead.phones as string[]) || [])[0] || "", website: (lead.url as string) || "", category: (lead.category as string) || "General", rating: 0, reviews: 0, address: "", description: (lead.description as string) || "", clase: "", motivo: "", score: (lead.score as number) || 50, stageId: "cs1", notes: "Importado desde extension", addedAt: new Date().toISOString().split("T")[0]!, customFields: [], outreachChannel: "", followUps: [] };
+    save([c, ...contacts]);
+    // Remove from extension leads
+    const updated = extLeads.filter(l => l.id !== lead.id);
+    setExtLeads(updated);
+    localStorage.setItem("extension_leads", JSON.stringify(updated));
+  }
+
+  function importAllExtLeads() {
+    const newContacts = extLeads.map((lead) => ({
+      id: generateId(), name: (lead.company as string) || (lead.title as string) || "Sin nombre", phone: ((lead.phones as string[]) || [])[0] || "", website: (lead.url as string) || "", category: (lead.category as string) || "General", rating: 0, reviews: 0, address: "", description: "", clase: "", motivo: "", score: (lead.score as number) || 50, stageId: "cs1", notes: "Importado desde extension", addedAt: new Date().toISOString().split("T")[0]!, customFields: [], outreachChannel: "", followUps: [],
+    } as ColdContact));
+    save([...newContacts, ...contacts]);
+    setExtLeads([]);
+    localStorage.setItem("extension_leads", "[]");
+    setShowExtLeads(false);
+  }
 
   function moveStage(contactId: string, stageId: string) {
     save(contacts.map((c) => c.id === contactId ? { ...c, stageId } : c));
@@ -225,6 +260,14 @@ export default function ColdContactsPage() {
             <button onClick={() => setShowImport(!showImport)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
               <Upload className="h-4 w-4" />Importar archivo
             </button>
+            <button onClick={() => setShowQuickAdd(!showQuickAdd)} className="flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50">
+              <Plus className="h-3.5 w-3.5" />Agregar uno
+            </button>
+            {extLeads.length > 0 && (
+              <button onClick={() => setShowExtLeads(!showExtLeads)} className="flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100">
+                <Download className="h-3.5 w-3.5" />Extension ({extLeads.length})
+              </button>
+            )}
           </div>
         </div>
 
@@ -241,6 +284,42 @@ export default function ColdContactsPage() {
               <button onClick={() => fileRef.current?.click()} className="rounded-md border bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 flex items-center gap-2">
                 <Download className="h-4 w-4" />Seleccionar archivo
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add one contact */}
+        {showQuickAdd && (
+          <div className="mt-4 rounded-lg border bg-white p-4">
+            <h4 className="text-sm font-semibold mb-3">Agregar contacto manualmente</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <input value={quickForm.name} onChange={e => setQuickForm({...quickForm, name: e.target.value})} placeholder="Nombre / Empresa *" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={quickForm.phone} onChange={e => setQuickForm({...quickForm, phone: e.target.value})} placeholder="Telefono" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={quickForm.website} onChange={e => setQuickForm({...quickForm, website: e.target.value})} placeholder="Website / URL" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={quickForm.category} onChange={e => setQuickForm({...quickForm, category: e.target.value})} placeholder="Categoria" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={quickForm.notes} onChange={e => setQuickForm({...quickForm, notes: e.target.value})} placeholder="Notas" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <button onClick={quickAddContact} disabled={!quickForm.name.trim()} className="rounded bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50">Agregar</button>
+            </div>
+          </div>
+        )}
+
+        {/* Extension leads */}
+        {showExtLeads && extLeads.length > 0 && (
+          <div className="mt-4 rounded-lg border border-green-200 bg-green-50/50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-green-800">Leads desde la extension ({extLeads.length})</h4>
+              <button onClick={importAllExtLeads} className="rounded bg-green-600 px-3 py-1.5 text-xs text-white hover:bg-green-700">Importar todos</button>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {extLeads.map((lead, i) => (
+                <div key={i} className="flex items-center justify-between rounded border border-green-200 bg-white px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{(lead.company as string) || (lead.title as string) || "Sin nombre"}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{(lead.url as string) || ""} · Score: {(lead.score as number) || 0}</p>
+                  </div>
+                  <button onClick={() => importExtLead(lead)} className="shrink-0 rounded bg-brand px-2.5 py-1 text-[10px] text-white hover:bg-brand-hover">Importar</button>
+                </div>
+              ))}
             </div>
           </div>
         )}

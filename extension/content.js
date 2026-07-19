@@ -164,3 +164,36 @@
     });
   }
 })();
+
+
+// ============ CRM SYNC: Write leads to CRM localStorage ============
+// When the user visits the CRM domain, push all saved clips into CRM's localStorage
+(function syncToCRM() {
+  var crmDomains = ["localrankcrm-livid.vercel.app", "localhost"];
+  var currentHost = window.location.hostname;
+
+  // Only run on CRM domain
+  if (!crmDomains.some(function(d) { return currentHost.includes(d); })) return;
+
+  // Get clips from chrome.storage and inject into page localStorage
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(["radar_clips"], function(result) {
+      var clips = result.radar_clips || [];
+      if (clips.length === 0) return;
+
+      // Read existing extension leads from CRM localStorage
+      var existing = [];
+      try { existing = JSON.parse(localStorage.getItem("extension_leads") || "[]"); } catch(e) {}
+
+      // Merge: add new clips that don't exist yet (by id)
+      var existingIds = new Set(existing.map(function(l) { return l.id; }));
+      var newLeads = clips.filter(function(c) { return !existingIds.has(c.id); });
+
+      if (newLeads.length > 0) {
+        var merged = newLeads.concat(existing);
+        localStorage.setItem("extension_leads", JSON.stringify(merged));
+        console.log("[LocalRank Radar] Synced " + newLeads.length + " new leads to CRM");
+      }
+    });
+  }
+})();
