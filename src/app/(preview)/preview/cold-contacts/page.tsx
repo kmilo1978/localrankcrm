@@ -131,6 +131,14 @@ export default function ColdContactsPage() {
 
   function deleteContact(id: string) { save(contacts.filter((c) => c.id !== id)); }
 
+  function sendToPipeline(contact: ColdContact) {
+    const leads = JSON.parse(localStorage.getItem("pipeline_leads") || "[]");
+    const exists = leads.some((l: { name: string }) => l.name === contact.name);
+    if (exists) return;
+    leads.unshift({ id: Date.now().toString(), name: contact.name, company: contact.category || contact.website, value: "$0", stageId: "s1" });
+    localStorage.setItem("pipeline_leads", JSON.stringify(leads));
+  }
+
   function getFieldForm(id: string) { return fieldForms[id] || { label: "", value: "" }; }
   function setFieldForm(id: string, data: { label: string; value: string }) { setFieldForms((p) => ({ ...p, [id]: data })); }
   function addCustomField(contactId: string) {
@@ -419,6 +427,7 @@ export default function ColdContactsPage() {
                     <select value={contact.stageId} onChange={(e) => { e.stopPropagation(); moveStage(contact.id, e.target.value); }} onClick={(e) => e.stopPropagation()} className="rounded border px-2 py-1 text-xs focus:outline-none">
                       {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
+                    <button onClick={(e) => { e.stopPropagation(); sendToPipeline(contact); }} className="rounded px-2 py-1 text-[10px] text-green-600 border border-green-200 hover:bg-green-50">Pipeline</button>
                     <button onClick={(e) => { e.stopPropagation(); deleteContact(contact.id); }} className="rounded p-1 hover:bg-red-50 text-muted-foreground hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
                   </div>
                   {isExp && (

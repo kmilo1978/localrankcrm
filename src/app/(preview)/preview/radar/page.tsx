@@ -167,6 +167,22 @@ export default function RadarPage() {
     .filter((c) => filterTag === "all" || c.tags.includes(filterTag))
     .filter((c) => !search || c.title.toLowerCase().includes(search.toLowerCase()) || c.url.toLowerCase().includes(search.toLowerCase()) || c.notes.toLowerCase().includes(search.toLowerCase()));
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 12;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Send to Pipeline
+  function sendToPipeline(clip: WebClip) {
+    const leads = JSON.parse(localStorage.getItem("pipeline_leads") || "[]");
+    const exists = leads.some((l: { name: string }) => l.name === clip.title);
+    if (exists) { setCopyMsg("Ya existe en pipeline"); return; }
+    leads.unshift({ id: Date.now().toString(), name: clip.title, company: clip.description || clip.url, value: "$0", stageId: "s1" });
+    localStorage.setItem("pipeline_leads", JSON.stringify(leads));
+    setCopyMsg("Enviado a Pipeline");
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-5xl">
@@ -231,7 +247,7 @@ export default function RadarPage() {
 
         {/* Clips grid */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((clip) => {
+          {paginated.map((clip) => {
             const folder = folders.find((f) => f.id === clip.folderId);
             return (
               <div key={clip.id} className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow">
@@ -241,6 +257,7 @@ export default function RadarPage() {
                     <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate text-brand hover:underline">{clip.title}</a>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                    <button onClick={() => sendToPipeline(clip)} className="text-muted-foreground hover:text-green-600" title="Enviar a Pipeline"><Plus className="h-3.5 w-3.5" /></button>
                     <button onClick={() => copyClip(clip)} className="text-muted-foreground hover:text-brand" title="Copiar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
                     <button onClick={() => copyClipJSON(clip)} className="text-muted-foreground hover:text-brand" title="Copiar JSON"><Tag className="h-3.5 w-3.5" /></button>
                     <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand"><ExternalLink className="h-3.5 w-3.5" /></a>
@@ -266,6 +283,15 @@ export default function RadarPage() {
         </div>
 
         {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground text-sm">Sin clips guardados. Usa el botón "Guardar página" o la extensión del navegador.</div>}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Anterior</button>
+            <span className="text-xs text-muted-foreground">Pagina {page} de {totalPages} ({filtered.length} clips)</span>
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Siguiente</button>
+          </div>
+        )}
 
         {/* Copy/paste notification */}
         {copyMsg && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{copyMsg}</div>}
