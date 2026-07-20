@@ -206,15 +206,28 @@ export function AppNav({
       )}>
         {/* Mobile close button */}
         <button onClick={() => setMobileOpen(false)} className="absolute right-2 top-2 rounded p-1 text-white/60 hover:text-white md:hidden"><X className="h-5 w-5" /></button>
-      {/* Brand white-label */}
+      {/* Brand white-label + theme toggle */}
       <div className="mb-6 flex items-center gap-2.5 px-3">
         <img src="/icon.svg" alt={branding.name} className="h-[32px] w-[32px] shrink-0" />
-        <span className="min-w-0">
+        <span className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-[700] leading-tight tracking-tight text-white">
             {branding.name}
           </span>
           <span className="block text-[11px] text-white/60">{activeWsName || "Enterprise CRM"}</span>
         </span>
+        <button
+          onClick={() => {
+            const root = document.documentElement;
+            const isDark = root.classList.contains("dark");
+            if (isDark) { root.classList.remove("dark"); localStorage.setItem("localrank_appearance_config", JSON.stringify({ theme: "light", language: "es" })); }
+            else { root.classList.add("dark"); localStorage.setItem("localrank_appearance_config", JSON.stringify({ theme: "dark", language: "es" })); }
+          }}
+          className="rounded-full p-1.5 text-white/40 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+          title="Cambiar tema claro/oscuro"
+        >
+          <svg className="h-4 w-4 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg className="h-4 w-4 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
       </div>
 
       <nav className="flex flex-col gap-0.5 overflow-y-auto">
