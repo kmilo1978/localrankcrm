@@ -96,6 +96,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
     { href: "/scoring", label: "Scoring", icon: Star },
     { href: "/ai-builder", label: "Constructor IA", icon: Bot },
+    { href: "/ai-quoter", label: "Cotizador IA", icon: FileText },
   ]},
   { label: "Operación", items: [
     { href: "/projects", label: "Proyectos", icon: FolderKanban },

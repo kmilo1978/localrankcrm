@@ -1,2 +1,13 @@
+# LocalRank CRM — No indexar (SaaS privado)
 User-agent: *
 Disallow: /
+
+# Bloquear todos los crawlers
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+# Solo permitir la landing page si la tienes
+# Allow: /landing

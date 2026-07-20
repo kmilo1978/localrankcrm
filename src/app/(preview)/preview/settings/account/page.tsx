@@ -1,11 +1,31 @@
 "use client";
-import { useState } from "react";
-import { AlertTriangle, Download, Trash2, UserX } from "lucide-react";
+import { useState, useRef } from "react";
+import { AlertTriangle, Download, Upload, Trash2, UserX } from "lucide-react";
 
 export default function AccountSettingsPage() {
   const [showDelete, setShowDelete] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleted, setDeleted] = useState(false);
+  const [importStatus, setImportStatus] = useState("");
+  const importRef = useRef<HTMLInputElement>(null);
+
+  function handleImportData(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        Object.entries(data).forEach(([key, value]) => {
+          if (key.startsWith("localrank_")) localStorage.setItem(key, JSON.stringify(value));
+        });
+        setImportStatus(`✅ Backup restaurado (${Object.keys(data).length} elementos)`);
+        setTimeout(() => { setImportStatus(""); window.location.reload(); }, 2000);
+      } catch { setImportStatus("❌ Archivo inválido. Debe ser un backup JSON de LocalRank CRM."); setTimeout(() => setImportStatus(""), 3000); }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
 
   function handleExportData() {
     const data: Record<string, unknown> = {};
@@ -51,11 +71,16 @@ export default function AccountSettingsPage() {
         <p className="text-sm text-muted-foreground">Gestiona tu cuenta, exporta datos o elimina todo.</p>
       </div>
 
-      {/* Export Data */}
+      {/* Export & Import Data */}
       <div className="rounded-lg border p-5">
-        <h4 className="text-sm font-semibold mb-1 flex items-center gap-2"><Download className="h-4 w-4 text-brand" />Exportar datos</h4>
-        <p className="text-xs text-muted-foreground mb-3">Descarga un backup completo de todos tus datos del CRM (contactos, tareas, notas, pipeline, configuracion) en formato JSON.</p>
-        <button onClick={handleExportData} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Descargar backup (JSON)</button>
+        <h4 className="text-sm font-semibold mb-1 flex items-center gap-2"><Download className="h-4 w-4 text-brand" />Copias de seguridad</h4>
+        <p className="text-xs text-muted-foreground mb-4">Descarga o restaura un backup completo de todos los datos del CRM (contactos, tareas, notas, pipeline, configuración) en formato JSON.</p>
+        <div className="flex gap-3 flex-wrap">
+          <button onClick={handleExportData} className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Download className="h-3.5 w-3.5" />Exportar backup</button>
+          <input ref={importRef} type="file" accept=".json" onChange={handleImportData} className="hidden" />
+          <button onClick={() => importRef.current?.click()} className="flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50"><Upload className="h-3.5 w-3.5" />Restaurar backup</button>
+        </div>
+        {importStatus && <p className="mt-2 text-xs">{importStatus}</p>}
       </div>
 
       {/* Delete Users */}

@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
         { key: "X-Frame-Options", value: "SAMEORIGIN" },
         { key: "X-XSS-Protection", value: "1; mode=block" },
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
       ],
     },
   ],

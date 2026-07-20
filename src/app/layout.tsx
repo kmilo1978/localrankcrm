@@ -24,6 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: ["CRM", "ventas", "prospección", "WhatsApp Business", "pipeline", "leads", "inteligencia artificial", "automatización", "omnicanal", "LocalRank"],
     authors: [{ name: "LocalRank" }],
     creator: "LocalRank",
+    robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
     openGraph: {
       type: "website",
       locale: "es_CO",
