@@ -54,7 +54,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!resetEmail.trim()) return;
     try {
-      await authClient.forgetPassword({ email: resetEmail, redirectTo: "/login" });
+      await authClient.resetPassword({ email: resetEmail, redirectTo: "/login" });
       setResetSent(true);
     } catch {
       setResetSent(true); // Don't reveal if email exists
