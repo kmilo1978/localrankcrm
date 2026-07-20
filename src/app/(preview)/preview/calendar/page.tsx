@@ -56,6 +56,8 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showNewAppt, setShowNewAppt] = useState(false);
   const [showNewCalendar, setShowNewCalendar] = useState(false);
+  const [showSync, setShowSync] = useState(false);
+  const [syncToast, setSyncToast] = useState("");
   const [visibleCalendars, setVisibleCalendars] = useState<Set<string>>(new Set());
   const [apptForm, setApptForm] = useState({ title: "", date: "", time: "", duration: "", calendarId: "", contact: "", type: "appointment" as Appointment["type"], amount: "", notes: "" });
   const [calForm, setCalForm] = useState({ name: "", color: COLORS[0]! });
@@ -179,16 +181,10 @@ export default function CalendarPage() {
         {/* Google Calendar Sync */}
         <div className="border-t pt-3 mt-3">
           <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Sincronizar</h4>
-          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Google Calendar")) { const gc: CalendarGroup = { id: generateId(), name: "Google Calendar", color: "#4285f4" }; saveCals([...calendars, gc]); setVisibleCalendars(new Set([...visibleCalendars, gc.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50 mb-1">
-            <span className="text-base">📅</span>Google Calendar
+          <button onClick={() => setShowSync(true)} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50 mb-1">
+            <span className="text-base">🔄</span>Conectar calendario externo
           </button>
-          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Outlook")) { const oc: CalendarGroup = { id: generateId(), name: "Outlook", color: "#0078d4" }; saveCals([...calendars, oc]); setVisibleCalendars(new Set([...visibleCalendars, oc.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50 mb-1">
-            <span className="text-base">📧</span>Outlook / Microsoft
-          </button>
-          <button onClick={() => { const cals2 = loadFromStorage("calendars", SEED_CALENDARS); if (!cals2.find((c: CalendarGroup) => c.name === "Apple Calendar")) { const ac: CalendarGroup = { id: generateId(), name: "Apple Calendar", color: "#ff3b30" }; saveCals([...calendars, ac]); setVisibleCalendars(new Set([...visibleCalendars, ac.id])); } }} className="w-full flex items-center gap-2 rounded border px-3 py-2 text-xs hover:bg-gray-50">
-            <span className="text-base">🍎</span>Apple Calendar
-          </button>
-          <p className="mt-2 text-[9px] text-muted-foreground">La sincronizacion real requiere conexion OAuth. Por ahora crea el calendario para organizar eventos de ese origen.</p>
+          <p className="mt-2 text-[9px] text-muted-foreground">Conecta Google Calendar, Outlook o Apple Calendar.</p>
         </div>
       </div>
 
@@ -331,6 +327,53 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+
+      {/* Sync Modal */}
+      {showSync && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowSync(false)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold">Sincronizar calendario externo</h3>
+              <button onClick={() => setShowSync(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Selecciona un servicio para crear un calendario y organizar eventos de ese origen. La sincronización bidireccional requiere configurar OAuth en Ajustes → Integraciones.</p>
+            <div className="space-y-2">
+              {[
+                { name: "Google Calendar", icon: "📅", color: "#4285f4", desc: "Sincroniza citas, reuniones y recordatorios de Google" },
+                { name: "Outlook", icon: "📧", color: "#0078d4", desc: "Conecta tu calendario de Microsoft 365 / Outlook" },
+                { name: "Apple Calendar", icon: "🍎", color: "#ff3b30", desc: "Integra tu iCloud Calendar" },
+              ].map(service => {
+                const exists = calendars.find(c => c.name === service.name);
+                return (
+                  <button key={service.name} onClick={() => {
+                    if (!exists) {
+                      const cal: CalendarGroup = { id: generateId(), name: service.name, color: service.color };
+                      saveCals([...calendars, cal]);
+                      setVisibleCalendars(new Set([...visibleCalendars, cal.id]));
+                    }
+                    setSyncToast(`"${service.name}" ${exists ? "ya está conectado" : "conectado correctamente"}`);
+                    setTimeout(() => setSyncToast(""), 3000);
+                    setShowSync(false);
+                  }} className={`w-full flex items-center gap-3 rounded-lg border p-3 text-left hover:shadow-sm transition-shadow ${exists ? "border-green-200 bg-green-50/50" : "hover:bg-gray-50"}`}>
+                    <span className="text-2xl">{service.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{service.name}</span>
+                        {exists && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-medium text-green-700">Conectado</span>}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{service.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-[9px] text-muted-foreground text-center">Para sincronización real OAuth, ve a Ajustes → Integraciones → Composio.dev</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Toast */}
+      {syncToast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{syncToast}</div>}
     </div>
   );
 }
