@@ -43,6 +43,10 @@ export default function VaultPage() {
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState("");
 
+  // Change master password modal
+  const [showChangeMaster, setShowChangeMaster] = useState(false);
+  const [newMasterPass, setNewMasterPass] = useState("");
+
   // Key generator state
   const [genOpen, setGenOpen] = useState(false);
   const [genLength, setGenLength] = useState(16);
@@ -181,7 +185,7 @@ export default function VaultPage() {
           </div>
           <div className="flex gap-2">
             <button onClick={lockVault} className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50 text-amber-700 border-amber-200 bg-amber-50"><Lock className="h-3.5 w-3.5" />Bloquear</button>
-            <button onClick={() => { const p = prompt("Nueva clave maestra:"); if (p) setMasterPassword(p); }} className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Key className="h-3.5 w-3.5" />Cambiar clave</button>
+            <button onClick={() => { setNewMasterPass(""); setShowChangeMaster(true); }} className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Key className="h-3.5 w-3.5" />Cambiar clave</button>
             <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" />Agregar</button>
           </div>
         </div>
@@ -322,6 +326,33 @@ export default function VaultPage() {
               </div>
               <button onClick={editItem ? handleUpdate : addItem} disabled={!form.title.trim()} className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">{editItem ? "Guardar cambios" : "Guardar en boveda"}</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Master Password Modal */}
+      {showChangeMaster && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl mx-4">
+            <div className="flex justify-between mb-4">
+              <h3 className="text-sm font-bold flex items-center gap-2"><Key className="h-4 w-4 text-brand" />Cambiar clave maestra</h3>
+              <button onClick={() => setShowChangeMaster(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">Ingresa tu nueva clave maestra. Se usara para proteger la boveda.</p>
+            <input
+              type="password"
+              value={newMasterPass}
+              onChange={e => setNewMasterPass(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && newMasterPass.trim()) { setMasterPassword(newMasterPass.trim()); setShowChangeMaster(false); } }}
+              placeholder="Nueva clave maestra"
+              className="w-full rounded-lg border px-4 py-3 text-sm focus:border-brand focus:outline-none mb-3"
+              autoFocus
+            />
+            <button
+              onClick={() => { if (newMasterPass.trim()) { setMasterPassword(newMasterPass.trim()); setShowChangeMaster(false); } }}
+              disabled={!newMasterPass.trim()}
+              className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+            >Guardar nueva clave</button>
           </div>
         </div>
       )}
