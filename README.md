@@ -99,6 +99,74 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 
 ---
 
+## Arquitectura del Menú
+
+```
+├── Dashboard
+├── Prospección
+│   ├── Radar
+│   ├── Lead Finder B2B
+│   ├── Prospección (Cold Contacts)
+│   ├── Email Finder
+│   ├── Enriquecimiento
+│   ├── Social Outreach
+│   ├── Formularios
+│   ├── Importar
+│   └── Proveedores
+├── CRM & Ventas
+│   ├── Contactos
+│   ├── Compañías
+│   ├── Oportunidades
+│   ├── Pipeline
+│   ├── Tareas
+│   ├── Calendario
+│   ├── Focus
+│   ├── Propuestas
+│   └── Cartera
+├── Conversaciones
+│   ├── Conversaciones (inbox)
+│   ├── Omnicanal
+│   ├── Plantillas
+│   ├── Resp. Rápidas
+│   └── Scheduler
+├── Automatización & IA
+│   ├── IA & Automatización
+│   ├── Automatizaciones
+│   ├── Secuencias
+│   ├── Flows
+│   ├── Lead Routing
+│   ├── Scoring
+│   └── Constructor IA
+├── Operación
+│   ├── Proyectos
+│   ├── Checklists
+│   ├── Recordatorios
+│   ├── To-Do
+│   ├── Notas
+│   └── Etiquetas
+├── Equipo & Espacios
+│   ├── Equipo
+│   ├── Chat interno
+│   ├── Workspace
+│   └── Bóveda
+├── Datos & Control
+│   ├── Analytics
+│   ├── Archivos & IA
+│   ├── OCR
+│   ├── Auditoría
+│   ├── Acortador URL
+│   └── Laboratorio
+└── Ajustes
+    ├── Canales (WhatsApp, SMS, Email Marketing)
+    ├── Integraciones (IA/APIs, MCP, Conectores, Webhooks)
+    ├── Tracking (Pixels & UTM)
+    ├── Personalización (Marca, Apariencia)
+    ├── Organización (Equipo, Cuenta)
+    └── Regional (Moneda)
+```
+
+---
+
 ## Personalización
 
 | Feature | Descripción |
@@ -120,16 +188,15 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **WhatsApp** | Cloud API + Coexistencia QR, webhook config |
 | **IA / APIs** | 15 proveedores: OpenRouter, NVIDIA, Claude, Gemini, Grok, Mistral, DeepSeek, Cohere, Groq, Together, Fireworks, Perplexity, OmniRouter, 9Router |
 | **Marca (White-Label)** | Logo principal/compacto/favicon, paleta HEX (6 presets), tipografías, custom domain, subdominios por tenant, ocultar branding, legal |
-| **Plantillas** | Templates con secuencias, botones, media, stats |
-| **Resp. Rápidas** | Shortcuts con media, programación, secuencias, round robin |
+| **Resp. Rápidas** | Accesibles desde menú Conversaciones (shortcuts con media, programación) |
 | **SMS** | Twilio, Vonage, MessageBird, Plivo |
 | **Email Marketing** | Resend, SendGrid, Mailgun, SES, Postmark, Brevo, Mailchimp + DNS (SPF/DKIM) |
 | **MCP** | Servidores Model Context Protocol: Supabase, Hermes Agent, OpenClaw, Composio, GitHub, Slack, Google Drive, Notion, Web Search, Postgres (one-click) |
 | **Conectores** | Composio.dev (250+ apps) + WithOne.ai |
-| **Flows** | Estrategia multicanal visual con triggers y steps |
+| **Flows** | Accesible desde menú Automatización & IA (estrategia multicanal visual) |
 | **Webhooks & APIs** | API keys + webhooks + n8n integration |
 | **Pixels & UTM** | Meta Pixel, GA4, Google Ads, Search Console, TikTok, LinkedIn + generador UTM |
-| **OCR** | Reconocimiento de texto (Tesseract, Google Vision, AWS Textract, Azure, OpenAI Vision) |
+| **OCR** | Accesible desde menú Datos & Control (Tesseract, Google Vision, AWS Textract, Azure, OpenAI Vision) |
 | **Moneda** | 10 monedas (USD, COP, EUR, MXN...) + formato |
 | **Apariencia** | Tema claro/oscuro/sistema + idioma (6 idiomas) |
 | **Cuenta** | Login/logout, perfil |

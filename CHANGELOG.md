@@ -36,6 +36,7 @@ Todos los cambios notables de este proyecto se documentan aquí.
 
 ### Corregido
 - **MCP Settings**: Agregados Hermes Agent, OpenClaw y Composio como servidores populares one-click.
+- **Menú reorganizado por categorías**: Plantillas y Resp. Rápidas movidos a Conversaciones, Flows a Automatización & IA, OCR a Datos & Control. Settings queda solo con configuración pura.
 - Build Vercel: localStorage en render, NodeJS.Timeout, email/phone en radar, JSX workspaces, prefix duplicado app-nav.
 - Bóveda: prompt() → modal propio.
 - Calendario: botón sincronizar → modal con opciones y feedback.
