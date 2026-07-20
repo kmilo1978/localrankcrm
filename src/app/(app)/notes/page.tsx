@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
+import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Lock, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
@@ -17,15 +17,16 @@ type Note = {
   category: string;
   tags: string[];
   pinned: boolean;
+  locked: boolean;
   createdAt: string;
 };
 
 const PRESET_COLORS = TAG_PRESET_COLORS;
 
 const SEED_NOTES: Note[] = [
-  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", image: "", pinned: true, relatedTo: "TechCorp", category: "Reunión", tags: ["Reunión", "Cliente VIP"], createdAt: "2026-07-17" },
-  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", image: "", pinned: false, relatedTo: "LogiNext", category: "Seguimiento", tags: ["Seguimiento"], createdAt: "2026-07-16" },
-  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", image: "", pinned: false, relatedTo: "MediaGroup", category: "Ideas", tags: ["Ideas", "Producto"], createdAt: "2026-07-15" },
+  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", image: "", pinned: true, locked: false, relatedTo: "TechCorp", category: "Reunión", tags: ["Reunión", "Cliente VIP"], createdAt: "2026-07-17" },
+  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", image: "", pinned: false, locked: false, relatedTo: "LogiNext", category: "Seguimiento", tags: ["Seguimiento"], createdAt: "2026-07-16" },
+  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", image: "", pinned: false, locked: false, relatedTo: "MediaGroup", category: "Ideas", tags: ["Ideas", "Producto"], createdAt: "2026-07-15" },
 ];
 
 export default function NotesPage() {
@@ -58,7 +59,7 @@ export default function NotesPage() {
 
   function handleAdd() {
     if (!form.title.trim()) return;
-    saveNotes([{ id: generateId(), title: form.title, content: form.content, image: form.image, relatedTo: form.relatedTo, category: form.category || "General", tags: form.tags, pinned: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
+    saveNotes([{ id: generateId(), title: form.title, content: form.content, image: form.image, relatedTo: form.relatedTo, category: form.category || "General", tags: form.tags, pinned: false, locked: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
     setForm({ title: "", content: "", image: "", relatedTo: "", category: "", tags: [] });
     setShowForm(false);
   }
@@ -83,6 +84,7 @@ export default function NotesPage() {
     showToast("Etiqueta actualizada");
   }
   function togglePin(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, pinned: !n.pinned } : n)); }
+  function toggleLock(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, locked: !n.locked } : n)); }
   function deleteNote(id: string) { saveNotes(notes.filter((n) => n.id !== id)); if (viewNote?.id === id) setViewNote(null); }
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2500); }
@@ -270,13 +272,13 @@ export default function NotesPage() {
         {pinned.length > 0 && (
           <div className="mb-4">
             <h3 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground"><Pin className="h-3 w-3" />Fijadas</h3>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}</div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onLock={toggleLock} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}</div>
           </div>
         )}
         <SortableList
           items={paginatedUnpinned}
           onReorder={(reordered) => { const otherNotes = notes.filter(n => !reordered.some(r => r.id === n.id)); saveNotes([...otherNotes, ...reordered]); }}
-          renderItem={(n) => <NoteCard note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />}
+          renderItem={(n) => <NoteCard note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onLock={toggleLock} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />}
         />
         </>)}
 
@@ -452,14 +454,15 @@ export default function NotesPage() {
   );
 }
 
-function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: CrmTag[]; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
+function NoteCard({ note, catColor, categories, onPin, onLock, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: CrmTag[]; onPin: (id: string) => void; onLock: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
   return (
-    <div className="rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow overflow-hidden">
+    <div className={`rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow overflow-hidden ${note.locked ? "border-amber-200 bg-amber-50/30" : ""}`}>
       {/* Title row — clickable to view */}
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => onView(note)}>
         <StickyNote className="h-3.5 w-3.5 text-brand shrink-0" />
         <h4 className="text-sm font-semibold truncate flex-1">{note.title}</h4>
         {note.pinned && <Pin className="h-3 w-3 text-brand shrink-0" />}
+        {note.locked && <Lock className="h-3 w-3 text-amber-600 shrink-0" />}
       </div>
       {/* Content preview */}
       <p className="mt-1.5 text-xs text-muted-foreground break-all overflow-hidden line-clamp-2 cursor-pointer" onClick={() => onView(note)}>{note.content}</p>
@@ -479,6 +482,7 @@ function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit,
         </select>
         <div className="flex-1" />
         <button onClick={() => onPin(note.id)} className={`rounded p-1 ${note.pinned ? "text-brand" : "text-muted-foreground hover:text-brand"}`} title="Fijar"><Pin className="h-3 w-3" /></button>
+        <button onClick={() => onLock(note.id)} className={`rounded p-1 ${note.locked ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"}`} title={note.locked ? "Desbloquear" : "Bloquear"}><Lock className="h-3 w-3" /></button>
         <button onClick={() => onEdit(note)} className="rounded p-1 text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3 w-3" /></button>
         <button onClick={() => onClone(note)} className="rounded p-1 text-muted-foreground hover:text-gray-700" title="Clonar"><Copy className="h-3 w-3" /></button>
         <button onClick={() => onDelete(note.id)} className="rounded p-1 text-red-400 hover:text-red-600 hover:bg-red-50" title="Eliminar"><Trash2 className="h-3 w-3" /></button>
