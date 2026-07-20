@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn, authClient } from "@/lib/auth/client";
+import { signIn } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,12 +53,15 @@ export default function LoginPage() {
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault();
     if (!resetEmail.trim()) return;
+    // Send reset request to our API (Better Auth handles it server-side)
     try {
-      await authClient.resetPassword({ email: resetEmail, redirectTo: "/login" });
-      setResetSent(true);
-    } catch {
-      setResetSent(true); // Don't reveal if email exists
-    }
+      await fetch("/api/auth/forget-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail, redirectTo: "/login" }),
+      });
+    } catch {}
+    setResetSent(true); // Always show success (don't reveal if email exists)
   }
 
   if (showReset) {
