@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  Book,
   Bookmark,
   Bot,
   Building2,
@@ -26,6 +27,7 @@ import {
   History,
   Kanban,
   LayoutDashboard,
+  Lightbulb,
   Link2,
   LogOut,
   Mail,
@@ -269,6 +271,16 @@ export function AppNav({
       </nav>
 
       <div className="flex-1" />
+
+      {/* Help & Support */}
+      <div className="mb-1 space-y-0.5 border-t border-white/10 pt-2">
+        <Link href={`${prefix}/settings/docs`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/settings/docs") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+          <Book className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Documentación</span>
+        </Link>
+        <Link href={`${prefix}/settings/suggestions`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/settings/suggestions") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+          <Lightbulb className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Sugerencias</span>
+        </Link>
+      </div>
 
       <Link
         href={`${prefix}/settings`}

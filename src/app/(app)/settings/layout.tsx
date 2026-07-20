@@ -14,8 +14,9 @@ const TABS = [
   { href: "/settings/mcp", label: "MCP" },
   { href: "/settings/integrations", label: "Conectores" },
   { href: "/settings/webhooks", label: "Webhooks & APIs" },
-  // Tracking
+  // Tracking & Sistema
   { href: "/settings/tracking", label: "Pixels & UTM" },
+  { href: "/settings/currency", label: "Moneda" },
   // Personalización
   { href: "/settings/branding", label: "Marca" },
   { href: "/settings/appearance", label: "Apariencia" },
@@ -23,11 +24,6 @@ const TABS = [
   // Organización
   { href: "/settings/team", label: "Equipo" },
   { href: "/settings/account", label: "Cuenta" },
-  // Regional
-  { href: "/settings/currency", label: "Moneda" },
-  // Ayuda
-  { href: "/settings/docs", label: "Documentación" },
-  { href: "/settings/suggestions", label: "Sugerencias" },
 ] as const;
 
 export default function SettingsLayout({

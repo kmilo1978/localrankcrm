@@ -14,8 +14,9 @@ const TABS = [
   { href: "/preview/settings/mcp", label: "MCP" },
   { href: "/preview/settings/integrations", label: "Conectores" },
   { href: "/preview/settings/webhooks", label: "Webhooks & APIs" },
-  // Tracking
+  // Tracking & Sistema
   { href: "/preview/settings/tracking", label: "Pixels & UTM" },
+  { href: "/preview/settings/currency", label: "Moneda" },
   // Personalización
   { href: "/preview/settings/branding", label: "Marca" },
   { href: "/preview/settings/appearance", label: "Apariencia" },
@@ -23,11 +24,6 @@ const TABS = [
   // Organización
   { href: "/preview/settings/team", label: "Equipo" },
   { href: "/preview/settings/account", label: "Cuenta" },
-  // Regional
-  { href: "/preview/settings/currency", label: "Moneda" },
-  // Ayuda
-  { href: "/preview/settings/docs", label: "Documentación" },
-  { href: "/preview/settings/suggestions", label: "Sugerencias" },
   { href: "/preview/settings/credentials", label: "Credenciales" },
 ] as const;
 
