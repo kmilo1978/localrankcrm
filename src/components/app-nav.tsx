@@ -48,6 +48,7 @@ import {
 import type { Branding } from "@/lib/branding";
 import { cn, initials } from "@/lib/utils";
 import { signOut } from "@/lib/auth/client";
+import { getActiveWorkspaceId, loadFromStorage } from "@/lib/local-storage";
 import { useEvents } from "@/components/use-events";
 
 // All nav items (combined pool)
@@ -115,14 +116,22 @@ export function AppNav({
   const [moreOpen, setMoreOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [mainHrefs, setMainHrefs] = useState<string[]>(DEFAULT_MAIN_HREFS);
+  const [activeWsName, setActiveWsName] = useState("");
   const isPreview = pathname.startsWith("/preview");
   const prefix = isPreview ? "/preview" : "";
 
-  // Load custom menu from localStorage
+  // Load custom menu and workspace name from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("localrank_nav_main");
       if (stored) { try { setMainHrefs(JSON.parse(stored)); } catch {} }
+      // Get active workspace name
+      const wsId = getActiveWorkspaceId();
+      if (wsId && wsId !== "default") {
+        const workspaces = loadFromStorage<Array<{id: string; name: string}>>("workspaces_v2", []);
+        const ws = workspaces.find(w => w.id === wsId);
+        if (ws) setActiveWsName(ws.name);
+      }
     }
   }, []);
 
@@ -193,7 +202,7 @@ export function AppNav({
           <span className="block truncate text-[16px] font-[700] leading-tight tracking-tight text-white">
             {branding.name}
           </span>
-          <span className="block text-[11px] text-white/60">Enterprise CRM</span>
+          <span className="block text-[11px] text-white/60">{activeWsName || "Enterprise CRM"}</span>
         </span>
       </div>
 

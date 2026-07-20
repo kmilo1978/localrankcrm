@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Building2, ChevronDown, ChevronRight, ClipboardCopy, Edit3, FileText, Folder, FolderPlus, Key, Plus, Trash2, Users, X } from "lucide-react";
-import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { loadFromStorage, saveToStorage, generateId, setActiveWorkspace, getActiveWorkspaceId } from "@/lib/local-storage";
 
 type WorkspaceFile = { id: string; name: string; type: string; addedAt: string };
 type SubFolder = { id: string; name: string; color: string; files: WorkspaceFile[] };
@@ -92,7 +92,7 @@ export default function WorkspacesPage() {
     if (!wsForm.name.trim()) return;
     if (!canCreateMore) { setToast(`Límite de ${MAX_WORKSPACES} espacios alcanzado`); setTimeout(() => setToast(""), 2500); return; }
     const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Camilo"], folders: [], keys: [], createdAt: new Date().toISOString().split("T")[0]!, clientId: wsForm.clientId || clients[0]?.id || "" };
-    save([...workspaces, ws]); setActiveWs(ws.id);
+    save([...workspaces, ws]); setActiveWs(ws.id); setActiveWorkspace(ws.id);
     setWsForm({ name: "", description: "", clientId: "" }); setShowNewWs(false);
   }
   function deleteWorkspace(id: string) { save(workspaces.filter((w) => w.id !== id)); if (activeWs === id) setActiveWs(workspaces[0]?.id || null); }
@@ -220,7 +220,7 @@ export default function WorkspacesPage() {
           {filteredWs.map((ws) => {
             const client = clients.find((c) => c.id === ws.clientId);
             return (
-              <div key={ws.id} onClick={() => setActiveWs(ws.id)} className={`group flex items-center gap-2 px-3 py-2 cursor-pointer ${activeWs === ws.id ? "bg-brand-tint" : "hover:bg-gray-50"}`}>
+              <div key={ws.id} onClick={() => { setActiveWs(ws.id); setActiveWorkspace(ws.id); }} className={`group flex items-center gap-2 px-3 py-2 cursor-pointer ${activeWs === ws.id ? "bg-brand-tint" : "hover:bg-gray-50"}`}>
                 <Folder className="h-4 w-4 text-brand shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{ws.name}</p>
