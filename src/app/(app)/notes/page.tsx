@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
+import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
@@ -111,6 +111,14 @@ export default function NotesPage() {
   function copyNoteJSON(note: Note) {
     navigator.clipboard.writeText(JSON.stringify(note, null, 2));
     showToast("JSON copiado");
+  }
+
+  function sendToReminder(note: Note) {
+    const reminders = loadFromStorage<Array<{id:string;title:string;description:string;dateTime:string;repeat:string;sound:boolean;active:boolean;dismissed:boolean;createdAt:string}>>("reminders_v2", []);
+    const dateTime = new Date(Date.now() + 3600000).toISOString().slice(0, 16); // 1 hour from now
+    const newReminder = { id: generateId(), title: note.title, description: note.content.slice(0, 200), dateTime, repeat: "none", sound: true, active: true, dismissed: false, createdAt: new Date().toISOString().split("T")[0]! };
+    saveToStorage("reminders_v2", [newReminder, ...reminders]);
+    showToast("Enviada a recordatorios (en 1 hora)");
   }
 
   function getCatColor(name: string) { return getTagColor(name); }
@@ -293,8 +301,9 @@ export default function NotesPage() {
             </div>
             <div className="whitespace-pre-wrap text-sm text-gray-700 leading-relaxed border-t pt-4 break-words overflow-hidden">{viewNote.content}</div>
             {viewNote.image && <img src={viewNote.image} alt="" className="mt-4 w-full max-h-64 rounded-lg border object-contain" />}
-            <div className="flex gap-2 mt-6 border-t pt-4">
+            <div className="flex gap-2 mt-6 border-t pt-4 flex-wrap">
               <button onClick={() => openEdit(viewNote)} className="flex items-center gap-1 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Edit3 className="h-3.5 w-3.5" />Editar</button>
+              <button onClick={() => { sendToReminder(viewNote); }} className="flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100"><Bell className="h-3.5 w-3.5" />Recordatorio</button>
               <button onClick={() => { cloneNote(viewNote); setViewNote(null); }} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Copy className="h-3.5 w-3.5" />Clonar</button>
               <button onClick={() => copyNote(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />Copiar texto</button>
               <button onClick={() => copyNoteJSON(viewNote)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><ClipboardCopy className="h-3.5 w-3.5" />JSON</button>

@@ -1,20 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckSquare, ClipboardPaste, Copy, Edit3, Plus, RotateCcw, Trash2, UserPlus, X } from "lucide-react";
+import { CheckSquare, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
 
 type CheckItem = { id: string; text: string; done: boolean };
-type Checklist = { id: string; title: string; client: string; items: CheckItem[]; createdAt: string };
+type Checklist = { id: string; title: string; client: string; category: string; locked: boolean; items: CheckItem[]; createdAt: string };
 
 const SEED: Checklist[] = [
-  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", createdAt: "2026-07-17", items: [
+  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", category: "Ventas", locked: false, createdAt: "2026-07-17", items: [
     { id: "i1", text: "Crear contacto en CRM", done: true },
     { id: "i2", text: "Asignar responsable", done: true },
     { id: "i3", text: "Enviar email de bienvenida", done: false },
     { id: "i4", text: "Agendar llamada kickoff", done: false },
     { id: "i5", text: "Configurar canales", done: false },
   ]},
-  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", createdAt: "2026-07-16", items: [
+  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", category: "Ventas", locked: false, createdAt: "2026-07-16", items: [
     { id: "i6", text: "Propuesta aprobada", done: true },
     { id: "i7", text: "Contrato firmado", done: true },
     { id: "i8", text: "Pago recibido", done: false },
@@ -42,38 +43,55 @@ export default function ChecklistsPage() {
   const [showPaste, setShowPaste] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newClient, setNewClient] = useState("");
+  const [newCategory, setNewCategory] = useState("General");
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteClient, setPasteClient] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editClient, setEditClient] = useState("");
+  const [editCategory, setEditCategory] = useState("");
   const [itemInputs, setItemInputs] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterCat, setFilterCat] = useState("all");
+  const [page, setPage] = useState(1);
+  const [tags, setTags] = useState<CrmTag[]>([]);
+  const PER_PAGE = 8;
 
-  useEffect(() => { setLists(loadFromStorage("checklists_v2", SEED)); }, []);
+  useEffect(() => { setLists(loadFromStorage("checklists_v2", SEED)); setTags(loadTags()); }, []);
   function save(u: Checklist[]) { setLists(u); saveToStorage("checklists_v2", u); }
   function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
 
+  const checklistCategories = Array.from(new Set(lists.map(l => l.category || "General").filter(Boolean)));
+
+  const filtered = lists
+    .filter(l => filterCat === "all" || (l.category || "General") === filterCat)
+    .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.client.toLowerCase().includes(search.toLowerCase()));
+
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
   function createEmpty() {
     if (!newTitle.trim()) return;
-    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, items: [], createdAt: new Date().toISOString().split("T")[0]! };
-    save([cl, ...lists]); setNewTitle(""); setNewClient(""); setShowNew(false);
+    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, category: newCategory || "General", locked: false, items: [], createdAt: new Date().toISOString().split("T")[0]! };
+    save([cl, ...lists]); setNewTitle(""); setNewClient(""); setNewCategory("General"); setShowNew(false);
   }
 
   function createFromPaste() {
     if (!pasteTitle.trim() || !pasteText.trim()) return;
     const items = splitText(pasteText).map(text => ({ id: generateId(), text, done: false }));
     if (items.length === 0) { notify("No se detectaron items"); return; }
-    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, items, createdAt: new Date().toISOString().split("T")[0]! };
+    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, category: "General", locked: false, items, createdAt: new Date().toISOString().split("T")[0]! };
     save([cl, ...lists]); setPasteTitle(""); setPasteClient(""); setPasteText(""); setShowPaste(false);
     notify(items.length + " items creados");
   }
 
   function addItem(listId: string) {
+    const list = lists.find(l => l.id === listId);
+    if (list?.locked) { notify("Checklist bloqueado"); return; }
     const text = itemInputs[listId]?.trim();
     if (!text) return;
-    // Check if pasted text has multiple items
     const parts = splitText(text);
     const newItems = parts.map(t => ({ id: generateId(), text: t, done: false }));
     save(lists.map(l => l.id === listId ? { ...l, items: [...l.items, ...newItems] } : l));
@@ -82,22 +100,32 @@ export default function ChecklistsPage() {
   }
 
   function toggleItem(listId: string, itemId: string) {
+    const list = lists.find(l => l.id === listId);
+    if (list?.locked) { notify("Checklist bloqueado"); return; }
     save(lists.map(l => l.id === listId ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, done: !i.done } : i) } : l));
   }
 
   function deleteItem(listId: string, itemId: string) {
+    const list = lists.find(l => l.id === listId);
+    if (list?.locked) { notify("Checklist bloqueado"); return; }
     save(lists.map(l => l.id === listId ? { ...l, items: l.items.filter(i => i.id !== itemId) } : l));
+  }
+
+  function toggleLock(id: string) {
+    save(lists.map(l => l.id === id ? { ...l, locked: !l.locked } : l));
+    const list = lists.find(l => l.id === id);
+    notify(list?.locked ? "Desbloqueado" : "Bloqueado");
   }
 
   function deleteList(id: string) { save(lists.filter(l => l.id !== id)); }
 
   function cloneList(cl: Checklist) {
-    const copy: Checklist = { ...cl, id: generateId(), title: cl.title + " (copia)", items: cl.items.map(i => ({ ...i, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
+    const copy: Checklist = { ...cl, id: generateId(), title: cl.title + " (copia)", locked: false, items: cl.items.map(i => ({ ...i, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
     save([copy, ...lists]); notify("Checklist clonada");
   }
 
   function cloneForClient(cl: Checklist, client: string) {
-    const copy: Checklist = { ...cl, id: generateId(), title: cl.title, client, items: cl.items.map(i => ({ ...i, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
+    const copy: Checklist = { ...cl, id: generateId(), title: cl.title, client, locked: false, items: cl.items.map(i => ({ ...i, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
     save([copy, ...lists]); notify("Duplicada para " + client);
   }
 
@@ -113,7 +141,7 @@ export default function ChecklistsPage() {
 
   function saveEdit() {
     if (!editId) return;
-    save(lists.map(l => l.id === editId ? { ...l, title: editTitle, client: editClient } : l));
+    save(lists.map(l => l.id === editId ? { ...l, title: editTitle, client: editClient, category: editCategory } : l));
     setEditId(null); notify("Actualizado");
   }
 
@@ -121,7 +149,7 @@ export default function ChecklistsPage() {
     <div className="h-full overflow-y-auto p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2"><CheckSquare className="h-5 w-5 text-brand" />Checklists</h1>
             <p className="text-xs text-muted-foreground">{lists.length} listas · Pega texto para crear items automaticamente</p>
@@ -132,22 +160,44 @@ export default function ChecklistsPage() {
           </div>
         </div>
 
+        {/* Search + Category filters + Pagination info */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar..." className="w-44 rounded border bg-white py-1.5 pl-8 pr-3 text-xs focus:border-brand focus:outline-none" />
+          </div>
+          <div className="flex gap-1 flex-wrap">
+            <button onClick={() => { setFilterCat("all"); setPage(1); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todas</button>
+            {checklistCategories.map(c => (
+              <button key={c} onClick={() => { setFilterCat(c); setPage(1); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === c ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{c}</button>
+            ))}
+          </div>
+          {totalPages > 1 && <span className="text-[10px] text-muted-foreground ml-auto">Pag {page}/{totalPages}</span>}
+        </div>
+
         {/* All checklists as cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {lists.map(cl => {
+          {paginated.map(cl => {
             const done = cl.items.filter(i => i.done).length;
             const total = cl.items.length;
             const pct = total > 0 ? Math.round(done / total * 100) : 0;
             return (
-              <div key={cl.id} className="rounded-lg border bg-white p-4">
+              <div key={cl.id} className={`rounded-lg border bg-white p-4 ${cl.locked ? "border-amber-200 bg-amber-50/30" : ""}`}>
                 {/* Card header */}
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="text-sm font-bold">{cl.title}</h3>
-                    {cl.client && <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">{cl.client}</span>}
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold">{cl.title}</h3>
+                      {cl.locked && <Lock className="h-3 w-3 text-amber-600" />}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {cl.client && <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">{cl.client}</span>}
+                      {cl.category && <span className="text-[10px] text-brand bg-brand/10 rounded-full px-2 py-0.5">{cl.category}</span>}
+                    </div>
                   </div>
                   <div className="flex gap-0.5">
-                    <button onClick={() => { setEditId(cl.id); setEditTitle(cl.title); setEditClient(cl.client); }} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Editar"><Edit3 className="h-3 w-3" /></button>
+                    <button onClick={() => toggleLock(cl.id)} className={`rounded p-1 hover:bg-gray-50 ${cl.locked ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"}`} title={cl.locked ? "Desbloquear" : "Bloquear"}>{cl.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}</button>
+                    <button onClick={() => { setEditId(cl.id); setEditTitle(cl.title); setEditClient(cl.client); setEditCategory(cl.category || "General"); }} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Editar"><Edit3 className="h-3 w-3" /></button>
                     <button onClick={() => cloneList(cl)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Clonar"><Copy className="h-3 w-3" /></button>
                     <button onClick={() => { const c = prompt("Nombre del cliente:"); if (c) cloneForClient(cl, c); }} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Duplicar para cliente"><UserPlus className="h-3 w-3" /></button>
                     <button onClick={() => copyList(cl)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Copiar texto"><ClipboardPaste className="h-3 w-3" /></button>
@@ -183,6 +233,15 @@ export default function ChecklistsPage() {
           })}
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Anterior</button>
+            <span className="text-xs text-muted-foreground">Pagina {page} de {totalPages} ({filtered.length} checklists)</span>
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Siguiente</button>
+          </div>
+        )}
+
         {lists.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <CheckSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
@@ -203,6 +262,7 @@ export default function ChecklistsPage() {
             <div className="space-y-2">
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Titulo *" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <input value={newClient} onChange={e => setNewClient(e.target.value)} placeholder="Cliente (opcional)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Categoría (ej: Ventas, Soporte)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <button onClick={createEmpty} disabled={!newTitle.trim()} className="w-full rounded bg-brand py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50">Crear</button>
             </div>
           </div>
@@ -234,6 +294,7 @@ export default function ChecklistsPage() {
             <div className="space-y-2">
               <input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <input value={editClient} onChange={e => setEditClient(e.target.value)} placeholder="Cliente" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={editCategory} onChange={e => setEditCategory(e.target.value)} placeholder="Categoría" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               <button onClick={saveEdit} className="w-full rounded bg-brand py-2 text-sm text-white hover:bg-brand-hover">Guardar</button>
             </div>
           </div>
