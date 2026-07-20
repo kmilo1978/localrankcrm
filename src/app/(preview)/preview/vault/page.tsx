@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Copy, Edit3, Eye, EyeOff, Key, Lock, Plus, Search, Shield, Trash2, Unlock, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Edit3, Eye, EyeOff, Key, Lock, Plus, RefreshCw, Search, Shield, Trash2, Unlock, X, Zap } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type VaultItem = {
@@ -43,6 +43,15 @@ export default function VaultPage() {
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState("");
 
+  // Key generator state
+  const [genOpen, setGenOpen] = useState(false);
+  const [genLength, setGenLength] = useState(16);
+  const [genUpper, setGenUpper] = useState(true);
+  const [genLower, setGenLower] = useState(true);
+  const [genNumbers, setGenNumbers] = useState(true);
+  const [genSymbols, setGenSymbols] = useState(true);
+  const [generatedKey, setGeneratedKey] = useState("");
+
   useEffect(() => {
     // Check if vault has a master password set
     const storedHash = localStorage.getItem("vault_master_hash");
@@ -50,6 +59,26 @@ export default function VaultPage() {
   }, []);
 
   function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
+
+  function generatePassword() {
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lower = "abcdefghijklmnopqrstuvwxyz";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+    let chars = "";
+    if (genUpper) chars += upper;
+    if (genLower) chars += lower;
+    if (genNumbers) chars += numbers;
+    if (genSymbols) chars += symbols;
+    if (!chars) chars = lower + numbers;
+    let result = "";
+    const array = new Uint32Array(genLength);
+    crypto.getRandomValues(array);
+    for (let i = 0; i < genLength; i++) {
+      result += chars[array[i]! % chars.length];
+    }
+    setGeneratedKey(result);
+  }
 
   function unlock() {
     const storedHash = localStorage.getItem("vault_master_hash");
@@ -155,6 +184,58 @@ export default function VaultPage() {
             <button onClick={() => { const p = prompt("Nueva clave maestra:"); if (p) setMasterPassword(p); }} className="flex items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Key className="h-3.5 w-3.5" />Cambiar clave</button>
             <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" />Agregar</button>
           </div>
+        </div>
+
+        {/* Key Generator */}
+        <div className="mb-4 rounded-lg border bg-gradient-to-r from-brand/5 to-purple-50 overflow-hidden">
+          <button onClick={() => setGenOpen(!genOpen)} className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-white/40 transition-colors">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-brand" />
+              <span className="text-sm font-semibold">Generador de claves</span>
+              <span className="text-[10px] text-muted-foreground">Crea contraseñas seguras al instante</span>
+            </div>
+            {genOpen ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </button>
+          {genOpen && (
+            <div className="border-t px-4 py-4 bg-white/60">
+              {/* Generated output */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex-1 rounded-lg border bg-white px-4 py-2.5 font-mono text-sm select-all break-all min-h-[40px] flex items-center">
+                  {generatedKey || <span className="text-muted-foreground italic">Haz clic en "Generar" para crear una clave</span>}
+                </div>
+                <button onClick={() => { if (generatedKey) { copyToClipboard(generatedKey, "Clave generada"); } }} disabled={!generatedKey} className="rounded-lg border p-2.5 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed" title="Copiar">
+                  <Copy className="h-4 w-4 text-muted-foreground" />
+                </button>
+                <button onClick={generatePassword} className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-xs font-medium text-white hover:bg-brand-hover shrink-0">
+                  <RefreshCw className="h-3.5 w-3.5" />Generar
+                </button>
+              </div>
+              {/* Options */}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-medium text-muted-foreground">Longitud:</label>
+                  <input type="range" min={6} max={64} value={genLength} onChange={e => setGenLength(Number(e.target.value))} className="w-24 accent-brand" />
+                  <span className="text-xs font-mono font-bold text-brand w-6 text-center">{genLength}</span>
+                </div>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={genUpper} onChange={e => setGenUpper(e.target.checked)} className="accent-brand rounded" />
+                  <span className="text-[11px] font-medium">ABC</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={genLower} onChange={e => setGenLower(e.target.checked)} className="accent-brand rounded" />
+                  <span className="text-[11px] font-medium">abc</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={genNumbers} onChange={e => setGenNumbers(e.target.checked)} className="accent-brand rounded" />
+                  <span className="text-[11px] font-medium">123</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={genSymbols} onChange={e => setGenSymbols(e.target.checked)} className="accent-brand rounded" />
+                  <span className="text-[11px] font-medium">!@#</span>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
