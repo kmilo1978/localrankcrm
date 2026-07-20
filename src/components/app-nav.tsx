@@ -11,6 +11,7 @@ import {
   Building2,
   Calendar,
   CheckSquare,
+  ChevronDown,
   CircleCheckBig,
   ClipboardList,
   Clock,
@@ -45,38 +46,49 @@ import { cn, initials } from "@/lib/utils";
 import { signOut } from "@/lib/auth/client";
 import { useEvents } from "@/components/use-events";
 
-// Navigation organized by: Context → Revenue Ops → Execution → Intelligence → Admin
-const NAV = [
-  // --- Context ---
-  { href: "/workspaces", label: "Workspace", icon: FolderOpen },
+// Navigation organized by: Main (always visible) + More (collapsible)
+const NAV_MAIN = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  // --- Revenue: Capture & Qualify ---
   { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
   { href: "/contacts", label: "Contactos", icon: Users },
   { href: "/companies", label: "Compañías", icon: Building2 },
   { href: "/opportunities", label: "Oportunidades", icon: Target },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
-  // --- Revenue: Close ---
   { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
+  { href: "/tasks", label: "Tareas", icon: CheckSquare },
+  { href: "/calendar", label: "Calendario", icon: Calendar },
+  { href: "/focus", label: "Focus", icon: Target },
+  { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+] as const;
+
+const NAV_MORE = [
   { href: "/templates", label: "Plantillas", icon: Send },
   { href: "/proposals", label: "Propuestas", icon: FileText },
   { href: "/cartera", label: "Cartera", icon: CreditCard },
-  // --- Execution ---
-  { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/checklists", label: "Checklists", icon: CircleCheckBig },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/reminders", label: "Recordatorios", icon: Clock },
   { href: "/todo", label: "To-Do", icon: CircleCheckBig },
-  { href: "/calendar", label: "Calendario", icon: Calendar },
-  // --- Intelligence ---
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
   { href: "/automations", label: "Automatizaciones", icon: Zap },
   { href: "/sequences", label: "Secuencias", icon: GitBranch },
   { href: "/scheduler", label: "Scheduler", icon: Clock },
   { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
   { href: "/scoring", label: "Scoring", icon: Star },
+  { href: "/omnichannel", label: "Omnicanal", icon: Activity },
+  { href: "/social", label: "Social", icon: Heart },
+  { href: "/radar", label: "Radar", icon: Bookmark },
+  { href: "/forms", label: "Formularios", icon: ClipboardList },
+  { href: "/import", label: "Importar", icon: Database },
+  { href: "/suppliers", label: "Proveedores", icon: Building2 },
+  { href: "/notes", label: "Notas", icon: StickyNote },
+  { href: "/labels", label: "Etiquetas", icon: Tag },
+  { href: "/team", label: "Equipo", icon: UsersRound },
+  { href: "/team-chat", label: "Chat interno", icon: MessageSquare },
+  { href: "/vault", label: "Bóveda", icon: Database },
+  { href: "/workspaces", label: "Workspace", icon: FolderOpen },
   { href: "/audit", label: "Auditoría", icon: History },
+  { href: "/lab", label: "Laboratorio", icon: FlaskConical },
 ] as const;
 
 export function AppNav({
@@ -92,6 +104,7 @@ export function AppNav({
   const router = useRouter();
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const isPreview = pathname.startsWith("/preview");
   const prefix = isPreview ? "/preview" : "";
 
@@ -154,7 +167,7 @@ export function AppNav({
       </div>
 
       <nav className="flex flex-col gap-0.5 overflow-y-auto">
-        {NAV.map((item) => {
+        {NAV_MAIN.map((item) => {
           const href = `${prefix}${item.href}`;
           const active =
             pathname === href || pathname.startsWith(`${href}/`) ||
@@ -188,36 +201,45 @@ export function AppNav({
             </Link>
           );
         })}
+
+        {/* Collapsible "Más" section */}
+        <button
+          onClick={() => setMoreOpen(!moreOpen)}
+          className="flex items-center gap-[11px] rounded-lg px-3 py-2 text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors mt-1"
+        >
+          <ChevronDown className={cn("h-[14px] w-[14px] transition-transform", moreOpen && "rotate-180")} strokeWidth={1.7} />
+          <span className="flex-1 text-left">{moreOpen ? "Menos módulos" : "Más módulos"}</span>
+          <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px]">{NAV_MORE.length}</span>
+        </button>
+
+        {moreOpen && (
+          <div className="space-y-0.5 pl-1">
+            {NAV_MORE.map((item) => {
+              const href = `${prefix}${item.href}`;
+              const active =
+                pathname === href || pathname.startsWith(`${href}/`) ||
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                    active
+                      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
+                      : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                  )}
+                >
+                  <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       <div className="flex-1" />
-
-      {/* Secondary modules */}
-      <div className="mb-1 border-t border-white/10 pt-2 space-y-0.5">
-        {[
-          { href: "/omnichannel", label: "Omnicanal", icon: Activity },
-          { href: "/social", label: "Social", icon: Heart },
-          { href: "/radar", label: "Radar", icon: Bookmark },
-          { href: "/forms", label: "Formularios", icon: ClipboardList },
-          { href: "/import", label: "Importar", icon: Database },
-          { href: "/suppliers", label: "Proveedores", icon: Building2 },
-          { href: "/notes", label: "Notas", icon: StickyNote },
-          { href: "/labels", label: "Etiquetas", icon: Tag },
-          { href: "/team", label: "Equipo", icon: UsersRound },
-          { href: "/team-chat", label: "Chat interno", icon: MessageSquare },
-          { href: "/vault", label: "Boveda", icon: Database },
-          { href: "/lab", label: "Laboratorio", icon: FlaskConical },
-        ].map((item) => {
-          const href2 = `${prefix}${item.href}`;
-          const active2 = pathname === href2 || pathname.startsWith(`${href2}/`) || pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link key={item.href} href={href2} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", active2 ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
-              <item.icon className="h-[14px] w-[14px]" strokeWidth={1.5} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
 
       <Link
         href={`${prefix}/settings`}
