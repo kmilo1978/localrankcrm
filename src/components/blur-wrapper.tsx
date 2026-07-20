@@ -58,11 +58,13 @@ export function BlurWrapper({ children }: { children: React.ReactNode }) {
     <div className="relative h-full">
       {blurred ? (
         <>
-          <div className="h-full blur-md pointer-events-none select-none opacity-60">{children}</div>
-          {/* Unlock button - always visible, fixed position */}
-          <button onClick={toggle} className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-xl hover:bg-brand-hover" title="Quitar blur">
-            <Eye className="h-4 w-4" />Mostrar contenido
-          </button>
+          {/* TOP BANNER — impossible to miss */}
+          <div className="sticky top-0 z-[80] flex items-center justify-center gap-3 bg-brand py-3 px-4 shadow-lg">
+            <Eye className="h-4 w-4 text-white" />
+            <span className="text-sm font-medium text-white">Contenido oculto (blur activo)</span>
+            <button onClick={toggle} className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-brand hover:bg-gray-100">Mostrar</button>
+          </div>
+          <div className="h-full blur-md pointer-events-none select-none opacity-50">{children}</div>
         </>
       ) : (
         <>
