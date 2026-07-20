@@ -76,19 +76,35 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Tareas** | Gestión por prioridad/estado con filtros, vistas múltiples (lista/kanban/calendario/tablero) |
 | **To-Do** | Diario, semanal, mensual con barras de progreso |
 | **Focus** | Modo enfoque Pomodoro (15/25/45/60 min), timer circular, tareas de enfoque con prioridad, historial de sesiones |
+| **Archivos & IA** | Importar archivos (txt/csv/json/md/img/pdf), visualizar inline, preguntar a la IA sobre contenido (extrae emails, teléfonos, resúmenes) |
 | **Calendario** | Múltiples calendarios con colores, citas, cobros, recordatorios |
 | **Formularios** | Conectar Tally/Typeform/JotForm + builder manual + generador IA |
 | **Importar & Enriquecer** | Upload CSV → enriquecimiento (email, social, tech, empresa, dominio) → exportar |
 | **Workspaces** | Multi-cliente con carpetas/subcarpetas, archivos, responsable por carpeta |
-| **Equipo** | Roles (owner/admin/manager/member/viewer), 20 permisos granulares, invitaciones, delegación |
+| **Equipo** | Roles (owner/admin/manager/member/viewer), 20 permisos granulares, invitaciones, delegación, control de módulos por miembro (admin puede activar/desactivar funcionalidades por usuario) |
 | **Chat Interno** | Conversaciones entre miembros: canales públicos/privados, mensajes directos, documentos compartidos, invitar miembros |
 | **Analytics** | KPIs 30d, funnel de ventas, rendimiento por rep, conversaciones por canal |
 | **Social** | Engagement: likes, comments, DMs, mentions por plataforma |
 | **Omnicanal** | Dashboard unificado con status de cada canal + actividad |
 | **Etiquetas** | Sistema compartido: ilimitadas con colores personalizados + hex custom, descripción, asignables a múltiples módulos (notas, contactos, tareas, oportunidades), importación cruzada entre módulos |
-| **Notas** | Etiquetas compartidas con colores, múltiples tags por nota, filtros, fijadas, importación de etiquetas del CRM |
+| **Notas** | Etiquetas compartidas con colores, múltiples tags por nota, filtros, fijadas, importación de etiquetas del CRM, enviar a recordatorio, vistas múltiples (grid/lista/board) |
 | **Bóveda** | Gestor de credenciales con clave maestra, generador de contraseñas seguras (crypto), categorías por servicio |
+| **Radar** | Captura web con extensión, editable (email/phone/notas), exportar a pipeline, reabrir páginas, carpetas + etiquetas |
 | **Auditoría** | Logs: quién hizo qué, workflows, errores, logins |
+
+---
+
+## Personalización
+
+| Feature | Descripción |
+|---------|-------------|
+| **Menú personalizable** | Cada usuario elige qué módulos van en el menú principal vs colapsados |
+| **Admin — Control de módulos** | El owner/admin activa/desactiva módulos por miembro del equipo |
+| **Dark mode** | Tema claro, oscuro o automático (sistema) con soporte en todos los módulos |
+| **White-label** | Logo, colores (6 presets + custom HEX), tipografía, dominio custom |
+| **Multi-workspace** | Espacios independientes con claves propias, renombrar, límite configurable |
+| **Vistas múltiples** | Lista, Kanban, Calendario, Tablero (por módulo) |
+| **Etiquetas compartidas** | Sistema de tags con colores importable entre todos los módulos |
 
 ---
 

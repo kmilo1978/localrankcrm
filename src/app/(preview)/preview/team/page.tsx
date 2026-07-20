@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Clock, Crown, Mail, MoreHorizontal, Plus, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, Clock, Crown, Mail, MoreHorizontal, Plus, Settings2, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type Member = {
@@ -101,6 +101,37 @@ export default function TeamPage() {
   const activeMembers = members.filter((m) => m.status === "active");
   const pendingInvites = invitations.filter((i) => i.status === "pending");
 
+  // Admin: module access control per member
+  const [showModuleControl, setShowModuleControl] = useState<string | null>(null);
+  const [memberModules, setMemberModules] = useState<Record<string, string[]>>({});
+  const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    setMemberModules(loadFromStorage("team_module_access", {}));
+  }, []);
+
+  const ALL_MODULES = ["dashboard", "cold-contacts", "contacts", "companies", "opportunities", "pipeline", "inbox", "tasks", "calendar", "focus", "ai-hub", "analytics", "files", "templates", "proposals", "cartera", "checklists", "projects", "reminders", "todo", "automations", "sequences", "notes", "labels", "vault", "team-chat", "radar", "forms", "import", "workspaces"];
+
+  function getMemberModules(memberId: string): string[] {
+    return memberModules[memberId] || ALL_MODULES; // Default: all access
+  }
+
+  function toggleMemberModule(memberId: string, module: string) {
+    const current = getMemberModules(memberId);
+    const updated = current.includes(module) ? current.filter(m => m !== module) : [...current, module];
+    const next = { ...memberModules, [memberId]: updated };
+    setMemberModules(next);
+    saveToStorage("team_module_access", next);
+  }
+
+  function setAllModules(memberId: string, enabled: boolean) {
+    const next = { ...memberModules, [memberId]: enabled ? [...ALL_MODULES] : ["dashboard"] };
+    setMemberModules(next);
+    saveToStorage("team_module_access", next);
+    setToast(enabled ? "Todos los módulos activados" : "Acceso restringido a Dashboard");
+    setTimeout(() => setToast(""), 2000);
+  }
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-5xl">
@@ -189,6 +220,7 @@ export default function TeamPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => setShowModuleControl(m.id)} className="rounded p-1 text-muted-foreground hover:text-purple-600 hover:bg-purple-50" title="Gestionar módulos"><Settings2 className="h-3.5 w-3.5" /></button>
                         <button onClick={() => setShowDelegate(m.id)} className="rounded px-2 py-1 text-xs text-brand hover:bg-brand-tint font-medium">Delegar</button>
                         {m.role !== "owner" && <button onClick={() => removeMember(m.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>}
                       </div>
@@ -304,6 +336,43 @@ export default function TeamPage() {
           </div>
         </div>
       )}
+
+      {/* Module Access Control Modal */}
+      {showModuleControl && (() => {
+        const member = members.find(m => m.id === showModuleControl);
+        if (!member) return null;
+        const modules = getMemberModules(showModuleControl);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowModuleControl(null)}>
+            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold flex items-center gap-2"><Settings2 className="h-4 w-4 text-purple-600" />Módulos de {member.name}</h3>
+                  <p className="text-[10px] text-muted-foreground">Controla qué funcionalidades puede ver este miembro</p>
+                </div>
+                <button onClick={() => setShowModuleControl(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => setAllModules(showModuleControl, true)} className="rounded border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">✓ Activar todos</button>
+                <button onClick={() => setAllModules(showModuleControl, false)} className="rounded border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">✕ Solo Dashboard</button>
+                <span className="ml-auto text-xs text-muted-foreground">{modules.length}/{ALL_MODULES.length} activos</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {ALL_MODULES.map(mod => (
+                  <button key={mod} onClick={() => toggleMemberModule(showModuleControl, mod)} className={`rounded-lg border px-3 py-2 text-xs font-medium text-left transition-all ${modules.includes(mod) ? "bg-brand/10 border-brand/30 text-brand" : "text-muted-foreground hover:bg-gray-50"}`}>
+                    <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${modules.includes(mod) ? "bg-green-500" : "bg-gray-300"}`} />
+                    {mod.replace("-", " ").replace(/^\w/, c => c.toUpperCase())}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-4 text-[9px] text-muted-foreground">Los cambios se aplican inmediatamente. El miembro verá solo los módulos activados en su menú.</p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Toast */}
+      {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
   );
 }
