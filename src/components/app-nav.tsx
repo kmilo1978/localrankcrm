@@ -29,8 +29,10 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Pin,
   Send,
   Settings,
+  Settings2,
   Star,
   StickyNote,
   Tag,
@@ -46,8 +48,8 @@ import { cn, initials } from "@/lib/utils";
 import { signOut } from "@/lib/auth/client";
 import { useEvents } from "@/components/use-events";
 
-// Navigation organized by: Main (always visible) + More (collapsible)
-const NAV_MAIN = [
+// All nav items (combined pool)
+const ALL_NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
   { href: "/contacts", label: "Contactos", icon: Users },
@@ -60,9 +62,7 @@ const NAV_MAIN = [
   { href: "/focus", label: "Focus", icon: Target },
   { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-] as const;
-
-const NAV_MORE = [
+  { href: "/files", label: "Archivos & IA", icon: FileText },
   { href: "/templates", label: "Plantillas", icon: Send },
   { href: "/proposals", label: "Propuestas", icon: FileText },
   { href: "/cartera", label: "Cartera", icon: CreditCard },
@@ -91,6 +91,8 @@ const NAV_MORE = [
   { href: "/lab", label: "Laboratorio", icon: FlaskConical },
 ] as const;
 
+const DEFAULT_MAIN_HREFS = ["/dashboard", "/cold-contacts", "/contacts", "/companies", "/opportunities", "/pipeline", "/inbox", "/tasks", "/calendar", "/focus", "/ai-hub", "/analytics", "/files"];
+
 export function AppNav({
   branding,
   userName,
@@ -105,7 +107,31 @@ export function AppNav({
   const [unread, setUnread] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [customizing, setCustomizing] = useState(false);
+  const [mainHrefs, setMainHrefs] = useState<string[]>(DEFAULT_MAIN_HREFS);
   const isPreview = pathname.startsWith("/preview");
+  const prefix = isPreview ? "/preview" : "";
+
+  // Load custom menu from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("localrank_nav_main");
+      if (stored) { try { setMainHrefs(JSON.parse(stored)); } catch {} }
+    }
+  }, []);
+
+  function saveMainHrefs(hrefs: string[]) {
+    setMainHrefs(hrefs);
+    localStorage.setItem("localrank_nav_main", JSON.stringify(hrefs));
+  }
+
+  function toggleMainItem(href: string) {
+    const next = mainHrefs.includes(href) ? mainHrefs.filter(h => h !== href) : [...mainHrefs, href];
+    saveMainHrefs(next);
+  }
+
+  const navMain = ALL_NAV.filter(item => mainHrefs.includes(item.href));
+  const navMore = ALL_NAV.filter(item => !mainHrefs.includes(item.href));
   const prefix = isPreview ? "/preview" : "";
 
   async function refetchUnread() {
@@ -167,72 +193,78 @@ export function AppNav({
       </div>
 
       <nav className="flex flex-col gap-0.5 overflow-y-auto">
-        {NAV_MAIN.map((item) => {
+        {navMain.map((item) => {
           const href = `${prefix}${item.href}`;
           const active =
             pathname === href || pathname.startsWith(`${href}/`) ||
             pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
-            <Link
-              key={item.href}
-              href={href}
-              className={cn(
-                "flex items-center gap-[11px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                active
-                  ? "bg-[var(--sidebar-active)] border-l-[3px] border-[var(--sidebar-active-text)] text-[var(--sidebar-active-text)]"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+            <div key={item.href} className="flex items-center">
+              <Link
+                href={href}
+                className={cn(
+                  "flex flex-1 items-center gap-[11px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-[var(--sidebar-active)] border-l-[3px] border-[var(--sidebar-active-text)] text-[var(--sidebar-active-text)]"
+                    : "text-white/70 hover:text-white hover:bg-white/10"
+                )}
+              >
+                <item.icon
+                  className={cn("h-[18px] w-[18px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/70")}
+                  strokeWidth={1.7}
+                />
+                <span className="flex-1">{item.label}</span>
+                {"badge" in item && item.badge && unread > 0 && (
+                  <span className={cn("flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold", active ? "bg-white text-[var(--sidebar-bg)]" : "bg-white/20 text-white")}>{unread}</span>
+                )}
+              </Link>
+              {customizing && (
+                <button onClick={() => toggleMainItem(item.href)} className="rounded p-1 text-white/40 hover:text-red-400 shrink-0" title="Quitar del menú principal"><X className="h-3 w-3" /></button>
               )}
-            >
-              <item.icon
-                className={cn("h-[18px] w-[18px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/70")}
-                strokeWidth={1.7}
-              />
-              <span className="flex-1">{item.label}</span>
-              {"badge" in item && item.badge && unread > 0 && (
-                <span
-                  className={cn(
-                    "flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold",
-                    active ? "bg-white text-[var(--sidebar-bg)]" : "bg-white/20 text-white"
-                  )}
-                >
-                  {unread}
-                </span>
-              )}
-            </Link>
+            </div>
           );
         })}
 
-        {/* Collapsible "Más" section */}
-        <button
-          onClick={() => setMoreOpen(!moreOpen)}
-          className="flex items-center gap-[11px] rounded-lg px-3 py-2 text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors mt-1"
-        >
-          <ChevronDown className={cn("h-[14px] w-[14px] transition-transform", moreOpen && "rotate-180")} strokeWidth={1.7} />
-          <span className="flex-1 text-left">{moreOpen ? "Menos módulos" : "Más módulos"}</span>
-          <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px]">{NAV_MORE.length}</span>
-        </button>
+        {/* Customize + Collapse toggle */}
+        <div className="flex items-center gap-1 mt-1">
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className="flex flex-1 items-center gap-[11px] rounded-lg px-3 py-2 text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+          >
+            <ChevronDown className={cn("h-[14px] w-[14px] transition-transform", moreOpen && "rotate-180")} strokeWidth={1.7} />
+            <span className="flex-1 text-left">{moreOpen ? "Menos" : "Más módulos"}</span>
+            <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px]">{navMore.length}</span>
+          </button>
+          <button onClick={() => setCustomizing(!customizing)} className={cn("rounded p-1.5 transition-colors", customizing ? "bg-white/20 text-white" : "text-white/30 hover:text-white/60")} title="Personalizar menú">
+            <Settings2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
         {moreOpen && (
           <div className="space-y-0.5 pl-1">
-            {NAV_MORE.map((item) => {
+            {navMore.map((item) => {
               const href = `${prefix}${item.href}`;
               const active =
                 pathname === href || pathname.startsWith(`${href}/`) ||
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
-                <Link
-                  key={item.href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
-                      : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                <div key={item.href} className="flex items-center">
+                  <Link
+                    href={href}
+                    className={cn(
+                      "flex flex-1 items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                      active
+                        ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
+                        : "text-white/50 hover:text-white/80 hover:bg-white/5"
+                    )}
+                  >
+                    <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
+                    <span>{item.label}</span>
+                  </Link>
+                  {customizing && (
+                    <button onClick={() => toggleMainItem(item.href)} className="rounded p-1 text-white/40 hover:text-green-400 shrink-0" title="Agregar al menú principal"><Pin className="h-3 w-3" /></button>
                   )}
-                >
-                  <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
-                  <span>{item.label}</span>
-                </Link>
+                </div>
               );
             })}
           </div>

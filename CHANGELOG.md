@@ -8,6 +8,8 @@ Todos los cambios notables de este proyecto se documentan aquí.
 
 ### Agregado
 - **Módulo Focus** (`/focus`): Modo enfoque con timer Pomodoro (15/25/45/60 min), progreso circular, tareas de enfoque con prioridad, botón "Enfocar" para vincular tarea al timer, historial de sesiones, estadísticas diarias.
+- **Módulo Archivos & IA** (`/files`): Importar archivos (txt, csv, json, md, imágenes, pdf), visualizarlos inline, y preguntarle a la IA sobre su contenido. La IA extrae emails, teléfonos, hace resúmenes y busca dentro del archivo.
+- **Menú personalizable**: Botón ⚙️ junto a "Más módulos" activa modo edición. Puedes agregar (📌) o quitar (✕) módulos del menú principal. Se guarda en localStorage.
 - **Contactos — Detección de duplicados**: Botón "Duplicados" que escanea contactos por teléfono, email o nombre+empresa coincidente. Modal con opción de fusionar conservando datos de ambos registros.
 - **Contactos — Transferencia de leads**: Botón "Transferir a Prospección" en cada contacto para moverlo al módulo de cold-contacts/prospección.
 - **Checklists — Etiquetas y proyectos**: Campo "Proyecto" y selector de etiquetas compartidas (tags del CRM) al crear checklists. Las etiquetas se muestran en cada card con su color.
