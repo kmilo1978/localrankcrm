@@ -5,26 +5,29 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
+  // Canales
   { href: "/preview/settings/whatsapp", label: "WhatsApp" },
-  { href: "/preview/settings/ai-providers", label: "IA / APIs" },
-  { href: "/preview/settings/branding", label: "Marca" },
-  { href: "/preview/settings/templates", label: "Plantillas" },
-  { href: "/preview/settings/quick-replies", label: "Resp. Rápidas" },
   { href: "/preview/settings/sms", label: "SMS" },
-  { href: "/preview/settings/email-marketing", label: "Email" },
+  { href: "/preview/settings/email-marketing", label: "Email Marketing" },
+  // Integraciones & APIs
+  { href: "/preview/settings/ai-providers", label: "IA / APIs" },
   { href: "/preview/settings/mcp", label: "MCP" },
   { href: "/preview/settings/integrations", label: "Conectores" },
-  { href: "/preview/settings/flows", label: "Flows" },
-  { href: "/preview/settings/webhooks", label: "Webhooks" },
+  { href: "/preview/settings/webhooks", label: "Webhooks & APIs" },
+  // Tracking
   { href: "/preview/settings/tracking", label: "Pixels & UTM" },
-  { href: "/preview/settings/ocr", label: "OCR" },
-  { href: "/preview/settings/currency", label: "Moneda" },
+  // Personalización
+  { href: "/preview/settings/branding", label: "Marca" },
   { href: "/preview/settings/appearance", label: "Apariencia" },
-  { href: "/preview/settings/credentials", label: "Credenciales" },
   { href: "/preview/settings/shortcuts", label: "Atajos" },
-  { href: "/preview/settings/docs", label: "Documentacion" },
-  { href: "/preview/settings/account", label: "Cuenta" },
+  // Organización
   { href: "/preview/settings/team", label: "Equipo" },
+  { href: "/preview/settings/account", label: "Cuenta" },
+  // Regional
+  { href: "/preview/settings/currency", label: "Moneda" },
+  // Ayuda
+  { href: "/preview/settings/docs", label: "Documentación" },
+  { href: "/preview/settings/credentials", label: "Credenciales" },
 ] as const;
 
 export default function PreviewSettingsLayout({

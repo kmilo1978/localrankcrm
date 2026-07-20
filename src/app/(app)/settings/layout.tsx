@@ -5,25 +5,28 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
+  // Canales
   { href: "/settings/whatsapp", label: "WhatsApp" },
-  { href: "/settings/ai-providers", label: "IA / APIs" },
-  { href: "/settings/branding", label: "Marca" },
-  { href: "/settings/templates", label: "Plantillas" },
-  { href: "/settings/quick-replies", label: "Resp. Rápidas" },
   { href: "/settings/sms", label: "SMS" },
   { href: "/settings/email-marketing", label: "Email Marketing" },
+  // Integraciones & APIs
+  { href: "/settings/ai-providers", label: "IA / APIs" },
   { href: "/settings/mcp", label: "MCP" },
   { href: "/settings/integrations", label: "Conectores" },
-  { href: "/settings/flows", label: "Flows" },
-  { href: "/settings/webhooks", label: "Webhooks" },
+  { href: "/settings/webhooks", label: "Webhooks & APIs" },
+  // Tracking
   { href: "/settings/tracking", label: "Pixels & UTM" },
-  { href: "/settings/ocr", label: "OCR" },
-  { href: "/settings/currency", label: "Moneda" },
+  // Personalización
+  { href: "/settings/branding", label: "Marca" },
   { href: "/settings/appearance", label: "Apariencia" },
   { href: "/settings/shortcuts", label: "Atajos" },
-  { href: "/settings/docs", label: "Documentacion" },
+  // Organización
   { href: "/settings/team", label: "Equipo" },
   { href: "/settings/account", label: "Cuenta" },
+  // Regional
+  { href: "/settings/currency", label: "Moneda" },
+  // Ayuda
+  { href: "/settings/docs", label: "Documentación" },
 ] as const;
 
 export default function SettingsLayout({
