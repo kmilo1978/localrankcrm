@@ -281,7 +281,10 @@ export default function WorkspacesPage() {
                 </div>
               </div>
             )}
-              </div>
+
+            {/* Folders header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold">Carpetas</h3>
               <button onClick={() => setShowNewFolder(active.id)} className="flex items-center gap-2 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><FolderPlus className="h-3.5 w-3.5" />Nueva carpeta</button>
             </div>
 
