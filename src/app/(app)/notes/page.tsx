@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
+import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
 
 type Note = {
   id: string;
@@ -12,64 +13,72 @@ type Note = {
   image: string;
   relatedTo: string;
   category: string;
+  tags: string[];
   pinned: boolean;
   createdAt: string;
 };
 
-type Category = { id: string; name: string; color: string };
-
-const PRESET_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#e91e8c", "#8b5cf6", "#ef4444", "#06b6d4", "#6366f1", "#f97316", "#78716c"];
-
-const SEED_CATEGORIES: Category[] = [
-  { id: "cat1", name: "Reunión", color: "#3b82f6" },
-  { id: "cat2", name: "Seguimiento", color: "#10b981" },
-  { id: "cat3", name: "Ideas", color: "#8b5cf6" },
-  { id: "cat4", name: "Producto", color: "#f59e0b" },
-  { id: "cat5", name: "General", color: "#78716c" },
-];
+const PRESET_COLORS = TAG_PRESET_COLORS;
 
 const SEED_NOTES: Note[] = [
-  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", image: "", pinned: true, relatedTo: "TechCorp", category: "Reunión", createdAt: "2026-07-17" },
-  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", image: "", pinned: false, relatedTo: "LogiNext", category: "Seguimiento", createdAt: "2026-07-16" },
-  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", image: "", pinned: false, relatedTo: "MediaGroup", category: "Ideas", createdAt: "2026-07-15" },
+  { id: "n1", title: "Reunión TechCorp - Requerimientos", content: "Necesitan integración con SAP. Presupuesto aprobado para Q3.", image: "", pinned: true, relatedTo: "TechCorp", category: "Reunión", tags: ["Reunión", "Cliente VIP"], createdAt: "2026-07-17" },
+  { id: "n2", title: "Seguimiento LogiNext", content: "María García interesada en módulo logístico.", image: "", pinned: false, relatedTo: "LogiNext", category: "Seguimiento", tags: ["Seguimiento"], createdAt: "2026-07-16" },
+  { id: "n3", title: "Ideas campaña MediaGroup", content: "Proponer paquete marketing digital + CRM.", image: "", pinned: false, relatedTo: "MediaGroup", category: "Ideas", tags: ["Ideas", "Producto"], createdAt: "2026-07-15" },
 ];
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<CrmTag[]>([]);
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [showCatForm, setShowCatForm] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "" });
-  const [catForm, setCatForm] = useState({ name: "", color: PRESET_COLORS[0]! });
+  const [form, setForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "", tags: [] as string[] });
+  const [catForm, setCatForm] = useState({ name: "", color: PRESET_COLORS[0]!, description: "" });
+  const [customColor, setCustomColor] = useState("");
   const [viewNote, setViewNote] = useState<Note | null>(null);
   const [editNote, setEditNote] = useState<Note | null>(null);
-  const [editForm, setEditForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "" });
+  const [editForm, setEditForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "", tags: [] as string[] });
   const [toast, setToast] = useState("");
+  const [editingTag, setEditingTag] = useState<CrmTag | null>(null);
 
   useEffect(() => {
     setNotes(loadFromStorage("notes", SEED_NOTES));
-    setCategories(loadFromStorage("note_categories", SEED_CATEGORIES));
+    reloadTags();
   }, []);
+
+  function reloadTags() { setTags(loadTags()); }
   function saveNotes(u: Note[]) { setNotes(u); saveToStorage("notes", u); }
-  function saveCats(u: Category[]) { setCategories(u); saveToStorage("note_categories", u); }
+
+  // Categories derived from tags that include "notas" module
+  const categories = tags.filter(t => t.modules.includes("notas"));
 
   function handleAdd() {
     if (!form.title.trim()) return;
-    saveNotes([{ id: generateId(), title: form.title, content: form.content, image: form.image, relatedTo: form.relatedTo, category: form.category || "General", pinned: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
-    setForm({ title: "", content: "", image: "", relatedTo: "", category: "" });
+    saveNotes([{ id: generateId(), title: form.title, content: form.content, image: form.image, relatedTo: form.relatedTo, category: form.category || "General", tags: form.tags, pinned: false, createdAt: new Date().toISOString().split("T")[0]! }, ...notes]);
+    setForm({ title: "", content: "", image: "", relatedTo: "", category: "", tags: [] });
     setShowForm(false);
   }
 
   function addCategory() {
     if (!catForm.name.trim()) return;
-    saveCats([...categories, { id: generateId(), name: catForm.name, color: catForm.color }]);
-    setCatForm({ name: "", color: PRESET_COLORS[(categories.length + 1) % PRESET_COLORS.length]! });
+    const color = customColor.match(/^#[0-9a-fA-F]{6}$/) ? customColor : catForm.color;
+    createTag(catForm.name, color, catForm.description, ["notas"]);
+    setCatForm({ name: "", color: PRESET_COLORS[(categories.length + 1) % PRESET_COLORS.length]!, description: "" });
+    setCustomColor("");
     setShowCatForm(false);
+    reloadTags();
   }
 
-  function deleteCategory(id: string) { saveCats(categories.filter((c) => c.id !== id)); }
+  function deleteCategory(id: string) { removeTag(id); reloadTags(); }
+
+  function handleEditTag() {
+    if (!editingTag || !editingTag.name.trim()) return;
+    updateTag(editingTag.id, { name: editingTag.name, color: editingTag.color, description: editingTag.description, modules: editingTag.modules });
+    setEditingTag(null);
+    reloadTags();
+    showToast("Etiqueta actualizada");
+  }
   function togglePin(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, pinned: !n.pinned } : n)); }
   function deleteNote(id: string) { saveNotes(notes.filter((n) => n.id !== id)); if (viewNote?.id === id) setViewNote(null); }
 
@@ -77,7 +86,7 @@ export default function NotesPage() {
 
   function openEdit(note: Note) {
     setEditNote(note);
-    setEditForm({ title: note.title, content: note.content, image: note.image || "", relatedTo: note.relatedTo, category: note.category });
+    setEditForm({ title: note.title, content: note.content, image: note.image || "", relatedTo: note.relatedTo, category: note.category, tags: note.tags || [] });
     setViewNote(null);
   }
 
@@ -104,7 +113,7 @@ export default function NotesPage() {
     showToast("JSON copiado");
   }
 
-  function getCatColor(name: string) { return categories.find((c) => c.name === name)?.color || "#78716c"; }
+  function getCatColor(name: string) { return getTagColor(name); }
 
   const filtered = notes
     .filter((n) => filterCat === "all" || n.category === filterCat)
@@ -140,27 +149,53 @@ export default function NotesPage() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={clearAllNotes} className="flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" />Borrar todas</button>
-            <button onClick={() => setShowCatForm(!showCatForm)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Tag className="h-3.5 w-3.5" />Categorías</button>
+            <button onClick={() => setShowCatForm(!showCatForm)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Tag className="h-3.5 w-3.5" />Etiquetas</button>
             <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Nueva nota</button>
           </div>
         </div>
 
-        {/* Category manager */}
+        {/* Tag/Category manager */}
         {showCatForm && (
           <div className="mb-4 rounded-lg border bg-white p-4">
-            <h4 className="mb-2 text-sm font-semibold">Gestionar categorías</h4>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="text-sm font-semibold">Gestionar etiquetas</h4>
+                <p className="text-[10px] text-muted-foreground">Las etiquetas son compartidas con todo el CRM (contactos, tareas, etc.)</p>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2 mb-3">
               {categories.map((c) => (
                 <div key={c.id} className="group flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-white" style={{ backgroundColor: c.color }}>
                   {c.name}
-                  <button onClick={() => deleteCategory(c.id)} className="opacity-0 group-hover:opacity-100 hover:bg-white/30 rounded-full p-0.5"><X className="h-2.5 w-2.5" /></button>
+                  <button onClick={() => setEditingTag(c)} className="opacity-0 group-hover:opacity-100 hover:bg-white/30 rounded-full p-0.5" title="Editar"><Edit3 className="h-2.5 w-2.5" /></button>
+                  <button onClick={() => deleteCategory(c.id)} className="opacity-0 group-hover:opacity-100 hover:bg-white/30 rounded-full p-0.5" title="Eliminar"><X className="h-2.5 w-2.5" /></button>
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2">
-              <input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="Nueva categoría" className="rounded-md border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
-              <div className="flex gap-1">{PRESET_COLORS.map((c) => <button key={c} onClick={() => setCatForm({ ...catForm, color: c })} className={`h-6 w-6 rounded-full border-2 ${catForm.color === c ? "border-gray-800 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />)}</div>
-              <button onClick={addCategory} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover">Agregar</button>
+            {/* Import from CRM tags */}
+            {tags.filter(t => !t.modules.includes("notas")).length > 0 && (
+              <div className="mb-3 rounded border border-dashed border-brand/30 bg-brand/5 p-3">
+                <p className="text-[10px] font-medium text-brand mb-1.5">Importar del CRM:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.filter(t => !t.modules.includes("notas")).map(t => (
+                    <button key={t.id} onClick={() => { updateTag(t.id, { modules: [...t.modules, "notas"] }); reloadTags(); showToast(`"${t.name}" importada a Notas`); }} className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] hover:bg-white" style={{ borderColor: t.color, color: t.color }}>
+                      <Plus className="h-2.5 w-2.5" />{t.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder="Nombre de la etiqueta *" className="flex-1 rounded-md border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+                <input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} placeholder="Descripción" className="flex-1 rounded-md border px-3 py-1.5 text-sm focus:border-brand focus:outline-none" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 flex-wrap flex-1">{PRESET_COLORS.map((c) => <button key={c} onClick={() => { setCatForm({ ...catForm, color: c }); setCustomColor(""); }} className={`h-5 w-5 rounded-full border-2 ${catForm.color === c && !customColor ? "border-gray-800 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />)}</div>
+                <input value={customColor} onChange={(e) => setCustomColor(e.target.value)} placeholder="#hex" className="w-20 rounded border px-2 py-1 text-xs focus:border-brand focus:outline-none" />
+                {customColor.match(/^#[0-9a-fA-F]{6}$/) && <span className="h-5 w-5 rounded-full border" style={{ backgroundColor: customColor }} />}
+                <button onClick={addCategory} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover shrink-0">Crear etiqueta</button>
+              </div>
             </div>
           </div>
         )}
@@ -182,6 +217,17 @@ export default function NotesPage() {
                   <option value="">Categoría...</option>
                   {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
                 </select>
+              </div>
+              {/* Tag selector */}
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {categories.map(t => (
+                    <button key={t.id} type="button" onClick={() => { const has = form.tags.includes(t.name); setForm({...form, tags: has ? form.tags.filter(x => x !== t.name) : [...form.tags, t.name]}); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${form.tags.includes(t.name) ? "text-white scale-105" : "border opacity-70 hover:opacity-100"}`} style={form.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="mt-4 flex gap-2">
@@ -281,10 +327,60 @@ export default function NotesPage() {
                   </select>
                 </div>
               </div>
+              {/* Edit tags */}
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {categories.map(t => (
+                    <button key={t.id} type="button" onClick={() => { const has = editForm.tags.includes(t.name); setEditForm({...editForm, tags: has ? editForm.tags.filter(x => x !== t.name) : [...editForm.tags, t.name]}); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${editForm.tags.includes(t.name) ? "text-white scale-105" : "border opacity-70 hover:opacity-100"}`} style={editForm.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-2 pt-2">
                 <button onClick={handleUpdate} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar cambios</button>
                 <button onClick={() => setEditNote(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tag Modal */}
+      {editingTag && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditingTag(null)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold">Editar etiqueta</h3>
+              <button onClick={() => setEditingTag(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <input value={editingTag.name} onChange={e => setEditingTag({...editingTag, name: e.target.value})} placeholder="Nombre" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <input value={editingTag.description} onChange={e => setEditingTag({...editingTag, description: e.target.value})} placeholder="Descripción" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Color</label>
+                <div className="flex flex-wrap gap-1.5">{PRESET_COLORS.map(c => <button key={c} onClick={() => setEditingTag({...editingTag, color: c})} className={`h-5 w-5 rounded-full border-2 ${editingTag.color === c ? "border-gray-800 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />)}</div>
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Disponible en módulos:</label>
+                <div className="flex flex-wrap gap-2">
+                  {["notas", "contactos", "tareas", "oportunidades"].map(mod => (
+                    <label key={mod} className="flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" checked={editingTag.modules.includes(mod)} onChange={e => { setEditingTag({...editingTag, modules: e.target.checked ? [...editingTag.modules, mod] : editingTag.modules.filter(m => m !== mod)}); }} className="accent-brand rounded" />
+                      <span className="text-xs capitalize">{mod}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-xs text-muted-foreground">Vista previa:</span>
+                <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: editingTag.color }}><Tag className="h-3 w-3" />{editingTag.name}</span>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button onClick={handleEditTag} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar</button>
+              <button onClick={() => setEditingTag(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
             </div>
           </div>
         </div>
@@ -296,7 +392,7 @@ export default function NotesPage() {
   );
 }
 
-function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: Category[]; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
+function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit, onClone, onCopy, onMove }: { note: Note; catColor: string; categories: CrmTag[]; onPin: (id: string) => void; onDelete: (id: string) => void; onView: (n: Note) => void; onEdit: (n: Note) => void; onClone: (n: Note) => void; onCopy: (n: Note) => void; onMove: (id: string, cat: string) => void }) {
   return (
     <div className="rounded-lg border bg-white p-3 hover:shadow-sm transition-shadow overflow-hidden">
       {/* Title row — clickable to view */}
@@ -308,9 +404,12 @@ function NoteCard({ note, catColor, categories, onPin, onDelete, onView, onEdit,
       {/* Content preview */}
       <p className="mt-1.5 text-xs text-muted-foreground break-all overflow-hidden line-clamp-2 cursor-pointer" onClick={() => onView(note)}>{note.content}</p>
       {note.image && <img src={note.image} alt="" className="mt-1.5 w-full max-h-20 rounded border object-cover cursor-pointer" onClick={() => onView(note)} />}
-      {/* Footer with category + date */}
-      <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+      {/* Tags + category */}
+      <div className="mt-2 flex items-center gap-1.5 flex-wrap text-[10px] text-muted-foreground">
         <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: catColor }}>{note.category}</span>
+        {(note.tags || []).filter(t => t !== note.category).map(t => (
+          <span key={t} className="rounded-full px-1.5 py-0.5 text-[9px] font-medium border" style={{ borderColor: getTagColor(t), color: getTagColor(t) }}>{t}</span>
+        ))}
         <span className="ml-auto">{note.createdAt}</span>
       </div>
       {/* Action buttons — ALWAYS visible */}

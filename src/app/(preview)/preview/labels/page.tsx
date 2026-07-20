@@ -2,60 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { Edit2, Plus, Tag, Trash2, X } from "lucide-react";
-import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { CrmTag, loadTags, saveTags, createTag, updateTag, deleteTag, TAG_PRESET_COLORS } from "@/lib/tags";
 
-type Label = {
-  id: string;
-  name: string;
-  color: string;
-  description: string;
-  count: number;
-};
-
-const PRESET_COLORS = [
-  "#e91e8c", "#ef4444", "#f97316", "#f59e0b", "#eab308",
-  "#84cc16", "#22c55e", "#10b981", "#14b8a6", "#06b6d4",
-  "#0ea5e9", "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7",
-  "#d946ef", "#ec4899", "#f43f5e", "#78716c", "#475569",
-];
-
-const SEED_LABELS: Label[] = [
-  { id: "lb1", name: "Cliente VIP", color: "#f59e0b", description: "Clientes de alto valor", count: 4 },
-  { id: "lb2", name: "Urgente", color: "#ef4444", description: "Requiere atención inmediata", count: 2 },
-  { id: "lb3", name: "Prospecto caliente", color: "#e91e8c", description: "Alta probabilidad de cierre", count: 5 },
-  { id: "lb4", name: "En negociación", color: "#8b5cf6", description: "En proceso de negociación activa", count: 3 },
-  { id: "lb5", name: "Renovación", color: "#06b6d4", description: "Contrato próximo a renovar", count: 2 },
-  { id: "lb6", name: "Nuevo lead", color: "#22c55e", description: "Lead recién ingresado", count: 8 },
-  { id: "lb7", name: "Soporte", color: "#3b82f6", description: "Requiere soporte post-venta", count: 1 },
-  { id: "lb8", name: "Inactivo", color: "#78716c", description: "Sin actividad reciente", count: 6 },
-];
+const PRESET_COLORS = TAG_PRESET_COLORS;
 
 export default function LabelsPage() {
-  const [labels, setLabels] = useState<Label[]>([]);
+  const [labels, setLabels] = useState<CrmTag[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Label | null>(null);
+  const [editing, setEditing] = useState<CrmTag | null>(null);
   const [form, setForm] = useState({ name: "", color: PRESET_COLORS[0]!, description: "" });
   const [customColor, setCustomColor] = useState("");
+  const [moduleFilter, setModuleFilter] = useState("all");
 
-  useEffect(() => { setLabels(loadFromStorage("crm_labels", SEED_LABELS)); }, []);
-  function save(u: Label[]) { setLabels(u); saveToStorage("crm_labels", u); }
+  useEffect(() => { setLabels(loadTags()); }, []);
+  function reload() { setLabels(loadTags()); }
 
   function handleAdd() {
     if (!form.name.trim()) return;
     const color = customColor.match(/^#[0-9a-fA-F]{6}$/) ? customColor : form.color;
-    save([...labels, { id: generateId(), name: form.name, color, description: form.description, count: 0 }]);
+    createTag(form.name, color, form.description, ["contactos", "notas", "tareas"]);
     setForm({ name: "", color: PRESET_COLORS[0]!, description: "" });
     setCustomColor("");
     setShowForm(false);
+    reload();
   }
 
   function handleEdit() {
     if (!editing || !editing.name.trim()) return;
-    save(labels.map((l) => l.id === editing.id ? editing : l));
+    updateTag(editing.id, { name: editing.name, color: editing.color, description: editing.description, modules: editing.modules });
     setEditing(null);
+    reload();
   }
 
-  function handleDelete(id: string) { save(labels.filter((l) => l.id !== id)); }
+  function handleDelete(id: string) { deleteTag(id); reload(); }
+
+  const filtered = moduleFilter === "all" ? labels : labels.filter(l => l.modules.includes(moduleFilter));
+  const modules = Array.from(new Set(labels.flatMap(l => l.modules)));
 
   return (
     <div className="h-full overflow-y-auto p-6">
@@ -63,11 +45,20 @@ export default function LabelsPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Etiquetas</h1>
-            <p className="text-sm text-muted-foreground">{labels.length} etiquetas · Crea las que necesites con colores personalizados</p>
+            <p className="text-sm text-muted-foreground">{labels.length} etiquetas compartidas en todo el CRM · Asigna colores y módulos</p>
           </div>
           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
             <Plus className="h-4 w-4" />Nueva etiqueta
           </button>
+        </div>
+
+        {/* Module filter */}
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-medium text-muted-foreground">Filtrar por módulo:</span>
+          <button onClick={() => setModuleFilter("all")} className={`rounded-full px-2.5 py-1 text-xs font-medium ${moduleFilter === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todas</button>
+          {modules.map(m => (
+            <button key={m} onClick={() => setModuleFilter(m)} className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${moduleFilter === m ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{m}</button>
+          ))}
         </div>
 
         {/* Create form */}
@@ -106,7 +97,7 @@ export default function LabelsPage() {
 
         {/* Labels grid */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {labels.map((label) => (
+          {filtered.map((label) => (
             <div key={label.id} className="group rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
@@ -125,7 +116,11 @@ export default function LabelsPage() {
                 <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium text-white" style={{ backgroundColor: label.color }}>
                   <Tag className="h-3 w-3" />{label.name}
                 </span>
-                <span className="text-xs text-muted-foreground">{label.count} asignadas</span>
+                <div className="flex gap-1">
+                  {label.modules.map(m => (
+                    <span key={m} className="rounded px-1.5 py-0.5 text-[9px] bg-gray-100 text-gray-600 capitalize">{m}</span>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
@@ -153,6 +148,17 @@ export default function LabelsPage() {
                 <div className="flex flex-wrap gap-2">
                   {PRESET_COLORS.map((c) => (
                     <button key={c} onClick={() => setEditing({ ...editing, color: c })} className={`h-6 w-6 rounded-full border-2 ${editing.color === c ? "border-gray-800 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Disponible en módulos</label>
+                <div className="flex flex-wrap gap-2">
+                  {["contactos", "notas", "tareas", "oportunidades"].map(mod => (
+                    <label key={mod} className="flex items-center gap-1.5 cursor-pointer">
+                      <input type="checkbox" checked={editing.modules.includes(mod)} onChange={e => { setEditing({...editing, modules: e.target.checked ? [...editing.modules, mod] : editing.modules.filter(m => m !== mod)}); }} className="accent-brand rounded" />
+                      <span className="text-xs capitalize">{mod}</span>
+                    </label>
                   ))}
                 </div>
               </div>
