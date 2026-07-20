@@ -169,17 +169,17 @@ export default function RadarPage() {
       try {
         const data = JSON.parse(text);
         if (data.url) {
-          saveClips([{ id: generateId(), url: data.url, title: data.title || data.url, description: data.description || "", image: "", folderId: data.folderId || folders[0]?.id || "", tags: data.tags || [], notes: data.notes || "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
+          saveClips([{ id: generateId(), url: data.url, title: data.title || data.url, description: data.description || "", image: "", folderId: data.folderId || folders[0]?.id || "", tags: data.tags || [], notes: data.notes || "", email: data.email || "", phone: data.phone || "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
           setCopyMsg("Clip pegado desde portapapeles");
         } else if (Array.isArray(data)) {
-          const newClips = data.map((d: Record<string, unknown>) => ({ id: generateId(), url: (d.url as string) || "", title: (d.title as string) || "", description: (d.description as string) || "", image: "", folderId: folders[0]?.id || "", tags: (d.tags as string[]) || [], notes: (d.notes as string) || "", savedAt: new Date().toLocaleString("es"), source: "manual" as const }));
+          const newClips = data.map((d: Record<string, unknown>) => ({ id: generateId(), url: (d.url as string) || "", title: (d.title as string) || "", description: (d.description as string) || "", image: "", folderId: folders[0]?.id || "", tags: (d.tags as string[]) || [], notes: (d.notes as string) || "", email: (d.email as string) || "", phone: (d.phone as string) || "", savedAt: new Date().toLocaleString("es"), source: "manual" as const }));
           saveClips([...newClips, ...clips]);
           setCopyMsg(`${newClips.length} clips pegados`);
         }
       } catch {
         // Not JSON — treat as URL
         if (text.startsWith("http")) {
-          saveClips([{ id: generateId(), url: text, title: text, description: "", image: "", folderId: folders[0]?.id || "", tags: [], notes: "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
+          saveClips([{ id: generateId(), url: text, title: text, description: "", image: "", folderId: folders[0]?.id || "", tags: [], notes: "", email: "", phone: "", savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
           setCopyMsg("URL pegada como clip");
         } else {
           setCopyMsg("No se reconoce el formato del portapapeles");
