@@ -96,6 +96,7 @@ const ALL_NAV = [
   { href: "/enrichment", label: "Enriquecimiento", icon: Database },
   { href: "/ai-builder", label: "Constructor IA", icon: Bot },
   { href: "/email-finder", label: "Email Finder", icon: Mail },
+  { href: "/lead-finder", label: "Lead Finder B2B", icon: Users },
 ] as const;
 
 const DEFAULT_MAIN_HREFS = ["/dashboard", "/cold-contacts", "/contacts", "/companies", "/opportunities", "/pipeline", "/inbox", "/tasks", "/calendar", "/focus", "/ai-hub", "/analytics", "/files"];

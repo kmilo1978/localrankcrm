@@ -29,6 +29,8 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **ToDo**: Clonar, mover entre periodos, enviar a recordatorio.
 - **Bóveda**: Generador de claves seguras (crypto) + modal cambiar clave.
 - **Sistema de etiquetas compartido** (`src/lib/tags.ts`): Importable entre todos los módulos.
+- **Lead Finder B2B** (`/lead-finder`): Localizador de leads estilo Snov.io — búsqueda por filtros (industria, ubicación, cargo, empresa) + búsqueda IA en lenguaje natural. Leads pre-verificados con score. Exportar CSV, enviar a Pipeline o Contactos directamente. Selección múltiple.
+- **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
 - Build Vercel: localStorage en render, NodeJS.Timeout, email/phone en radar, JSX workspaces, prefix duplicado app-nav.

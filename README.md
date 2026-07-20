@@ -78,7 +78,8 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Focus** | Modo enfoque Pomodoro (15/25/45/60 min), timer circular, tareas de enfoque con prioridad, historial de sesiones |
 | **Archivos & IA** | Importar archivos (txt/csv/json/md/img/pdf), visualizar inline, preguntar a la IA sobre contenido (extrae emails, teléfonos, resúmenes) |
 | **Acortador URL** | Crear enlaces cortos con tracking de clicks, etiquetas y copiar al portapapeles |
-| **Enriquecimiento** | 8 templates para encontrar emails, phones, company info, social profiles, tech stack. Conecta con Composio/Snov.io |
+| **Email Finder** | Genera emails probables por nombre+dominio (8 patrones), verifica formato/reputación, detecta typos y emails desechables |
+| **Lead Finder B2B** | Localizador de leads: búsqueda IA en lenguaje natural + filtros (industria/ubicación/cargo), leads verificados con score, exportar CSV, enviar a Pipeline/Contactos |
 | **Constructor IA** | Interfaz de lenguaje natural: dile qué hacer y la IA ejecuta en el módulo correcto. Auto-detecta contexto |
 | **Calendario** | Múltiples calendarios con colores, citas, cobros, recordatorios |
 | **Formularios** | Conectar Tally/Typeform/JotForm + builder manual + generador IA |
@@ -105,7 +106,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Admin — Control de módulos** | El owner/admin activa/desactiva módulos por miembro del equipo |
 | **Dark mode** | Tema claro, oscuro o automático (sistema) con soporte en todos los módulos |
 | **White-label** | Logo, colores (6 presets + custom HEX), tipografía, dominio custom |
-| **Multi-workspace** | Espacios independientes con claves propias, renombrar, límite configurable, eliminación segura (confirmar en MAYÚSCULAS) |
+| **Multi-workspace** | Espacios aislados (cada uno con sus propios datos), claves propias, renombrar, límite configurable, eliminación segura (confirmar en MAYÚSCULAS) |
 | **Vistas múltiples** | Lista, Kanban, Calendario, Tablero (por módulo) |
 | **Etiquetas compartidas** | Sistema de tags con colores importable entre todos los módulos |
 
