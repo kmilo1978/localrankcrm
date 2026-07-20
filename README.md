@@ -81,7 +81,8 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Email Finder** | 4 herramientas: Finder (genera emails), Verificador (formato/dominio), Escritor IA (5 tipos de email con tono), Limpiar lista (duplicados/inválidos/temporales) |
 | **Lead Finder B2B** | Localizador de leads: búsqueda IA en lenguaje natural + filtros, leads verificados con score, exportar CSV, enviar a Pipeline/Contactos |
 | **Social Outreach** | Outreach multicanal: LinkedIn, Twitter/X, Instagram, Facebook, TikTok. Templates por plataforma, tracking de mensajes, exportar perfiles |
-| **Constructor IA** | Interfaz de lenguaje natural: dile qué hacer y la IA ejecuta en el módulo correcto. Auto-detecta contexto |
+| **Constructor IA** | Interfaz de lenguaje natural: dile qué hacer y la IA ejecuta en el módulo correcto. Auto-detecta contexto. 6 agentes especializados |
+| **Cotizador IA** | Genera propuestas comerciales completas desde un prompt. Secciones editables, copiar, exportar |
 | **Calendario** | Múltiples calendarios con colores, citas, cobros, recordatorios |
 | **Formularios** | Conectar Tally/Typeform/JotForm + builder manual + generador IA |
 | **Importar & Enriquecer** | Upload CSV → enriquecimiento (email, social, tech, empresa, dominio) → exportar |

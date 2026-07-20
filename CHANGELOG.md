@@ -35,7 +35,10 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
-- **Menú cerrado por defecto**: Las categorías del sidebar empiezan colapsadas.
+- **Cotizador IA** (`/ai-quoter`): Genera propuestas comerciales desde prompt (cliente, proyecto, presupuesto, timeline). Con OpenRouter: IA real. Sin API key: plantilla profesional. Secciones editables, copiar/exportar.
+- **Backup completo** (Ajustes → Cuenta): Exportar JSON + Importar/Restaurar desde archivo con recarga automática.
+- **robots.txt + noindex**: Protección contra indexación en motores de búsqueda (robots.txt Disallow all, meta noindex, header X-Robots-Tag).
+- **Auditoría de seguridad**: Verificado 0 API keys expuestas en el código. .env protegido por gitignore y nunca commiteado.
 - **Página Sugerencias** (Ajustes): Formulario para enviar feedback/bugs/ideas a jkbotero78@gmail.com.
 - **Documentación completa** (Ajustes): Guía paso a paso de cada módulo con "Cómo usar" + "Tips". Buscador integrado.
 - **Toggle tema** en sidebar: Ícono sol/luna para cambiar claro/oscuro con un clic.
