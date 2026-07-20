@@ -23,7 +23,7 @@ export default function RemindersPage() {
   const [activePopup, setActivePopup] = useState<Reminder | null>(null);
   const [toast, setToast] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const checkInterval = useRef<NodeJS.Timeout | null>(null);
+  const checkInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { setReminders(loadFromStorage("reminders_v2", SEED)); }, []);
   useEffect(() => {

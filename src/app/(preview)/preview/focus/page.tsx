@@ -21,7 +21,7 @@ export default function FocusPage() {
   const [focusDuration, setFocusDuration] = useState(25);
   const [currentTask, setCurrentTask] = useState("");
   const [toast, setToast] = useState("");
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setTasks(loadFromStorage("focus_tasks", SEED_TASKS));

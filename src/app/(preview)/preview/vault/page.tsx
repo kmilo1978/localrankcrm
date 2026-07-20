@@ -55,11 +55,12 @@ export default function VaultPage() {
   const [genNumbers, setGenNumbers] = useState(true);
   const [genSymbols, setGenSymbols] = useState(true);
   const [generatedKey, setGeneratedKey] = useState("");
+  const [isFirstTime, setIsFirstTime] = useState(false);
 
   useEffect(() => {
     // Check if vault has a master password set
     const storedHash = localStorage.getItem("vault_master_hash");
-    if (!storedHash) setLocked(false); // First time: no password yet
+    if (!storedHash) { setLocked(false); setIsFirstTime(true); }
   }, []);
 
   function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
@@ -164,7 +165,7 @@ export default function VaultPage() {
             <input type="password" value={masterPass} onChange={e => { setMasterPass(e.target.value); setPassError(false); }} onKeyDown={e => { if (e.key === "Enter") unlock(); }} placeholder="Clave maestra" className={`w-full rounded-lg border px-4 py-3 text-center text-sm focus:border-brand focus:outline-none ${passError ? "border-red-400 bg-red-50" : ""}`} autoFocus />
             {passError && <p className="text-xs text-red-500">Clave incorrecta</p>}
             <button onClick={unlock} className="w-full rounded-lg bg-brand py-3 text-sm font-medium text-white hover:bg-brand-hover">Desbloquear</button>
-            {!localStorage.getItem("vault_master_hash") && (
+            {isFirstTime && (
               <p className="text-[10px] text-muted-foreground">Primera vez? Escribe una clave y se configurara como tu clave maestra.</p>
             )}
           </div>
