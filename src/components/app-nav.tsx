@@ -121,7 +121,6 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/files", label: "Archivos & IA", icon: FileText },
     { href: "/settings/ocr", label: "OCR", icon: FileText },
     { href: "/audit", label: "Auditoría", icon: History },
-    { href: "/trash", label: "Papelera", icon: Trash2 },
     { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
     { href: "/lab", label: "Laboratorio", icon: FlaskConical },
   ]},
@@ -285,6 +284,9 @@ export function AppNav({
         </Link>
         <Link href={`${prefix}/settings/suggestions`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/settings/suggestions") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
           <Lightbulb className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Sugerencias</span>
+        </Link>
+        <Link href={`${prefix}/trash`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/trash") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+          <Trash2 className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Papelera</span>
         </Link>
       </div>
 
