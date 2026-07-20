@@ -7,6 +7,9 @@ Todos los cambios notables de este proyecto se documentan aquí.
 ## [2026-07-20]
 
 ### Agregado
+- **Componente ViewToggle** (`src/components/view-toggle.tsx`): Selector de vistas reutilizable para todo el CRM. Soporta: Lista, Kanban, Tablero (grid), Calendario y Mapa mental. Cada módulo elige cuáles mostrar.
+- **Tareas — Vistas múltiples**: Lista (original), Kanban (columnas por estado), Calendario (mes con tareas por fecha), Tablero (cards compactas en grid).
+- **Notas — Vistas múltiples**: Grid (original, cards), Lista (filas compactas), Board (columnas kanban por categoría/etiqueta).
 - **Notas — Enviar a recordatorio**: Botón "Recordatorio" en el modal de nota que crea un recordatorio automático programado a 1 hora desde ahora, con el título y contenido de la nota.
 - **Checklists — Bloqueo**: Botón para bloquear/desbloquear checklists. Cuando está bloqueado, no se pueden marcar, agregar ni eliminar items.
 - **Checklists — Paginación**: Navegación por páginas (8 checklists por página) con controles anterior/siguiente.

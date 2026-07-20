@@ -5,6 +5,7 @@ import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Pin, Plus, Search,
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
+import { ViewToggle, ViewMode } from "@/components/view-toggle";
 
 type Note = {
   id: string;
@@ -29,6 +30,7 @@ const SEED_NOTES: Note[] = [
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [tags, setTags] = useState<CrmTag[]>([]);
+  const [view, setView] = useState<ViewMode>("grid");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -156,6 +158,7 @@ export default function NotesPage() {
             <p className="text-sm text-muted-foreground">{notes.length} notas · {categories.length} categorías</p>
           </div>
           <div className="flex items-center gap-2">
+            <ViewToggle current={view} onChange={setView} views={["grid", "list", "board"]} />
             <button onClick={clearAllNotes} className="flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" />Borrar todas</button>
             <button onClick={() => setShowCatForm(!showCatForm)} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><Tag className="h-3.5 w-3.5" />Etiquetas</button>
             <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Nueva nota</button>
@@ -261,7 +264,8 @@ export default function NotesPage() {
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Notes — GRID VIEW (default, cards) */}
+        {view === "grid" && (<>
         {pinned.length > 0 && (
           <div className="mb-4">
             <h3 className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground"><Pin className="h-3 w-3" />Fijadas</h3>
@@ -271,6 +275,50 @@ export default function NotesPage() {
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {paginatedUnpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}
         </div>
+        </>)}
+
+        {/* Notes — LIST VIEW (compact rows) */}
+        {view === "list" && (
+          <div className="rounded-lg border bg-white overflow-hidden">
+            {[...pinned, ...paginatedUnpinned].map(n => (
+              <div key={n.id} className="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 hover:bg-gray-50 cursor-pointer" onClick={() => setViewNote(n)}>
+                {n.pinned && <Pin className="h-3 w-3 text-brand shrink-0" />}
+                <span className="rounded-full w-2 h-2 shrink-0" style={{ backgroundColor: getCatColor(n.category) }} />
+                <span className="text-sm font-medium flex-1 truncate">{n.title}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{n.category}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{n.createdAt}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Notes — BOARD VIEW (by category columns) */}
+        {view === "board" && (
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {categories.map(cat => {
+              const catNotes = filtered.filter(n => n.category === cat.name);
+              return (
+                <div key={cat.id} className="w-64 shrink-0 rounded-lg border bg-white">
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b">
+                    <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                    <span className="text-xs font-semibold">{cat.name}</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto">{catNotes.length}</span>
+                  </div>
+                  <div className="p-2 space-y-2 max-h-[60vh] overflow-y-auto">
+                    {catNotes.map(n => (
+                      <div key={n.id} className="rounded border p-2 hover:shadow-sm cursor-pointer" onClick={() => setViewNote(n)}>
+                        <p className="text-xs font-medium truncate">{n.title}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{n.content}</p>
+                        <span className="text-[9px] text-muted-foreground mt-1 block">{n.createdAt}</span>
+                      </div>
+                    ))}
+                    {catNotes.length === 0 && <p className="text-center text-[10px] text-muted-foreground py-6">Sin notas</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
