@@ -174,13 +174,14 @@
     .p-6 { padding: 1rem; }
     .px-6 { padding-left: 1rem; padding-right: 1rem; }
     .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+    .p-4 { padding: 0.75rem; }
 
     /* Make headings smaller */
     h1 { font-size: 1.25rem !important; }
     h2 { font-size: 1.1rem !important; }
 
     /* Full-width cards */
-    .max-w-5xl, .max-w-6xl, .max-w-7xl {
+    .max-w-5xl, .max-w-6xl, .max-w-7xl, .max-w-4xl, .max-w-3xl {
       max-width: 100% !important;
     }
 
@@ -189,5 +190,35 @@
 
     /* Fix fixed elements not to go offscreen */
     .fixed { max-width: 100vw; }
+
+    /* Responsive grids */
+    .grid-cols-2, .grid-cols-3 { grid-template-columns: 1fr !important; }
+    .sm\:grid-cols-2, .sm\:grid-cols-3, .lg\:grid-cols-3 { grid-template-columns: 1fr !important; }
+
+    /* Stack flex items on mobile */
+    .flex-wrap { flex-wrap: wrap; }
+    
+    /* Kanban horizontal scroll */
+    .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+
+    /* Modals full width on mobile */
+    .max-w-sm, .max-w-md, .max-w-lg, .max-w-xl, .max-w-2xl {
+      max-width: calc(100vw - 2rem) !important;
+    }
+
+    /* Sidebar hidden by default (hamburger menu handles it) */
+    .w-60 { width: 100% !important; max-width: 260px; }
+
+    /* Buttons touch-friendly */
+    button, a { min-height: 36px; }
+    
+    /* Inputs larger on mobile */
+    input, select, textarea { font-size: 16px !important; }
+  }
+
+  /* Tablet */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .lg\:grid-cols-3 { grid-template-columns: repeat(2, 1fr) !important; }
+    .lg\:col-span-2 { grid-column: span 2 !important; }
   }
 }

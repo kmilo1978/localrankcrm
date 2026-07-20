@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Bot, CheckCircle2, Lightbulb, Send, Sparkles, Wand2, Zap } from "lucide-react";
+import { Bot, CheckCircle2, Lightbulb, Send, Settings, Sparkles, Wand2, Zap } from "lucide-react";
 import { generateId } from "@/lib/local-storage";
+import { crmAI, isAiConfigured, AI_AGENTS, callAI } from "@/lib/ai-client";
+import type { AiMessage } from "@/lib/ai-client";
 
 type AiAction = { id: string; prompt: string; module: string; action: string; result: string; timestamp: string };
 
@@ -30,6 +32,7 @@ const EXAMPLES = [
 export default function AiBuilderPage() {
   const [prompt, setPrompt] = useState("");
   const [module, setModule] = useState("auto");
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [history, setHistory] = useState<AiAction[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,23 +40,36 @@ export default function AiBuilderPage() {
     if (!prompt.trim()) return;
     setLoading(true);
 
-    // Detect module from prompt
     const detectedModule = detectModule(prompt);
-    const action = generateAction(prompt, detectedModule);
 
-    setTimeout(() => {
-      const entry: AiAction = {
-        id: generateId(),
-        prompt,
-        module: detectedModule,
-        action: action.action,
-        result: action.result,
-        timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
-      };
-      setHistory(prev => [entry, ...prev]);
-      setPrompt("");
-      setLoading(false);
-    }, 1200);
+    if (isAiConfigured() && selectedAgent) {
+      // Use real AI with selected agent
+      const agent = AI_AGENTS.find(a => a.id === selectedAgent);
+      const msgs: AiMessage[] = [
+        { role: "system", content: agent?.system || "Eres un asistente de CRM." },
+        { role: "user", content: prompt },
+      ];
+      callAI(msgs).then(result => {
+        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: `${agent?.name || "IA"} respondió`, result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
+        setHistory(prev => [entry, ...prev]);
+        setPrompt(""); setLoading(false);
+      });
+    } else if (isAiConfigured()) {
+      // Use real AI without specific agent
+      crmAI(prompt).then(result => {
+        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: "IA respondió", result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
+        setHistory(prev => [entry, ...prev]);
+        setPrompt(""); setLoading(false);
+      });
+    } else {
+      // Fallback to local logic
+      const action = generateAction(prompt, detectedModule);
+      setTimeout(() => {
+        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: action.action, result: action.result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
+        setHistory(prev => [entry, ...prev]);
+        setPrompt(""); setLoading(false);
+      }, 1200);
+    }
   }
 
   function detectModule(text: string): string {
@@ -89,6 +105,22 @@ export default function AiBuilderPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2"><Wand2 className="h-6 w-6 text-purple-600" />Constructor IA</h1>
           <p className="text-sm text-muted-foreground">Dile qué hacer y la IA lo ejecuta en el módulo correcto. Mezcla manual + automático.</p>
+        </div>
+
+        {/* AI Status + Agents */}
+        <div className="mb-4 flex items-center gap-3 flex-wrap">
+          <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium ${isAiConfigured() ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+            {isAiConfigured() ? "✓ OpenRouter conectado" : "⚠ Sin API key — modo local"}
+          </span>
+          {!isAiConfigured() && <a href="/settings/ai-providers" className="text-[10px] text-brand hover:underline">Configurar IA →</a>}
+          <div className="flex gap-1 ml-auto">
+            {AI_AGENTS.map(agent => (
+              <button key={agent.id} onClick={() => setSelectedAgent(selectedAgent === agent.id ? null : agent.id)} className={`rounded-full px-2 py-1 text-[10px] font-medium ${selectedAgent === agent.id ? "bg-purple-100 text-purple-700" : "border hover:bg-gray-50"}`} title={agent.name}>
+                {agent.icon}
+              </button>
+            ))}
+          </div>
+          {selectedAgent && <span className="text-[10px] text-purple-600">{AI_AGENTS.find(a => a.id === selectedAgent)?.name}</span>}
         </div>
 
         {/* Main input */}
