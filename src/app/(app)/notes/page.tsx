@@ -129,7 +129,7 @@ export default function NotesPage() {
   function getCatColor(name: string) { return getTagColor(name); }
 
   const filtered = notes
-    .filter((n) => filterCat === "all" || n.category === filterCat)
+    .filter((n) => filterCat === "all" ? true : filterCat === "__locked" ? n.locked : n.category === filterCat)
     .filter((n) => !search || n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase()));
   const pinned = filtered.filter((n) => n.pinned);
   const unpinned = filtered.filter((n) => !n.pinned);
@@ -259,6 +259,7 @@ export default function NotesPage() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button onClick={() => setFilterCat("all")} className={`rounded-full px-2.5 py-1 text-xs font-medium ${filterCat === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todas</button>
+            <button onClick={() => setFilterCat("__locked")} className={`rounded-full px-2.5 py-1 text-xs font-medium flex items-center gap-1 ${filterCat === "__locked" ? "bg-amber-500 text-white" : "border border-amber-200 text-amber-700 hover:bg-amber-50"}`}><Lock className="h-3 w-3" />Bloqueadas</button>
             {categories.map((c) => (
               <button key={c.id} onClick={() => setFilterCat(c.name)} className={`rounded-full px-2.5 py-1 text-xs font-medium ${filterCat === c.name ? "text-white" : "border hover:bg-gray-50"}`} style={filterCat === c.name ? { backgroundColor: c.color } : {}}>
                 {c.name}
