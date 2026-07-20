@@ -78,8 +78,9 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Focus** | Modo enfoque Pomodoro (15/25/45/60 min), timer circular, tareas de enfoque con prioridad, historial de sesiones |
 | **Archivos & IA** | Importar archivos (txt/csv/json/md/img/pdf), visualizar inline, preguntar a la IA sobre contenido (extrae emails, teléfonos, resúmenes) |
 | **Acortador URL** | Crear enlaces cortos con tracking de clicks, etiquetas y copiar al portapapeles |
-| **Email Finder** | Genera emails probables por nombre+dominio (8 patrones), verifica formato/reputación, detecta typos y emails desechables |
-| **Lead Finder B2B** | Localizador de leads: búsqueda IA en lenguaje natural + filtros (industria/ubicación/cargo), leads verificados con score, exportar CSV, enviar a Pipeline/Contactos |
+| **Email Finder** | 4 herramientas: Finder (genera emails), Verificador (formato/dominio), Escritor IA (5 tipos de email con tono), Limpiar lista (duplicados/inválidos/temporales) |
+| **Lead Finder B2B** | Localizador de leads: búsqueda IA en lenguaje natural + filtros, leads verificados con score, exportar CSV, enviar a Pipeline/Contactos |
+| **Social Outreach** | Outreach multicanal: LinkedIn, Twitter/X, Instagram, Facebook, TikTok. Templates por plataforma, tracking de mensajes, exportar perfiles |
 | **Constructor IA** | Interfaz de lenguaje natural: dile qué hacer y la IA ejecuta en el módulo correcto. Auto-detecta contexto |
 | **Calendario** | Múltiples calendarios con colores, citas, cobros, recordatorios |
 | **Formularios** | Conectar Tally/Typeform/JotForm + builder manual + generador IA |

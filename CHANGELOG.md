@@ -29,7 +29,9 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **ToDo**: Clonar, mover entre periodos, enviar a recordatorio.
 - **Bóveda**: Generador de claves seguras (crypto) + modal cambiar clave.
 - **Sistema de etiquetas compartido** (`src/lib/tags.ts`): Importable entre todos los módulos.
-- **Lead Finder B2B** (`/lead-finder`): Localizador de leads estilo Snov.io — búsqueda por filtros (industria, ubicación, cargo, empresa) + búsqueda IA en lenguaje natural. Leads pre-verificados con score. Exportar CSV, enviar a Pipeline o Contactos directamente. Selección múltiple.
+- **Email Tools mejorado** (`/email-finder`): 4 tabs — Finder (genera emails por nombre+dominio), Verificador (formato+dominio+typos), Escritor IA (genera borradores por tipo/tono: cold-outreach, follow-up, reunión, propuesta, agradecimiento), Limpiar lista (elimina duplicados, inválidos, temporales, marca personales).
+- **Social Outreach** (`/social-outreach`): Gestión de outreach multicanal — LinkedIn, Twitter/X, Instagram, Facebook, TikTok. Agregar perfiles, enviar mensajes con templates personalizados, tracking de estado (draft/enviado/aceptado/respondido), exportar a CSV. Templates por plataforma (connection, message, InMail, DM, comment).
+- **Lead Finder B2B** (`/lead-finder`): Localizador de leads estilo Snov.io — búsqueda por filtros + búsqueda IA en lenguaje natural. Leads verificados con score. Exportar CSV, enviar a Pipeline o Contactos.
 - **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
