@@ -99,6 +99,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Bóveda** | Gestor de credenciales con clave maestra, generador de contraseñas seguras (crypto), categorías por servicio |
 | **Radar** | Captura web con extensión, editable (email/phone/notas), exportar a pipeline, reabrir páginas, carpetas + etiquetas |
 | **Auditoría** | Logs: quién hizo qué, workflows, errores, logins |
+| **Papelera** | Items eliminados se guardan 30 días, restaurar con un clic, vaciar con confirmación |
 
 ---
 
