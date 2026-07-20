@@ -27,6 +27,7 @@ const TABS = [
   { href: "/preview/settings/currency", label: "Moneda" },
   // Ayuda
   { href: "/preview/settings/docs", label: "Documentación" },
+  { href: "/preview/settings/suggestions", label: "Sugerencias" },
   { href: "/preview/settings/credentials", label: "Credenciales" },
 ] as const;
 

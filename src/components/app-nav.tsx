@@ -138,7 +138,7 @@ export function AppNav({
   const [moreOpen, setMoreOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [mainHrefs, setMainHrefs] = useState<string[]>(DEFAULT_MAIN_HREFS);
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(["Prospección", "CRM & Ventas"]));
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [activeWsName, setActiveWsName] = useState("");
   const isPreview = pathname.startsWith("/preview");
   const prefix = isPreview ? "/preview" : "";

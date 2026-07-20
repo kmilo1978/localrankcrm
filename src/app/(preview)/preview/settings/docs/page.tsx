@@ -1,119 +1,122 @@
 "use client";
 import { useState } from "react";
-import { Book, ExternalLink, Search } from "lucide-react";
-import Link from "next/link";
+import { Book, ChevronDown, ExternalLink, HelpCircle, Search } from "lucide-react";
 
-type DocEntry = { title: string; description: string; features: string[]; href: string; category: string };
+type DocSection = {
+  category: string;
+  modules: { title: string; description: string; howTo: string[]; tips: string[] }[];
+};
 
-const DOCS: DocEntry[] = [
-  // --- Context ---
-  { title: "Dashboard", description: "Vista general del CRM con KPIs, actividad reciente y oportunidades top.", features: ["KPIs de ventas", "Actividad reciente", "Oportunidades top", "Tareas pendientes"], href: "/preview/dashboard", category: "General" },
-  { title: "Workspaces", description: "Organiza proyectos por cliente con carpetas, subcarpetas y archivos.", features: ["Crear clientes", "Workspaces por cliente", "Carpetas y subcarpetas", "Asignar responsable", "Subir archivos"], href: "/preview/workspaces", category: "General" },
-  // --- Revenue ---
-  { title: "Prospeccion", description: "Contactos frios con scoring, import CSV, filtros avanzados y canales de outreach.", features: ["Import CSV", "Score automatico", "Filtros por web/verificacion/GMB", "Canal de outreach", "Follow-ups"], href: "/preview/cold-contacts", category: "Revenue" },
-  { title: "Contactos", description: "Base de contactos con campos personalizados ilimitados, notas, recordatorios y edicion inline.", features: ["Campos custom ilimitados", "Notas por contacto", "Recordatorios con fecha", "Edicion inline", "Archivar/Restaurar"], href: "/preview/contacts", category: "Revenue" },
-  { title: "Companias", description: "Empresas con campos custom, notas y subcarpetas organizativas.", features: ["Campos personalizados", "Notas por empresa", "Busqueda rapida"], href: "/preview/companies", category: "Revenue" },
-  { title: "Oportunidades", description: "Deals con valor y probabilidad. Vista board kanban + lista. Drag-and-drop entre etapas.", features: ["Vista Board (Kanban)", "Vista Lista", "Drag & drop entre etapas", "Mover con flechas", "Editar modal", "Duplicar", "Copiar datos"], href: "/preview/opportunities", category: "Revenue" },
-  { title: "Pipeline", description: "Kanban drag-and-drop con 6+ etapas personalizables para leads.", features: ["Drag & drop", "Agregar leads", "Editar en modal", "Mover de etapa", "Duplicar lead"], href: "/preview/pipeline", category: "Revenue" },
-  { title: "Conversaciones", description: "Bandeja omnicanal: WhatsApp (x3), Email, Instagram, Facebook, LinkedIn, Telegram, TikTok y mas.", features: ["WhatsApp x3 lineas + Coexistencia", "Email, Instagram, Facebook", "LinkedIn, X, Telegram, TikTok", "SMS, Gmail, Reddit, Quora", "Adjuntos", "Toggle IA"], href: "/preview/inbox", category: "Revenue" },
-  { title: "Plantillas", description: "Templates con scheduling, secuencias, botones, media, pre-aprobacion y metricas.", features: ["Variables {{nombre}}", "Programar envio", "Secuencias automaticas", "Pre-aprobacion", "Media (imagen/video/audio)", "Metricas de exito", "Subir base de datos CSV"], href: "/preview/templates", category: "Revenue" },
-  { title: "Propuestas", description: "Editor de secciones con logo, firma, media, embed, exportacion PDF y UTM.", features: ["Editor por secciones", "Logo y firma", "Imagenes, video, audio", "Embed (Cal.com, YouTube)", "Exportar PDF", "UTM y contrasena", "Canales de envio"], href: "/preview/proposals", category: "Revenue" },
-  { title: "Cartera", description: "Facturas, cuentas por cobrar, vencimientos, pagos, recordatorios y acuerdos.", features: ["Facturas", "Cuentas por cobrar", "Vencimientos", "Pagos recibidos", "Recordatorios de cobro", "Acuerdos de pago", "Historial de cobranza"], href: "/preview/cartera", category: "Revenue" },
-  // --- Execution ---
-  { title: "Tareas", description: "Gestion por prioridad y estado con modal de edicion, duplicar, copiar/pegar.", features: ["Crear tareas", "Editar en modal", "Cambiar estado/prioridad", "Duplicar tarea", "Copiar como JSON", "Pegar desde portapapeles"], href: "/preview/tasks", category: "Ejecucion" },
-  { title: "Proyectos", description: "Project Tracker con hitos, tareas, progreso, equipo y colores.", features: ["Crear proyectos", "Hitos con fecha", "Tareas por proyecto", "Barra de progreso automatica", "Asignar equipo", "Editar estado"], href: "/preview/projects", category: "Ejecucion" },
-  { title: "Checklists", description: "Listas reutilizables con items. Pega texto y se convierte en checklist automaticamente.", features: ["Pegar lista (auto-split por ' - ' o lineas)", "Asignar a cliente", "Duplicar para otro cliente", "Copiar como texto", "Reiniciar items", "Progreso visual"], href: "/preview/checklists", category: "Ejecucion" },
-  { title: "To-Do", description: "Organizacion diaria, semanal y mensual con barras de progreso.", features: ["3 columnas (hoy/semana/mes)", "Barras de progreso", "Marcar completadas", "Limpiar completadas"], href: "/preview/todo", category: "Ejecucion" },
-  { title: "Calendario", description: "Agenda con multiples calendarios, citas, cobros y vista mensual.", features: ["Multiples calendarios con colores", "Vista mensual", "Citas y recordatorios", "Cobros programados"], href: "/preview/calendar", category: "Ejecucion" },
-  // --- Intelligence ---
-  { title: "Analytics", description: "KPIs de ventas, embudo de conversion, rendimiento por representante y canal.", features: ["KPIs 30 dias", "Funnel de ventas", "Rendimiento por rep", "Actividad por canal"], href: "/preview/analytics", category: "Inteligencia" },
-  { title: "IA & Automatizacion", description: "Agente conversacional, resumenes automaticos, drafts IA y scoring predictivo.", features: ["Agente IA", "Resumenes por contacto", "Drafts con confianza %", "Scoring predictivo"], href: "/preview/ai-hub", category: "Inteligencia" },
-  { title: "Automatizaciones", description: "Constructor visual: 10 triggers x 12 acciones x condiciones. Logs de ejecucion.", features: ["Constructor visual", "10 tipos de trigger", "12 tipos de accion", "Condiciones con operadores", "Logs de ejecucion", "Activar/Desactivar"], href: "/preview/automations", category: "Inteligencia" },
-  { title: "Secuencias", description: "Cadenas multicanal (Email, WhatsApp, LinkedIn, SMS, Llamada) con delays y stop-on-reply.", features: ["Multi-canal", "Delays configurables", "Stop on reply", "Ramificaciones", "Metricas por paso"], href: "/preview/sequences", category: "Inteligencia" },
-  { title: "Lead Routing", description: "Asignacion automatica: Round Robin, menos cargado, por reglas.", features: ["Round Robin", "Menos cargado", "Reglas por fuente/score/canal", "Historial de asignaciones"], href: "/preview/lead-routing", category: "Inteligencia" },
-  { title: "Scoring", description: "Motor de puntuacion: ICP match, engagement, completitud y senales de intencion.", features: ["Score ICP", "Score engagement", "Completitud de datos", "Senales de intencion", "Pesos configurables"], href: "/preview/scoring", category: "Inteligencia" },
-  { title: "Scheduler", description: "Tareas programadas: follow-ups, re-engagement, recordatorios y limpieza.", features: ["Follow-ups automaticos", "Re-engagement", "Recordatorios", "Limpieza de datos", "Reportes programados"], href: "/preview/scheduler", category: "Inteligencia" },
-  { title: "Auditoria", description: "Logs de todo: quien hizo que, workflows ejecutados, errores.", features: ["Historial de cambios", "Workflows ejecutados", "Errores y fallos", "Filtros por tipo/usuario/fecha"], href: "/preview/audit", category: "Inteligencia" },
-  // --- Secondary ---
-  { title: "Omnicanal", description: "Dashboard unificado de todos los canales de comunicacion con metricas.", features: ["Status por canal", "Mensajes sin leer", "Actividad cross-channel"], href: "/preview/omnichannel", category: "Canales" },
-  { title: "Social", description: "Monitoreo de engagement: likes, comments, DMs, menciones por plataforma.", features: ["Metricas por red social", "Interacciones pendientes", "Oportunidades de engagement"], href: "/preview/social", category: "Canales" },
-  { title: "Radar", description: "Captura paginas web con la extension, organiza por carpetas y etiquetas.", features: ["Extension Chrome", "Carpetas y etiquetas", "Score de prospeccion", "Copiar/Pegar datos", "Exportar CSV/JSON", "Sync con CRM"], href: "/preview/radar", category: "Canales" },
-  { title: "Notas", description: "Notas con categorias, colores, fijadas. Click para ver completa, editar, clonar.", features: ["Categorias con colores", "Fijar notas", "Ver nota completa (modal)", "Editar", "Clonar", "Copiar texto/JSON"], href: "/preview/notes", category: "Herramientas" },
-  { title: "Equipo", description: "Miembros, roles, permisos granulares, invitaciones y delegacion.", features: ["Roles (Owner/Admin/Manager/Member/Viewer)", "20 permisos granulares", "Invitar por email", "Delegar tareas"], href: "/preview/team", category: "Herramientas" },
-  { title: "Chat Interno", description: "Conversaciones entre miembros: canales publicos/privados, DMs, documentos.", features: ["Canales publicos", "Canales privados", "Mensajes directos", "Adjuntar documentos", "Fijar mensajes", "Invitar miembros"], href: "/preview/team-chat", category: "Herramientas" },
-  { title: "Boveda", description: "Almacena contrasenas, API keys y credenciales protegidas con clave maestra.", features: ["Clave maestra", "Categorias (API, Servicio, Hosting...)", "Mostrar/ocultar clave", "Copiar con un click", "Bloquear boveda"], href: "/preview/vault", category: "Herramientas" },
-  { title: "Formularios", description: "Conecta formularios externos o crea los tuyos. Respuestas organizadas.", features: ["Conectar Tally/Typeform/JotForm", "Builder manual", "Generador IA", "Respuestas organizadas"], href: "/preview/forms", category: "Herramientas" },
-  { title: "Importar", description: "Sube CSV para importar datos y enriquecelos con email, redes y mas.", features: ["Upload CSV/TSV", "Enriquecimiento automatico", "Email, social, tech", "Exportar a Contactos"], href: "/preview/import", category: "Herramientas" },
-  { title: "Etiquetas", description: "Etiquetas ilimitadas con colores para organizar contactos y oportunidades.", features: ["Colores personalizados", "Hex custom", "Asignar a contactos/pipeline"], href: "/preview/labels", category: "Herramientas" },
-  // --- Extension ---
-  { title: "Extension Chrome (Radar)", description: "Analiza paginas web, extrae datos de negocios y sincroniza con el CRM.", features: ["Analisis automatico de paginas", "Extraer nombre/telefono/email/redes", "Score de prospeccion", "Auto-fill formularios", "Copiar datos", "Sync con CRM", "IA de prospeccion"], href: "/preview/radar", category: "Extension" },
+const DOCUMENTATION: DocSection[] = [
+  { category: "🔍 Prospección", modules: [
+    { title: "Radar", description: "Captura páginas web mientras navegas con la extensión de Chrome. Organiza leads por carpetas y etiquetas.", howTo: ["Instala la extensión desde Chrome Web Store", "Navega a una página de interés y haz clic en el ícono de Radar", "Los datos se sincronizan automáticamente al CRM", "Edita cada clip para agregar email, teléfono y notas", "Envía directamente al Pipeline con un clic"], tips: ["Usa carpetas para organizar por tipo de lead", "El botón 'Sync ext' trae los datos más recientes de la extensión"] },
+    { title: "Lead Finder B2B", description: "Encuentra leads verificados por cargo, industria y ubicación. Búsqueda con IA en lenguaje natural.", howTo: ["Escribe una descripción de tu lead ideal (ej: 'CTOs de tech en Colombia')", "O usa los filtros avanzados para buscar por industria/cargo/ubicación", "Selecciona los leads que te interesan con los checkboxes", "Exporta a CSV o envía directamente a Contactos/Pipeline"], tips: ["La búsqueda IA entiende lenguaje natural — sé específico", "Los leads con score verde (85+) son los más probables de convertir"] },
+    { title: "Email Finder", description: "Encuentra, verifica, genera y limpia emails para prospección.", howTo: ["Tab Finder: ingresa nombre + dominio → genera emails probables", "Tab Verificar: pega una lista de emails → valida formato y dominio", "Tab Escritor IA: selecciona tipo de email y tono → genera borrador", "Tab Limpiar: pega tu lista → elimina duplicados e inválidos"], tips: ["Los emails con confianza 30%+ son los más probables", "El verificador detecta typos comunes (gmial → gmail)"] },
+    { title: "Enriquecimiento", description: "Templates para encontrar datos adicionales de empresas y contactos.", howTo: ["Selecciona un template (Email Finder, Company Info, Tech Stack...)", "Llena los campos requeridos", "Haz clic en Ejecutar", "Para resultados reales, conecta Composio en Ajustes → Conectores"], tips: ["Funciona mejor con dominios corporativos", "Combina varios templates para un perfil completo"] },
+  ]},
+  { category: "💼 CRM & Ventas", modules: [
+    { title: "Contactos", description: "Gestiona tu base de contactos con campos personalizados, notas, recordatorios y detección de duplicados.", howTo: ["Crea contactos con el botón 'Nuevo'", "Expande un contacto para ver/editar todos sus datos", "Agrega campos personalizados para información extra", "Usa 'Duplicados' para detectar y fusionar registros repetidos", "Transfiere contactos a Prospección con el botón ↔"], tips: ["Los recordatorios se disparan automáticamente a la hora programada", "Puedes subir foto de perfil para cada contacto"] },
+    { title: "Pipeline", description: "Kanban drag-and-drop para gestionar tu embudo de ventas.", howTo: ["Arrastra leads entre columnas para moverlos de etapa", "Crea leads con el botón 'Nuevo lead'", "Edita haciendo clic en cualquier tarjeta", "Duplica o copia leads con los botones de hover"], tips: ["Las etapas son personalizables", "Los leads importados desde Radar/Prospección llegan a 'Nuevo'"] },
+    { title: "Tareas", description: "Gestión de tareas con 4 vistas: Lista (con drag-and-drop), Kanban, Calendario y Tablero.", howTo: ["Cambia de vista con los botones superiores", "En vista Lista puedes arrastrar para reordenar", "En vista Kanban las columnas son por estado", "En vista Calendario las tareas aparecen por fecha", "Haz clic en una tarea para editarla"], tips: ["Las tareas se pueden pegar desde el portapapeles (JSON)", "El botón 'Duplicar' crea una copia rápida"] },
+  ]},
+  { category: "💬 Conversaciones", modules: [
+    { title: "Inbox", description: "Centro de conversaciones omnicanal. Todos los mensajes en un solo lugar.", howTo: ["Selecciona una conversación de la lista izquierda", "Escribe tu mensaje y envía", "El badge rojo muestra mensajes sin leer", "Usa plantillas para respuestas rápidas"], tips: ["La IA puede responder automáticamente si está configurada", "Las conversaciones se ordenan por última actividad"] },
+    { title: "Plantillas", description: "Templates predefinidos para WhatsApp, Email y otros canales.", howTo: ["Crea plantillas con variables dinámicas", "Asigna botones de acción (URL, teléfono, respuesta)", "Envía plantillas desde cualquier conversación"], tips: ["Las plantillas de WhatsApp requieren aprobación de Meta", "Usa variables como {nombre} para personalizar"] },
+  ]},
+  { category: "🤖 Automatización & IA", modules: [
+    { title: "Constructor IA", description: "Dile a la IA qué hacer en lenguaje natural y lo ejecuta en el módulo correcto.", howTo: ["Escribe lo que quieres hacer (ej: 'Crea una tarea para llamar a Carlos mañana')", "La IA detecta automáticamente si es una tarea, nota, email, etc.", "Selecciona un agente específico (Ventas, Soporte, Marketing...)", "Si tienes OpenRouter configurado, usa modelos reales"], tips: ["Sé específico en tus instrucciones para mejores resultados", "Los agentes tienen personalidades distintas — elige el adecuado", "Sin API key funciona en modo local (respuestas predefinidas)"] },
+    { title: "Automatizaciones", description: "Reglas automáticas: cuando pasa X → ejecuta Y.", howTo: ["Crea una automatización con nombre y trigger", "Agrega condiciones (si lead_score > 80...)", "Agrega acciones (enviar WhatsApp, crear tarea, mover etapa...)", "Activa/desactiva con el toggle ON/OFF"], tips: ["Revisa los logs para ver ejecuciones y errores", "Combina múltiples acciones en secuencia"] },
+  ]},
+  { category: "📋 Operación", modules: [
+    { title: "Notas", description: "Notas con etiquetas compartidas, múltiples vistas y opción de enviar a recordatorio.", howTo: ["Crea notas con título, contenido e imagen", "Asigna etiquetas del sistema compartido", "Cambia entre vistas: Grid, Lista o Board (por categoría)", "Usa el botón 'Recordatorio' para programar un aviso"], tips: ["Las etiquetas son compartidas con todos los módulos del CRM", "Puedes importar etiquetas de otros módulos"] },
+    { title: "Checklists", description: "Listas de verificación con bloqueo, etiquetas, proyectos y reordenamiento.", howTo: ["Crea un checklist con título, cliente y categoría", "Agrega items uno a uno o pega una lista completa", "Bloquea con el candado para evitar cambios accidentales", "Usa ↑↓ para reordenar las cards"], tips: ["Puedes clonar checklists para reutilizar con otros clientes", "Las etiquetas del CRM se pueden asignar al crear"] },
+    { title: "Focus", description: "Modo Pomodoro para concentrarte en una tarea a la vez.", howTo: ["Selecciona duración (15/25/45/60 min)", "Escribe en qué te enfocas", "Presiona 'Iniciar' para arrancar el timer", "Agrega tareas de enfoque y usa 'Enfocar' para vincularlas al timer"], tips: ["El historial muestra cuántas sesiones completaste hoy", "Marca tareas como completadas cuando termines"] },
+  ]},
+  { category: "👥 Equipo & Espacios", modules: [
+    { title: "Workspace", description: "Espacios de trabajo aislados. Cada uno tiene sus propios datos, carpetas y claves.", howTo: ["Crea un workspace nuevo con nombre y cliente", "Selecciona un workspace para activarlo (los datos cambian)", "Usa la bóveda de claves (🔑) para guardar API keys por espacio", "Renombra con el botón ✏️", "Para eliminar, escribe el nombre en MAYÚSCULAS"], tips: ["Cada workspace tiene datos independientes (contactos, notas, etc.)", "Las etiquetas y equipo son globales (compartidos)", "Hay un límite configurable de espacios (default: 10)"] },
+    { title: "Bóveda", description: "Gestor de credenciales protegido con clave maestra.", howTo: ["Configura tu clave maestra la primera vez", "Agrega credenciales con título, usuario y contraseña", "Usa el generador de claves para crear passwords seguros", "Copia con un clic sin mostrar la contraseña completa"], tips: ["La bóveda se bloquea automáticamente", "El generador usa crypto.getRandomValues (criptográficamente seguro)", "Se activa blur por defecto para proteger la pantalla"] },
+  ]},
+  { category: "⚙️ Configuración", modules: [
+    { title: "Tema claro/oscuro", description: "Cambia entre tema claro y oscuro con un solo clic.", howTo: ["Usa el ícono de sol/luna en la parte superior del sidebar", "O ve a Ajustes → Apariencia para más opciones"], tips: ["También puedes usar 'Sistema' para que siga tu preferencia del SO"] },
+    { title: "MCP (IA externa)", description: "Conecta herramientas de IA externas como Hermes, OpenClaw o Composio.", howTo: ["Ve a Ajustes → MCP", "Agrega un servidor de los populares con un clic", "O agrega uno personalizado con comando y argumentos"], tips: ["Hermes Agent conecta Telegram, Discord, Slack", "OpenClaw conecta WhatsApp, Teams, iMessage", "Composio conecta 250+ apps con una sola API key"] },
+  ]},
 ];
-
-const CATEGORIES_ORDER = ["General", "Revenue", "Ejecucion", "Inteligencia", "Canales", "Herramientas", "Extension"];
 
 export default function DocsPage() {
   const [search, setSearch] = useState("");
+  const [expandedCat, setExpandedCat] = useState<string | null>(DOCUMENTATION[0]?.category || null);
 
-  const filtered = DOCS.filter(d =>
-    !search || d.title.toLowerCase().includes(search.toLowerCase()) ||
-    d.description.toLowerCase().includes(search.toLowerCase()) ||
-    d.features.some(f => f.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  const grouped = CATEGORIES_ORDER.map(cat => ({
-    category: cat,
-    items: filtered.filter(d => d.category === cat),
-  })).filter(g => g.items.length > 0);
+  const filtered = search.trim()
+    ? DOCUMENTATION.map(s => ({ ...s, modules: s.modules.filter(m => m.title.toLowerCase().includes(search.toLowerCase()) || m.description.toLowerCase().includes(search.toLowerCase())) })).filter(s => s.modules.length > 0)
+    : DOCUMENTATION;
 
   return (
-    <div className="max-w-4xl">
-      <div className="mb-6">
-        <h3 className="text-lg font-bold flex items-center gap-2"><Book className="h-5 w-5 text-brand" />Documentacion</h3>
-        <p className="text-sm text-muted-foreground">Biblioteca completa de todos los modulos y funcionalidades del CRM. Busca por nombre o caracteristica.</p>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2"><Book className="h-5 w-5 text-brand" />Documentación</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Guía completa de cada módulo del CRM. Aprende cómo usar cada funcionalidad.</p>
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar modulo, funcion o caracteristica..." className="w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+      <div className="relative">
+        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar en documentación..." className="w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm focus:border-brand focus:outline-none" />
       </div>
 
-      {/* Grouped modules */}
-      <div className="space-y-8">
-        {grouped.map(group => (
-          <div key={group.category}>
-            <h4 className="text-xs font-bold uppercase text-muted-foreground mb-3 border-b pb-2">{group.category}</h4>
-            <div className="space-y-3">
-              {group.items.map(doc => (
-                <div key={doc.href} className="rounded-lg border bg-white p-4 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h5 className="text-sm font-semibold">{doc.title}</h5>
-                        <Link href={doc.href} className="flex items-center gap-1 text-[10px] text-brand hover:underline"><ExternalLink className="h-2.5 w-2.5" />Ir al modulo</Link>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2">{doc.description}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {doc.features.map((f, i) => (
-                          <span key={i} className="rounded bg-gray-100 px-2 py-0.5 text-[9px] text-gray-600">{f}</span>
+      {/* Sections */}
+      {filtered.map(section => (
+        <div key={section.category} className="rounded-lg border bg-white overflow-hidden">
+          <button onClick={() => setExpandedCat(expandedCat === section.category ? null : section.category)} className="flex w-full items-center justify-between px-5 py-4 hover:bg-gray-50 text-left">
+            <h4 className="text-sm font-bold">{section.category}</h4>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">{section.modules.length} módulos</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedCat === section.category ? "rotate-180" : ""}`} />
+            </div>
+          </button>
+          {expandedCat === section.category && (
+            <div className="border-t divide-y">
+              {section.modules.map(mod => (
+                <div key={mod.title} className="px-5 py-4">
+                  <h5 className="text-sm font-semibold mb-1">{mod.title}</h5>
+                  <p className="text-xs text-muted-foreground mb-3">{mod.description}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-brand mb-1.5">Cómo usar</p>
+                      <ol className="space-y-1">
+                        {mod.howTo.map((step, i) => (
+                          <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[9px] font-bold text-brand">{i + 1}</span>
+                            {step}
+                          </li>
                         ))}
-                      </div>
+                      </ol>
                     </div>
+                    {mod.tips && mod.tips.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-amber-600 mb-1.5">💡 Tips</p>
+                        <ul className="space-y-1">
+                          {mod.tips.map((tip, i) => (
+                            <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+                              <span className="text-amber-500 shrink-0">•</span>{tip}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      ))}
 
-      {filtered.length === 0 && (
-        <div className="py-16 text-center text-muted-foreground text-sm">No se encontraron resultados para "{search}"</div>
-      )}
-
-      {/* Stats */}
-      <div className="mt-8 rounded-lg border border-dashed bg-gray-50 p-4 text-center">
-        <p className="text-xs text-muted-foreground">{DOCS.length} modulos documentados · {DOCS.reduce((s, d) => s + d.features.length, 0)} funcionalidades · Busca por nombre o caracteristica</p>
+      {/* Quick help */}
+      <div className="rounded-lg border border-dashed bg-gray-50 p-5 text-center">
+        <HelpCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+        <p className="text-sm font-medium mb-1">¿No encuentras lo que buscas?</p>
+        <p className="text-xs text-muted-foreground mb-3">Envíanos tu duda y te ayudamos.</p>
+        <a href="/preview/settings/suggestions" className="inline-flex items-center gap-1 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Enviar sugerencia</a>
       </div>
     </div>
   );

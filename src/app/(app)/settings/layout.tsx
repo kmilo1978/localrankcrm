@@ -27,6 +27,7 @@ const TABS = [
   { href: "/settings/currency", label: "Moneda" },
   // Ayuda
   { href: "/settings/docs", label: "Documentación" },
+  { href: "/settings/suggestions", label: "Sugerencias" },
 ] as const;
 
 export default function SettingsLayout({
