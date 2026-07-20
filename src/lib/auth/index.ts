@@ -6,6 +6,7 @@ import { organization } from "better-auth/plugins";
 import { getDb, schema } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 import { AUTH_RATE_LIMIT, checkRateLimit } from "@/lib/rate-limit";
+import { sendEmail, passwordResetEmail } from "@/lib/email";
 import {
   onUserCreated,
   resolveActiveOrganizationId,
@@ -62,9 +63,11 @@ function createAuth() {
       requireEmailVerification: false,
       minPasswordLength: 8,
       sendResetPassword: async ({ user, url }) => {
-        // In production: send email via Resend/SendGrid
-        // For now: log the reset URL
-        console.log(`[Auth] Password reset for ${user.email}: ${url}`);
+        await sendEmail({
+          to: user.email,
+          subject: "Restablecer contraseña — LocalRank CRM",
+          html: passwordResetEmail(url, user.name),
+        });
       },
     },
     socialProviders: {
