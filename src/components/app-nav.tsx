@@ -81,6 +81,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/focus", label: "Focus", icon: Target },
     { href: "/proposals", label: "Propuestas", icon: FileText },
     { href: "/cartera", label: "Cartera", icon: CreditCard },
+    { href: "/subscriptions", label: "Suscripciones", icon: CreditCard },
   ]},
   { label: "Conversaciones", items: [
     { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
