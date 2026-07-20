@@ -26,6 +26,7 @@ import {
   History,
   Kanban,
   LayoutDashboard,
+  Link2,
   LogOut,
   Menu,
   MessageSquare,
@@ -89,6 +90,9 @@ const ALL_NAV = [
   { href: "/workspaces", label: "Workspace", icon: FolderOpen },
   { href: "/audit", label: "Auditoría", icon: History },
   { href: "/lab", label: "Laboratorio", icon: FlaskConical },
+  { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
+  { href: "/enrichment", label: "Enriquecimiento", icon: Database },
+  { href: "/ai-builder", label: "Constructor IA", icon: Bot },
 ] as const;
 
 const DEFAULT_MAIN_HREFS = ["/dashboard", "/cold-contacts", "/contacts", "/companies", "/opportunities", "/pipeline", "/inbox", "/tasks", "/calendar", "/focus", "/ai-hub", "/analytics", "/files"];
