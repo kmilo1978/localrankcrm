@@ -61,6 +61,17 @@ function createAuth() {
       enabled: true,
       requireEmailVerification: false,
       minPasswordLength: 8,
+      sendResetPassword: async ({ user, url }) => {
+        // In production: send email via Resend/SendGrid
+        // For now: log the reset URL
+        console.log(`[Auth] Password reset for ${user.email}: ${url}`);
+      },
+    },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID || "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      },
     },
     plugins: [organization({ creatorRole: "owner" })],
     hooks: {
