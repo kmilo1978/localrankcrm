@@ -56,9 +56,11 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Oportunidades** | Deals con valor/probabilidad, vista lista + board kanban |
 | **Pipeline** | Kanban drag-and-drop con 6+ etapas personalizables |
 | **Conversaciones** | Omnicanal: WhatsApp (×3 líneas + coexistencia), Email, Instagram, Facebook, LinkedIn, X, Telegram, TikTok, Gmail, Reddit, Quora |
+| **Meeting Reminders** | Recordatorios automáticos multicanal (email/SMS/WhatsApp), IA para generar mensajes, sugerir timing, integración Google Calendar/Twilio |
 | **Plantillas** | Templates con scheduling, secuencias, botones (URL/Phone/Reply), media, pre-aprobación, métricas de éxito |
 | **Propuestas** | Editor de secciones con logo, firma, imágenes, audio, video, embed (Cal.com, YouTube, scripts), exportación PDF |
 | **Cartera** | Facturas, cuentas por cobrar, vencimientos, pagos, recordatorios de cobro, acuerdos de pago, historial de cobranza, cancelaciones |
+| **Suscripciones** | Control de pagos recurrentes (personal/profesional/cliente), alertas vencimiento, métodos de pago, análisis de ahorro, multi-moneda |
 
 ### Automatización & IA
 | Módulo | Descripción |

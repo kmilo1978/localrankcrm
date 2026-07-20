@@ -35,7 +35,9 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
-- **Cotizador IA** (`/ai-quoter`): Genera propuestas comerciales desde prompt (cliente, proyecto, presupuesto, timeline). Con OpenRouter: IA real. Sin API key: plantilla profesional. Secciones editables, copiar/exportar.
+- **Meeting Reminders** (`/meeting-reminders`): Recordatorios automáticos multicanal (email/SMS/WhatsApp) para reuniones. Configuración por reunión, envío manual con un clic, integración Google Calendar/Twilio, IA para generar mensajes y sugerir timing óptimo.
+- **Módulo Suscripciones** (`/subscriptions`): Control de pagos recurrentes personales y profesionales. KPIs (total/mes por moneda), alertas de vencimiento, métodos de pago con últimos 4 dígitos, análisis de ahorro, multi-moneda (USD/COP/EUR/MXN), ciclos flexibles.
+- **Cotizador IA** (`/ai-quoter`): Genera propuestas comerciales desde prompt (cliente, proyecto, presupuesto, timeline). Secciones editables, copiar/exportar.
 - **Backup completo** (Ajustes → Cuenta): Exportar JSON + Importar/Restaurar desde archivo con recarga automática.
 - **robots.txt + noindex**: Protección contra indexación en motores de búsqueda (robots.txt Disallow all, meta noindex, header X-Robots-Tag).
 - **Auditoría de seguridad**: Verificado 0 API keys expuestas en el código. .env protegido por gitignore y nunca commiteado.
