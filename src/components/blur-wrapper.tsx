@@ -59,9 +59,9 @@ export function BlurWrapper({ children }: { children: React.ReactNode }) {
       {blurred ? (
         <>
           <div className="h-full blur-md pointer-events-none select-none opacity-60">{children}</div>
-          {/* Small unlock button - no overlay blocking */}
-          <button onClick={toggle} className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-md bg-gray-900/80 px-3 py-1.5 text-xs text-white shadow-lg hover:bg-gray-900" title="Quitar blur">
-            <Eye className="h-3.5 w-3.5" />Mostrar
+          {/* Unlock button - always visible, fixed position */}
+          <button onClick={toggle} className="fixed top-3 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-xl hover:bg-brand-hover" title="Quitar blur">
+            <Eye className="h-4 w-4" />Mostrar contenido
           </button>
         </>
       ) : (
