@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { CheckSquare, ChevronDown, ChevronUp, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
+import { SortableList } from "@/components/sortable-list";
 
 type CheckItem = { id: string; text: string; done: boolean };
 type Checklist = { id: string; title: string; client: string; category: string; tags: string[]; project: string; locked: boolean; items: CheckItem[]; createdAt: string };

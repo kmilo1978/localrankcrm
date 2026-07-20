@@ -6,6 +6,7 @@ import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage"
 import { openImagePicker } from "@/lib/image-upload";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
 import { ViewToggle, ViewMode } from "@/components/view-toggle";
+import { SortableList } from "@/components/sortable-list";
 
 type Note = {
   id: string;
@@ -272,9 +273,11 @@ export default function NotesPage() {
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{pinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}</div>
           </div>
         )}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {paginatedUnpinned.map((n) => <NoteCard key={n.id} note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />)}
-        </div>
+        <SortableList
+          items={paginatedUnpinned}
+          onReorder={(reordered) => { const otherNotes = notes.filter(n => !reordered.some(r => r.id === n.id)); saveNotes([...otherNotes, ...reordered]); }}
+          renderItem={(n) => <NoteCard note={n} catColor={getCatColor(n.category)} categories={categories} onPin={togglePin} onDelete={deleteNote} onView={setViewNote} onEdit={openEdit} onClone={cloneNote} onCopy={copyNote} onMove={moveNote} />}
+        />
         </>)}
 
         {/* Notes — LIST VIEW (compact rows) */}

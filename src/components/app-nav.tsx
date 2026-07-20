@@ -132,7 +132,6 @@ export function AppNav({
 
   const navMain = ALL_NAV.filter(item => mainHrefs.includes(item.href));
   const navMore = ALL_NAV.filter(item => !mainHrefs.includes(item.href));
-  const prefix = isPreview ? "/preview" : "";
 
   async function refetchUnread() {
     if (isPreview) return;

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Calendar, CheckCircle2, Circle, Clock, ClipboardCopy, Edit3, Plus, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { ViewToggle, ViewMode } from "@/components/view-toggle";
+import { SortableList } from "@/components/sortable-list";
 
 type Task = {
   id: string;
@@ -150,11 +151,13 @@ export default function TasksPage() {
 
         {/* LIST VIEW */}
         {view === "list" && (
-        <div className="space-y-2">
-          {filtered.map((task) => {
+        <SortableList
+          items={filtered}
+          onReorder={(reordered) => { save(reordered); }}
+          renderItem={(task) => {
             const StatusIcon = STATUS_ICONS[task.status];
             return (
-              <div key={task.id} className={`group rounded-lg border bg-white p-4 transition-colors hover:shadow-sm ${task.status === "completed" ? "opacity-60" : ""}`}>
+              <div className={`group rounded-lg border bg-white p-4 transition-colors hover:shadow-sm ${task.status === "completed" ? "opacity-60" : ""}`}>
                 <div className="flex items-start gap-3">
                   <button onClick={() => toggleStatus(task.id)} title="Cambiar estado">
                     <StatusIcon className={`mt-0.5 h-5 w-5 shrink-0 ${task.status === "completed" ? "text-green-500" : task.status === "in_progress" ? "text-brand" : "text-muted-foreground"}`} />
@@ -181,10 +184,10 @@ export default function TasksPage() {
                 </div>
               </div>
             );
-          })}
-          {filtered.length === 0 && <div className="py-12 text-center text-muted-foreground">No hay tareas en este filtro.</div>}
-        </div>
+          }}
+        />
         )}
+        {view === "list" && filtered.length === 0 && <div className="py-12 text-center text-muted-foreground">No hay tareas en este filtro.</div>}
 
         {/* BOARD VIEW (Kanban by status) */}
         {view === "board" && (
