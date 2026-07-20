@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle2, Circle, Plus, Trash2, Bell, Copy, ArrowRight } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type TodoItem = { id: string; text: string; done: boolean; createdAt: string };
@@ -62,6 +62,22 @@ export default function TodoPage() {
     save({ ...todos, [period]: todos[period].filter((t) => t.id !== id) });
   }
 
+  function cloneItem(period: TodoPeriod, item: TodoItem) {
+    const copy: TodoItem = { ...item, id: generateId(), done: false };
+    save({ ...todos, [period]: [copy, ...todos[period]] });
+  }
+
+  function moveItem(fromPeriod: TodoPeriod, toPeriod: TodoPeriod, item: TodoItem) {
+    save({ ...todos, [fromPeriod]: todos[fromPeriod].filter(t => t.id !== item.id), [toPeriod]: [{ ...item, id: generateId(), done: false }, ...todos[toPeriod]] });
+  }
+
+  function sendToReminder(item: TodoItem) {
+    const reminders = loadFromStorage<Array<{id:string;title:string;description:string;dateTime:string;repeat:string;sound:boolean;active:boolean;dismissed:boolean;createdAt:string}>>("reminders_v2", []);
+    const dateTime = new Date(Date.now() + 3600000).toISOString().slice(0, 16);
+    const newReminder = { id: generateId(), title: item.text, description: "", dateTime, repeat: "none", sound: true, active: true, dismissed: false, createdAt: new Date().toISOString().split("T")[0]! };
+    saveToStorage("reminders_v2", [newReminder, ...reminders]);
+  }
+
   function clearDone(period: TodoPeriod) {
     save({ ...todos, [period]: todos[period].filter((t) => !t.done) });
   }
@@ -116,7 +132,12 @@ export default function TodoPage() {
                         {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
                       </button>
                       <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</span>
-                      <button onClick={() => deleteItem(period, item.id)} className="opacity-0 group-hover:opacity-100 shrink-0 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 shrink-0">
+                        <button onClick={() => cloneItem(period, item)} className="text-muted-foreground hover:text-brand" title="Clonar"><Copy className="h-3 w-3" /></button>
+                        <button onClick={() => { const targets = (["daily","weekly","monthly"] as TodoPeriod[]).filter(p => p !== period); moveItem(period, targets[0]!, item); }} className="text-muted-foreground hover:text-purple-600" title={`Mover a ${period === "daily" ? "semanal" : period === "weekly" ? "mensual" : "diario"}`}><ArrowRight className="h-3 w-3" /></button>
+                        <button onClick={() => sendToReminder(item)} className="text-muted-foreground hover:text-amber-600" title="Recordatorio"><Bell className="h-3 w-3" /></button>
+                        <button onClick={() => deleteItem(period, item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                      </div>
                     </div>
                   ))}
                   {items.length === 0 && <p className="text-center text-xs text-muted-foreground py-4">Sin tareas</p>}

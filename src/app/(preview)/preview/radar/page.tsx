@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bookmark, ClipboardCopy, ClipboardPaste, ExternalLink, Folder, Globe, Plus, RefreshCw, Search, Tag, Trash2, X } from "lucide-react";
+import { Bookmark, ClipboardCopy, ClipboardPaste, Edit3, ExternalLink, Folder, Globe, Mail, Phone, Plus, RefreshCw, Search, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type ClipTag = { id: string; name: string; color: string };
@@ -14,6 +14,8 @@ type WebClip = {
   folderId: string;
   tags: string[];
   notes: string;
+  email: string;
+  phone: string;
   savedAt: string;
   source: "extension" | "manual";
 };
@@ -36,11 +38,11 @@ const SEED_TAGS: ClipTag[] = [
 ];
 
 const SEED_CLIPS: WebClip[] = [
-  { id: "rc1", url: "https://linkedin.com/in/carlos-ruiz-cto", title: "Carlos Ruiz — CTO at TechCorp", description: "CTO con 15 años de experiencia en cloud computing. Decisor técnico para Enterprise.", image: "", folderId: "rf1", tags: ["Prioridad alta", "B2B"], notes: "Contactar por LinkedIn primero. Interesado en migración cloud.", savedAt: "2026-07-17 14:30", source: "extension" },
-  { id: "rc2", url: "https://www.competidor.com/pricing", title: "Competidor X — Página de precios", description: "Plan Pro $199/mes, Enterprise $499/mes. Sin pipeline visual.", image: "", folderId: "rf2", tags: ["Revisar después"], notes: "Nuestro pricing es más competitivo. Podemos diferenciarnos con omnicanal.", savedAt: "2026-07-16 10:15", source: "extension" },
-  { id: "rc3", url: "https://blog.hubspot.com/sales/cold-email-templates", title: "21 Cold Email Templates That Actually Work", description: "Guía de HubSpot con plantillas de cold outreach para B2B SaaS.", image: "", folderId: "rf3", tags: ["B2B", "SaaS"], notes: "", savedAt: "2026-07-15 09:00", source: "manual" },
-  { id: "rc4", url: "https://dentart.com", title: "Dentart Odontology — Website", description: "Clínica dental con web propia en La Estrella. Score 99, can_claim.", image: "", folderId: "rf4", tags: ["Prioridad alta", "Medellín"], notes: "Lead caliente del scraping. Tiene web propia pero ficha de GMB no verificada.", savedAt: "2026-07-14 16:45", source: "extension" },
-  { id: "rc5", url: "https://www.oralstudio.com.co", title: "Oral Studio — Clínica dental Medellín", description: "924 reseñas, rating 5.0. Diseño de sonrisa, implantes, blanqueamiento.", image: "", folderId: "rf4", tags: ["Medellín", "B2B"], notes: "Score 103. No verificado en GMB. Oportunidad de servicio.", savedAt: "2026-07-13 11:20", source: "extension" },
+  { id: "rc1", url: "https://linkedin.com/in/carlos-ruiz-cto", title: "Carlos Ruiz — CTO at TechCorp", description: "CTO con 15 años de experiencia en cloud computing. Decisor técnico para Enterprise.", image: "", folderId: "rf1", tags: ["Prioridad alta", "B2B"], notes: "Contactar por LinkedIn primero. Interesado en migración cloud.", email: "carlos@techcorp.com", phone: "+52 55 1234 5678", savedAt: "2026-07-17 14:30", source: "extension" },
+  { id: "rc2", url: "https://www.competidor.com/pricing", title: "Competidor X — Página de precios", description: "Plan Pro $199/mes, Enterprise $499/mes. Sin pipeline visual.", image: "", folderId: "rf2", tags: ["Revisar después"], notes: "Nuestro pricing es más competitivo. Podemos diferenciarnos con omnicanal.", email: "", phone: "", savedAt: "2026-07-16 10:15", source: "extension" },
+  { id: "rc3", url: "https://blog.hubspot.com/sales/cold-email-templates", title: "21 Cold Email Templates That Actually Work", description: "Guía de HubSpot con plantillas de cold outreach para B2B SaaS.", image: "", folderId: "rf3", tags: ["B2B", "SaaS"], notes: "", email: "", phone: "", savedAt: "2026-07-15 09:00", source: "manual" },
+  { id: "rc4", url: "https://dentart.com", title: "Dentart Odontology — Website", description: "Clínica dental con web propia en La Estrella. Score 99, can_claim.", image: "", folderId: "rf4", tags: ["Prioridad alta", "Medellín"], notes: "Lead caliente del scraping. Tiene web propia pero ficha de GMB no verificada.", email: "info@dentart.com", phone: "301 6510868", savedAt: "2026-07-14 16:45", source: "extension" },
+  { id: "rc5", url: "https://www.oralstudio.com.co", title: "Oral Studio — Clínica dental Medellín", description: "924 reseñas, rating 5.0. Diseño de sonrisa, implantes, blanqueamiento.", image: "", folderId: "rf4", tags: ["Medellín", "B2B"], notes: "Score 103. No verificado en GMB. Oportunidad de servicio.", email: "", phone: "312 7093687", savedAt: "2026-07-13 11:20", source: "extension" },
 ];
 
 export default function RadarPage() {
@@ -52,7 +54,8 @@ export default function RadarPage() {
   const [filterTag, setFilterTag] = useState("all");
   const [showAddClip, setShowAddClip] = useState(false);
   const [showAddFolder, setShowAddFolder] = useState(false);
-  const [clipForm, setClipForm] = useState({ url: "", title: "", description: "", folderId: "", notes: "" });
+  const [editingClip, setEditingClip] = useState<WebClip | null>(null);
+  const [clipForm, setClipForm] = useState({ url: "", title: "", description: "", folderId: "", notes: "", email: "", phone: "" });
   const [folderForm, setFolderForm] = useState({ name: "", color: COLORS[0]! });
 
   useEffect(() => {
@@ -71,18 +74,26 @@ export default function RadarPage() {
       const existingUrls = new Set(currentClips.map(c => c.url));
       const newClips: WebClip[] = extLeads
         .filter(l => l.url && !existingUrls.has(l.url as string))
-        .map(l => ({
-          id: generateId(),
-          url: (l.url as string) || "",
-          title: (l.company as string) || (l.title as string) || "Sin titulo",
-          description: (l.description as string) || "",
-          image: "",
-          folderId: "rf4",
-          tags: ((l.tags as string[]) || []),
-          notes: `Score: ${(l.score as number) || 0} · Importado desde extension`,
-          savedAt: (l.savedAt as string) || new Date().toLocaleString("es"),
-          source: "extension" as const,
-        }));
+        .map(l => {
+          // Normalize phone — accept any format with digits
+          let phone = ((l.phone as string) || (l.telefono as string) || "").replace(/[^\d+\s()-]/g, "").trim();
+          if (phone && !phone.startsWith("+")) phone = phone; // Keep as-is, CRM will organize
+          const email = ((l.email as string) || (l.correo as string) || "").trim();
+          return {
+            id: generateId(),
+            url: (l.url as string) || "",
+            title: (l.company as string) || (l.title as string) || (l.nombre as string) || "Sin titulo",
+            description: (l.description as string) || (l.descripcion as string) || "",
+            image: "",
+            folderId: "rf4",
+            tags: ((l.tags as string[]) || []),
+            notes: `Score: ${(l.score as number) || 0} · Importado desde extension`,
+            email,
+            phone,
+            savedAt: (l.savedAt as string) || new Date().toLocaleString("es"),
+            source: "extension" as const,
+          };
+        });
       if (newClips.length > 0) {
         const merged = [...newClips, ...currentClips];
         setClips(merged);
@@ -96,8 +107,26 @@ export default function RadarPage() {
 
   function addClip() {
     if (!clipForm.url.trim()) return;
-    saveClips([{ id: generateId(), url: clipForm.url, title: clipForm.title || clipForm.url, description: clipForm.description, image: "", folderId: clipForm.folderId || folders[0]?.id || "", tags: [], notes: clipForm.notes, savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
-    setClipForm({ url: "", title: "", description: "", folderId: "", notes: "" }); setShowAddClip(false);
+    saveClips([{ id: generateId(), url: clipForm.url, title: clipForm.title || clipForm.url, description: clipForm.description, image: "", folderId: clipForm.folderId || folders[0]?.id || "", tags: [], notes: clipForm.notes, email: clipForm.email, phone: clipForm.phone, savedAt: new Date().toLocaleString("es"), source: "manual" }, ...clips]);
+    setClipForm({ url: "", title: "", description: "", folderId: "", notes: "", email: "", phone: "" }); setShowAddClip(false);
+  }
+
+  function openEditClip(clip: WebClip) {
+    setEditingClip(clip);
+  }
+
+  function updateClip(id: string, updates: Partial<WebClip>) {
+    saveClips(clips.map(c => c.id === id ? { ...c, ...updates } : c));
+    setCopyMsg("Actualizado");
+    setTimeout(() => setCopyMsg(""), 2000);
+  }
+
+  function saveEditClip() {
+    if (!editingClip) return;
+    saveClips(clips.map(c => c.id === editingClip.id ? editingClip : c));
+    setEditingClip(null);
+    setCopyMsg("Clip actualizado");
+    setTimeout(() => setCopyMsg(""), 2000);
   }
   function addFolder() {
     if (!folderForm.name.trim()) return;
@@ -257,14 +286,21 @@ export default function RadarPage() {
                     <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate text-brand hover:underline">{clip.title}</a>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                    <button onClick={() => openEditClip(clip)} className="text-muted-foreground hover:text-brand" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
                     <button onClick={() => sendToPipeline(clip)} className="text-muted-foreground hover:text-green-600" title="Enviar a Pipeline"><Plus className="h-3.5 w-3.5" /></button>
                     <button onClick={() => copyClip(clip)} className="text-muted-foreground hover:text-brand" title="Copiar"><ClipboardCopy className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => copyClipJSON(clip)} className="text-muted-foreground hover:text-brand" title="Copiar JSON"><Tag className="h-3.5 w-3.5" /></button>
-                    <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand"><ExternalLink className="h-3.5 w-3.5" /></a>
+                    <a href={clip.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand" title="Abrir página"><ExternalLink className="h-3.5 w-3.5" /></a>
                     <button onClick={() => deleteClip(clip.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
                 {clip.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{clip.description}</p>}
+                {/* Contact info */}
+                {(clip.email || clip.phone) && (
+                  <div className="flex flex-wrap gap-2 mb-2 text-[10px]">
+                    {clip.email && <span className="flex items-center gap-1 text-blue-600"><Mail className="h-2.5 w-2.5" />{clip.email}</span>}
+                    {clip.phone && <span className="flex items-center gap-1 text-green-600"><Phone className="h-2.5 w-2.5" />{clip.phone}</span>}
+                  </div>
+                )}
                 {clip.notes && <p className="text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">{clip.notes}</p>}
                 <div className="flex items-center gap-2 flex-wrap">
                   {folder && <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: folder.color }}><Folder className="h-2.5 w-2.5" />{folder.name}</span>}
@@ -295,6 +331,44 @@ export default function RadarPage() {
 
         {/* Copy/paste notification */}
         {copyMsg && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{copyMsg}</div>}
+
+        {/* Edit Clip Modal */}
+        {editingClip && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditingClip(null)}>
+            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold">Editar clip</h3>
+                <button onClick={() => setEditingClip(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="space-y-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Título</label><input value={editingClip.title} onChange={e => setEditingClip({...editingClip, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">URL</label><input value={editingClip.url} onChange={e => setEditingClip({...editingClip, url: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-xs font-medium text-muted-foreground">Email</label><input value={editingClip.email || ""} onChange={e => setEditingClip({...editingClip, email: e.target.value})} placeholder="email@ejemplo.com" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                  <div><label className="text-xs font-medium text-muted-foreground">Teléfono</label><input value={editingClip.phone || ""} onChange={e => setEditingClip({...editingClip, phone: e.target.value})} placeholder="+57 300 1234567" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                </div>
+                <div><label className="text-xs font-medium text-muted-foreground">Descripción</label><textarea value={editingClip.description} onChange={e => setEditingClip({...editingClip, description: e.target.value})} rows={2} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Notas</label><textarea value={editingClip.notes} onChange={e => setEditingClip({...editingClip, notes: e.target.value})} rows={3} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Carpeta</label>
+                  <select value={editingClip.folderId} onChange={e => setEditingClip({...editingClip, folderId: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">
+                    {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                  <div className="flex flex-wrap gap-1">{tags.map(t => (
+                    <button key={t.id} onClick={() => setEditingClip({...editingClip, tags: editingClip.tags.includes(t.name) ? editingClip.tags.filter(x => x !== t.name) : [...editingClip.tags, t.name]})} className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${editingClip.tags.includes(t.name) ? "text-white" : "border"}`} style={editingClip.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>{t.name}</button>
+                  ))}</div>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={saveEditClip} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover">Guardar cambios</button>
+                  <a href={editingClip.url} target="_blank" rel="noopener noreferrer" className="rounded-md border px-4 py-2 text-sm flex items-center gap-1 hover:bg-gray-50"><ExternalLink className="h-3.5 w-3.5" />Abrir página</a>
+                  <button onClick={() => setEditingClip(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Extension info */}
         <div className="mt-8 rounded-lg border border-dashed bg-gray-50 p-5">

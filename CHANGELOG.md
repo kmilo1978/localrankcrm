@@ -11,7 +11,7 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Contactos — Detección de duplicados**: Botón "Duplicados" que escanea contactos por teléfono, email o nombre+empresa coincidente. Modal con opción de fusionar conservando datos de ambos registros.
 - **Contactos — Transferencia de leads**: Botón "Transferir a Prospección" en cada contacto para moverlo al módulo de cold-contacts/prospección.
 - **Checklists — Etiquetas y proyectos**: Campo "Proyecto" y selector de etiquetas compartidas (tags del CRM) al crear checklists. Las etiquetas se muestran en cada card con su color.
-- **Calendario — Modal sincronización**: El botón "Sincronizar" ahora abre un modal con opciones (Google Calendar, Outlook, Apple Calendar), feedback visual de estado y toast de confirmación.
+- **Calendario — Modal sincronización**: El botón "Sincronizar" ahora abre un modal con opciones (Google Calendar, Outlook, Apple Calendar), valida API key de Composio antes de conectar, feedback visual y toast de confirmación.
 - **Componente ViewToggle** (`src/components/view-toggle.tsx`): Selector de vistas reutilizable para todo el CRM. Soporta: Lista, Kanban, Tablero (grid), Calendario y Mapa mental. Cada módulo elige cuáles mostrar.
 - **Tareas — Vistas múltiples**: Lista (original), Kanban (columnas por estado), Calendario (mes con tareas por fecha), Tablero (cards compactas en grid).
 - **Notas — Vistas múltiples**: Grid (original, cards), Lista (filas compactas), Board (columnas kanban por categoría/etiqueta).
@@ -26,4 +26,10 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Labels — Integración compartida**: El módulo de etiquetas ahora comparte store con todo el CRM. Filtro por módulo (contactos, notas, tareas, oportunidades). Edición con selector de módulos donde aplica cada etiqueta.
 
 ### Corregido
+- **Radar — Importación email/teléfono**: La sincronización con la extensión ahora importa correctamente email y teléfono (acepta campos `email`, `correo`, `phone`, `telefono`). Los teléfonos se aceptan en cualquier formato con indicativo.
+- **Radar — Editable**: Modal completo de edición para cada clip (título, URL, email, teléfono, notas, descripción, carpeta, etiquetas). Botón "Abrir página" para reabrir la URL guardada.
+- **Radar — Exportar a Pipeline**: Botón para enviar cualquier clip directamente al Pipeline de ventas.
+- **ToDo — Modular**: Cada item ahora tiene botones para clonar, mover entre periodos (diario→semanal→mensual) y enviar a recordatorio.
+- **Checklists — Mover cards**: Botones ↑↓ para reorganizar el orden de los checklists (subir/bajar).
+- **Menú — Reorganizado**: Módulos principales (12) siempre visibles, el resto (26) en sección colapsable "Más módulos".
 - **Bóveda — Modal cambiar clave**: Reemplazado `prompt()` nativo (que causaba popup vacío) por modal propio integrado con input de contraseña y confirmación.

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckSquare, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
+import { CheckSquare, ChevronDown, ChevronUp, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
 
@@ -121,6 +121,20 @@ export default function ChecklistsPage() {
 
   function deleteList(id: string) { save(lists.filter(l => l.id !== id)); }
 
+  function moveListUp(id: string) {
+    const idx = lists.findIndex(l => l.id === id);
+    if (idx <= 0) return;
+    const arr = [...lists]; [arr[idx - 1], arr[idx]] = [arr[idx]!, arr[idx - 1]!];
+    save(arr);
+  }
+
+  function moveListDown(id: string) {
+    const idx = lists.findIndex(l => l.id === id);
+    if (idx >= lists.length - 1) return;
+    const arr = [...lists]; [arr[idx], arr[idx + 1]] = [arr[idx + 1]!, arr[idx]!];
+    save(arr);
+  }
+
   function cloneList(cl: Checklist) {
     const copy: Checklist = { ...cl, id: generateId(), title: cl.title + " (copia)", locked: false, items: cl.items.map(i => ({ ...i, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
     save([copy, ...lists]); notify("Checklist clonada");
@@ -200,6 +214,8 @@ export default function ChecklistsPage() {
                     </div>
                   </div>
                   <div className="flex gap-0.5">
+                    <button onClick={() => moveListUp(cl.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Subir"><ChevronUp className="h-3 w-3" /></button>
+                    <button onClick={() => moveListDown(cl.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Bajar"><ChevronDown className="h-3 w-3" /></button>
                     <button onClick={() => toggleLock(cl.id)} className={`rounded p-1 hover:bg-gray-50 ${cl.locked ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"}`} title={cl.locked ? "Desbloquear" : "Bloquear"}>{cl.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}</button>
                     <button onClick={() => { setEditId(cl.id); setEditTitle(cl.title); setEditClient(cl.client); setEditCategory(cl.category || "General"); }} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Editar"><Edit3 className="h-3 w-3" /></button>
                     <button onClick={() => cloneList(cl)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Clonar"><Copy className="h-3 w-3" /></button>
