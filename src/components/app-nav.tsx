@@ -82,12 +82,14 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
     { href: "/omnichannel", label: "Omnicanal", icon: Activity },
     { href: "/templates", label: "Plantillas", icon: Send },
+    { href: "/settings/quick-replies", label: "Resp. Rápidas", icon: Send },
     { href: "/scheduler", label: "Scheduler", icon: Clock },
   ]},
   { label: "Automatización & IA", items: [
     { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
     { href: "/automations", label: "Automatizaciones", icon: Zap },
     { href: "/sequences", label: "Secuencias", icon: GitBranch },
+    { href: "/settings/flows", label: "Flows", icon: GitBranch },
     { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
     { href: "/scoring", label: "Scoring", icon: Star },
     { href: "/ai-builder", label: "Constructor IA", icon: Bot },
@@ -109,6 +111,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   { label: "Datos & Control", items: [
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/files", label: "Archivos & IA", icon: FileText },
+    { href: "/settings/ocr", label: "OCR", icon: FileText },
     { href: "/audit", label: "Auditoría", icon: History },
     { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
     { href: "/lab", label: "Laboratorio", icon: FlaskConical },
