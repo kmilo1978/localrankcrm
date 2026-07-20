@@ -35,8 +35,10 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
-- **MCP Settings**: Agregados Hermes Agent, OpenClaw y Composio como servidores populares one-click.
-- **Menú reorganizado por categorías**: Plantillas y Resp. Rápidas movidos a Conversaciones, Flows a Automatización & IA, OCR a Datos & Control. Settings queda solo con configuración pura.
+- **Menú cerrado por defecto**: Las categorías del sidebar empiezan colapsadas.
+- **Página Sugerencias** (Ajustes): Formulario para enviar feedback/bugs/ideas a jkbotero78@gmail.com.
+- **Documentación completa** (Ajustes): Guía paso a paso de cada módulo con "Cómo usar" + "Tips". Buscador integrado.
+- **Toggle tema** en sidebar: Ícono sol/luna para cambiar claro/oscuro con un clic.
 - Build Vercel: localStorage en render, NodeJS.Timeout, email/phone en radar, JSX workspaces, prefix duplicado app-nav.
 - Bóveda: prompt() → modal propio.
 - Calendario: botón sincronizar → modal con opciones y feedback.
