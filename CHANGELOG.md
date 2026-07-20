@@ -41,6 +41,11 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Módulo Suscripciones** (`/subscriptions`): Control de pagos recurrentes personales y profesionales. KPIs, alertas vencimiento, análisis de ahorro.
 - **Cotizador IA** (`/ai-quoter`): Genera propuestas comerciales desde prompt. Secciones editables, copiar/exportar.
 - **Banner de actualizaciones**: Popup con novedades de cada versión, dismiss persistente.
+- **Protección de sesión**: Middleware redirige a preview si no hay cookie de auth. Rutas (app) protegidas.
+- **Login con Google OAuth**: Botón "Continuar con Google" + configuración de social provider.
+- **Recuperar contraseña**: Formulario + envío de email con enlace de reset via Resend.
+- **hCaptcha en login**: Widget captcha, botón deshabilitado hasta resolver. Modo test sin API key.
+- **Email provider (Resend)**: Envío real de emails transaccionales. Templates para reset y bienvenida.
 - **Backup completo** (Ajustes → Cuenta): Exportar JSON + Importar/Restaurar desde archivo con recarga automática.
 - **robots.txt + noindex**: Protección contra indexación en motores de búsqueda (robots.txt Disallow all, meta noindex, header X-Robots-Tag).
 - **Auditoría de seguridad**: Verificado 0 API keys expuestas en el código. .env protegido por gitignore y nunca commiteado.
