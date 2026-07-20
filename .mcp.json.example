@@ -1,10 +1,43 @@
 {
-  "//": "EJEMPLO de MCP scoped al proyecto. Copia las entradas que necesites a .mcp.json (que arranca vacío) o usa `claude mcp add` (recomendado). Los ${VAR} se resuelven desde tu entorno / .env — NUNCA pongas tokens en claro aquí. Ver docs/mcp-setup.md.",
+  "//": "MCP scoped al proyecto. Copia las entradas que necesites a .mcp.json. Los ${VAR} se resuelven desde tu entorno / .env — NUNCA pongas tokens en claro aquí.",
 
   "mcpServers": {
-    "playwright": {
+    "supabase": {
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
+      "args": ["-y", "supabase-mcp-server@latest"],
+      "env": {
+        "SUPABASE_URL": "${SUPABASE_URL}",
+        "SUPABASE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}"
+      }
+    },
+
+    "hermes-agent": {
+      "command": "npx",
+      "args": ["-y", "hermes-mcp@latest"],
+      "env": {
+        "HERMES_API_URL": "http://localhost:3001",
+        "HERMES_API_KEY": "${HERMES_API_KEY}"
+      },
+      "//": "Hermes Agent (NousResearch) — Agente IA multicanal. Instalar: pip install hermes-agent. Conecta Telegram, Discord, Slack, Signal, Matrix. Docs: https://hermes-agent.nousresearch.com"
+    },
+
+    "openclaw": {
+      "command": "npx",
+      "args": ["-y", "openclaw-mcp-server@latest"],
+      "env": {
+        "OPENCLAW_URL": "http://localhost:4000",
+        "OPENCLAW_TOKEN": "${OPENCLAW_TOKEN}"
+      },
+      "//": "OpenClaw — Gateway de agentes IA self-hosted. Conecta Discord, WhatsApp, Telegram, Slack, Teams, iMessage. Docs: https://docs.openclaw.ai. Install: curl -fsSL https://openclaw.ai/install.sh | sh"
+    },
+
+    "composio": {
+      "command": "npx",
+      "args": ["-y", "composio-mcp-server@latest"],
+      "env": {
+        "COMPOSIO_API_KEY": "${COMPOSIO_API_KEY}"
+      },
+      "//": "Composio.dev — 250+ integraciones con una sola API key. Gmail, Calendar, Sheets, LinkedIn, HubSpot, Notion. Docs: https://docs.composio.dev"
     },
 
     "github": {
@@ -13,6 +46,12 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
+    },
+
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "//": "Navegador automatizado para scraping y testing"
     }
   }
 }

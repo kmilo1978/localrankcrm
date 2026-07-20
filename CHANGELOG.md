@@ -35,6 +35,7 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Workspace aislados**: Cada workspace tiene sus propios datos (contactos, notas, tareas, etc.). Los datos globales (equipo, bóveda, etiquetas) siguen compartidos. Migración automática de datos viejos.
 
 ### Corregido
+- **MCP Settings**: Agregados Hermes Agent, OpenClaw y Composio como servidores populares one-click.
 - Build Vercel: localStorage en render, NodeJS.Timeout, email/phone en radar, JSX workspaces, prefix duplicado app-nav.
 - Bóveda: prompt() → modal propio.
 - Calendario: botón sincronizar → modal con opciones y feedback.

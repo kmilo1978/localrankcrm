@@ -124,7 +124,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Resp. Rápidas** | Shortcuts con media, programación, secuencias, round robin |
 | **SMS** | Twilio, Vonage, MessageBird, Plivo |
 | **Email Marketing** | Resend, SendGrid, Mailgun, SES, Postmark, Brevo, Mailchimp + DNS (SPF/DKIM) |
-| **MCP** | Servidores Model Context Protocol (7 populares one-click) |
+| **MCP** | Servidores Model Context Protocol: Supabase, Hermes Agent, OpenClaw, Composio, GitHub, Slack, Google Drive, Notion, Web Search, Postgres (one-click) |
 | **Conectores** | Composio.dev (250+ apps) + WithOne.ai |
 | **Flows** | Estrategia multicanal visual con triggers y steps |
 | **Webhooks & APIs** | API keys + webhooks + n8n integration |

@@ -12,12 +12,15 @@ const SEED: McpServer[] = [
 
 const POPULAR_SERVERS = [
   { name: "supabase", command: "npx", args: "supabase-mcp-server@latest", desc: "Acceso a tu base de datos Supabase" },
+  { name: "hermes-agent", command: "npx", args: "hermes-mcp@latest", desc: "Hermes Agent (NousResearch) — Agente IA multicanal (Telegram, Discord, Slack, Signal)" },
+  { name: "openclaw", command: "npx", args: "openclaw-mcp-server@latest", desc: "OpenClaw — Gateway de agentes IA self-hosted (WhatsApp, Teams, Discord, Telegram)" },
   { name: "github", command: "npx", args: "@anthropic/mcp-github-server", desc: "Integración con GitHub repos" },
   { name: "slack", command: "npx", args: "@anthropic/mcp-slack-server", desc: "Enviar y leer mensajes de Slack" },
   { name: "google-drive", command: "npx", args: "google-drive-mcp-server", desc: "Acceso a Google Drive" },
   { name: "notion", command: "npx", args: "notion-mcp-server", desc: "Leer/escribir en Notion" },
   { name: "web-search", command: "npx", args: "@anthropic/mcp-web-search-server", desc: "Búsqueda web en tiempo real" },
   { name: "postgres", command: "npx", args: "postgres-mcp-server", desc: "Consultas SQL directas" },
+  { name: "composio", command: "npx", args: "composio-mcp-server@latest", desc: "Composio — 250+ integraciones (Gmail, Calendar, HubSpot, LinkedIn)" },
 ];
 
 export default function McpSettingsPage() {
