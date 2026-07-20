@@ -7,6 +7,11 @@ Todos los cambios notables de este proyecto se documentan aquí.
 ## [2026-07-20]
 
 ### Agregado
+- **Módulo Focus** (`/focus`): Modo enfoque con timer Pomodoro (15/25/45/60 min), progreso circular, tareas de enfoque con prioridad, botón "Enfocar" para vincular tarea al timer, historial de sesiones, estadísticas diarias.
+- **Contactos — Detección de duplicados**: Botón "Duplicados" que escanea contactos por teléfono, email o nombre+empresa coincidente. Modal con opción de fusionar conservando datos de ambos registros.
+- **Contactos — Transferencia de leads**: Botón "Transferir a Prospección" en cada contacto para moverlo al módulo de cold-contacts/prospección.
+- **Checklists — Etiquetas y proyectos**: Campo "Proyecto" y selector de etiquetas compartidas (tags del CRM) al crear checklists. Las etiquetas se muestran en cada card con su color.
+- **Calendario — Modal sincronización**: El botón "Sincronizar" ahora abre un modal con opciones (Google Calendar, Outlook, Apple Calendar), feedback visual de estado y toast de confirmación.
 - **Componente ViewToggle** (`src/components/view-toggle.tsx`): Selector de vistas reutilizable para todo el CRM. Soporta: Lista, Kanban, Tablero (grid), Calendario y Mapa mental. Cada módulo elige cuáles mostrar.
 - **Tareas — Vistas múltiples**: Lista (original), Kanban (columnas por estado), Calendario (mes con tareas por fecha), Tablero (cards compactas en grid).
 - **Notas — Vistas múltiples**: Grid (original, cards), Lista (filas compactas), Board (columnas kanban por categoría/etiqueta).

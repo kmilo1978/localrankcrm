@@ -51,7 +51,7 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 |--------|-------------|
 | **Dashboard** | KPIs, actividad reciente, oportunidades top, tareas pendientes |
 | **Prospección** | Contactos fríos con scoring, import CSV, filtros avanzados (web/verificación/GMB), canal de outreach, follow-ups |
-| **Contactos** | Campos personalizados ilimitados, notas, recordatorios, etiquetas |
+| **Contactos** | Campos personalizados ilimitados, notas, recordatorios, etiquetas, detección de duplicados con fusión, transferencia de leads a prospección |
 | **Compañías** | Empresas con campos custom, notas por empresa, subcarpetas |
 | **Oportunidades** | Deals con valor/probabilidad, vista lista + board kanban |
 | **Pipeline** | Kanban drag-and-drop con 6+ etapas personalizables |
@@ -73,8 +73,9 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 ### Operaciones
 | Módulo | Descripción |
 |--------|-------------|
-| **Tareas** | Gestión por prioridad/estado con filtros |
+| **Tareas** | Gestión por prioridad/estado con filtros, vistas múltiples (lista/kanban/calendario/tablero) |
 | **To-Do** | Diario, semanal, mensual con barras de progreso |
+| **Focus** | Modo enfoque Pomodoro (15/25/45/60 min), timer circular, tareas de enfoque con prioridad, historial de sesiones |
 | **Calendario** | Múltiples calendarios con colores, citas, cobros, recordatorios |
 | **Formularios** | Conectar Tally/Typeform/JotForm + builder manual + generador IA |
 | **Importar & Enriquecer** | Upload CSV → enriquecimiento (email, social, tech, empresa, dominio) → exportar |

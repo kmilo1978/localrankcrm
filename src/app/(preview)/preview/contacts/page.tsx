@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Archive, ArchiveRestore, Bell, ChevronDown, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Trash2, Users, X } from "lucide-react";
+import { Archive, ArchiveRestore, AlertCircle, ArrowRightLeft, Bell, ChevronDown, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Trash2, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 
@@ -37,6 +37,7 @@ export default function ContactsPreviewPage() {
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", company: "", role: "" });
   const [formExtraFields, setFormExtraFields] = useState<{ label: string; value: string }[]>([]);
@@ -44,9 +45,50 @@ export default function ContactsPreviewPage() {
   const [fieldForms, setFieldForms] = useState<Record<string, { label: string; value: string }>>({});
   const [noteForms, setNoteForms] = useState<Record<string, string>>({});
   const [reminderForms, setReminderForms] = useState<Record<string, { text: string; date: string }>>({});
+  const [toast, setToast] = useState("");
 
   useEffect(() => { setContacts(loadFromStorage("contacts", SEED)); }, []);
   function save(u: Contact[]) { setContacts(u); saveToStorage("contacts", u); }
+  function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
+
+  // Duplicate detection
+  function findDuplicates(): { a: Contact; b: Contact; reason: string }[] {
+    const dupes: { a: Contact; b: Contact; reason: string }[] = [];
+    for (let i = 0; i < contacts.length; i++) {
+      for (let j = i + 1; j < contacts.length; j++) {
+        const a = contacts[i]!, b = contacts[j]!;
+        if (a.phone && b.phone && a.phone.replace(/\D/g, "").slice(-8) === b.phone.replace(/\D/g, "").slice(-8)) {
+          dupes.push({ a, b, reason: "Mismo teléfono" });
+        } else if (a.email && b.email && a.email.toLowerCase() === b.email.toLowerCase()) {
+          dupes.push({ a, b, reason: "Mismo email" });
+        } else if (a.name && b.name && a.name.toLowerCase() === b.name.toLowerCase() && a.company.toLowerCase() === b.company.toLowerCase()) {
+          dupes.push({ a, b, reason: "Mismo nombre y empresa" });
+        }
+      }
+    }
+    return dupes;
+  }
+
+  function mergeContacts(keepId: string, removeId: string) {
+    const keep = contacts.find(c => c.id === keepId);
+    const remove = contacts.find(c => c.id === removeId);
+    if (!keep || !remove) return;
+    const merged: Contact = { ...keep, notes: [...keep.notes, ...remove.notes], customFields: [...keep.customFields, ...remove.customFields.filter(f => !keep.customFields.some(kf => kf.label === f.label))], reminders: [...keep.reminders, ...remove.reminders] };
+    if (!merged.phone && remove.phone) merged.phone = remove.phone;
+    if (!merged.email && remove.email) merged.email = remove.email;
+    save(contacts.map(c => c.id === keepId ? merged : c).filter(c => c.id !== removeId));
+    notify("Contactos fusionados");
+  }
+
+  // Transfer to cold contacts / pipeline
+  function transferToProspection(contact: Contact) {
+    const coldContacts = loadFromStorage<Array<{id:string;name:string;phone:string;[key:string]:unknown}>>("cold_contacts", []);
+    const exists = coldContacts.some(c => c.phone?.replace(/\D/g, "").slice(-8) === contact.phone.replace(/\D/g, "").slice(-8));
+    if (exists) { notify("Ya existe en prospección"); return; }
+    const newCold = { id: generateId(), name: contact.name, phone: contact.phone, website: "", category: contact.company, rating: 0, reviews: 0, address: "", description: contact.role, clase: "Transferido", motivo: "Desde contactos", score: 50, stageId: "cs1", notes: contact.notes.map(n => n.content).join("; "), addedAt: new Date().toISOString().split("T")[0]!, customFields: [], outreachChannel: "", followUps: [] };
+    saveToStorage("cold_contacts", [newCold, ...coldContacts]);
+    notify(`"${contact.name}" transferido a Prospección`);
+  }
 
   function handleAdd() {
     if (!form.name.trim()) return;
@@ -134,6 +176,9 @@ export default function ContactsPreviewPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-56 rounded-md border bg-white py-2 pl-8 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
           </div>
+          <button onClick={() => setShowDuplicates(true)} className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100">
+            <AlertCircle className="h-3.5 w-3.5" />Duplicados
+          </button>
           <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
             <Plus className="h-4 w-4" />Nuevo
           </button>
@@ -209,6 +254,9 @@ export default function ContactsPreviewPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       {pendingRem > 0 && <span className="flex items-center gap-0.5 text-xs text-amber-600"><Bell className="h-3 w-3" />{pendingRem}</span>}
                       {contact.notes.length > 0 && <span className="flex items-center gap-0.5 text-xs text-muted-foreground"><StickyNote className="h-3 w-3" />{contact.notes.length}</span>}
+                      <button onClick={(e) => { e.stopPropagation(); transferToProspection(contact); }} className="rounded p-1 hover:bg-blue-50 text-muted-foreground hover:text-brand" title="Transferir a Prospección">
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </button>
                       <button onClick={(e) => { e.stopPropagation(); toggleArchive(contact.id); }} className="rounded p-1 hover:bg-gray-100 text-muted-foreground" title={contact.archived ? "Desarchivar" : "Archivar"}>
                         {contact.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
                       </button>
@@ -306,6 +354,51 @@ export default function ContactsPreviewPage() {
           </div>
         )}
       </div>
+
+      {/* Duplicates Modal */}
+      {showDuplicates && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowDuplicates(false)}>
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold flex items-center gap-2"><AlertCircle className="h-4 w-4 text-amber-600" />Detección de duplicados</h3>
+              <button onClick={() => setShowDuplicates(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            {(() => {
+              const dupes = findDuplicates();
+              if (dupes.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No se encontraron duplicados 🎉</p>;
+              return (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">{dupes.length} posible(s) duplicado(s) encontrado(s)</p>
+                  {dupes.map((d, i) => (
+                    <div key={i} className="rounded-lg border p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-medium text-amber-700">{d.reason}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="rounded border p-2">
+                          <p className="font-medium">{d.a.name}</p>
+                          <p className="text-muted-foreground">{d.a.phone}</p>
+                          <p className="text-muted-foreground">{d.a.email}</p>
+                          <button onClick={() => { mergeContacts(d.a.id, d.b.id); setShowDuplicates(false); }} className="mt-2 rounded bg-brand px-2 py-1 text-[10px] text-white hover:bg-brand-hover">Mantener este</button>
+                        </div>
+                        <div className="rounded border p-2">
+                          <p className="font-medium">{d.b.name}</p>
+                          <p className="text-muted-foreground">{d.b.phone}</p>
+                          <p className="text-muted-foreground">{d.b.email}</p>
+                          <button onClick={() => { mergeContacts(d.b.id, d.a.id); setShowDuplicates(false); }} className="mt-2 rounded bg-brand px-2 py-1 text-[10px] text-white hover:bg-brand-hover">Mantener este</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
   );
 }

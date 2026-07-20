@@ -5,17 +5,17 @@ import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage"
 import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
 
 type CheckItem = { id: string; text: string; done: boolean };
-type Checklist = { id: string; title: string; client: string; category: string; locked: boolean; items: CheckItem[]; createdAt: string };
+type Checklist = { id: string; title: string; client: string; category: string; tags: string[]; project: string; locked: boolean; items: CheckItem[]; createdAt: string };
 
 const SEED: Checklist[] = [
-  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", category: "Ventas", locked: false, createdAt: "2026-07-17", items: [
+  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", category: "Ventas", tags: ["Cliente VIP"], project: "Implementación", locked: false, createdAt: "2026-07-17", items: [
     { id: "i1", text: "Crear contacto en CRM", done: true },
     { id: "i2", text: "Asignar responsable", done: true },
     { id: "i3", text: "Enviar email de bienvenida", done: false },
     { id: "i4", text: "Agendar llamada kickoff", done: false },
     { id: "i5", text: "Configurar canales", done: false },
   ]},
-  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", category: "Ventas", locked: false, createdAt: "2026-07-16", items: [
+  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", category: "Ventas", tags: ["Urgente"], project: "Comercial", locked: false, createdAt: "2026-07-16", items: [
     { id: "i6", text: "Propuesta aprobada", done: true },
     { id: "i7", text: "Contrato firmado", done: true },
     { id: "i8", text: "Pago recibido", done: false },
@@ -44,6 +44,8 @@ export default function ChecklistsPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newClient, setNewClient] = useState("");
   const [newCategory, setNewCategory] = useState("General");
+  const [newProject, setNewProject] = useState("");
+  const [newTags, setNewTags] = useState<string[]>([]);
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteClient, setPasteClient] = useState("");
   const [pasteText, setPasteText] = useState("");
@@ -74,15 +76,15 @@ export default function ChecklistsPage() {
 
   function createEmpty() {
     if (!newTitle.trim()) return;
-    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, category: newCategory || "General", locked: false, items: [], createdAt: new Date().toISOString().split("T")[0]! };
-    save([cl, ...lists]); setNewTitle(""); setNewClient(""); setNewCategory("General"); setShowNew(false);
+    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, category: newCategory || "General", tags: newTags, project: newProject, locked: false, items: [], createdAt: new Date().toISOString().split("T")[0]! };
+    save([cl, ...lists]); setNewTitle(""); setNewClient(""); setNewCategory("General"); setNewProject(""); setNewTags([]); setShowNew(false);
   }
 
   function createFromPaste() {
     if (!pasteTitle.trim() || !pasteText.trim()) return;
     const items = splitText(pasteText).map(text => ({ id: generateId(), text, done: false }));
     if (items.length === 0) { notify("No se detectaron items"); return; }
-    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, category: "General", locked: false, items, createdAt: new Date().toISOString().split("T")[0]! };
+    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, category: "General", tags: [], project: "", locked: false, items, createdAt: new Date().toISOString().split("T")[0]! };
     save([cl, ...lists]); setPasteTitle(""); setPasteClient(""); setPasteText(""); setShowPaste(false);
     notify(items.length + " items creados");
   }
@@ -190,9 +192,11 @@ export default function ChecklistsPage() {
                       <h3 className="text-sm font-bold">{cl.title}</h3>
                       {cl.locked && <Lock className="h-3 w-3 text-amber-600" />}
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       {cl.client && <span className="text-[10px] text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">{cl.client}</span>}
                       {cl.category && <span className="text-[10px] text-brand bg-brand/10 rounded-full px-2 py-0.5">{cl.category}</span>}
+                      {cl.project && <span className="text-[10px] text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2 py-0.5">{cl.project}</span>}
+                      {(cl.tags || []).map(t => <span key={t} className="rounded-full px-1.5 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: getTagColor(t) }}>{t}</span>)}
                     </div>
                   </div>
                   <div className="flex gap-0.5">
@@ -261,8 +265,22 @@ export default function ChecklistsPage() {
             <div className="flex justify-between mb-3"><h3 className="text-sm font-bold">Nuevo checklist</h3><button onClick={() => setShowNew(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button></div>
             <div className="space-y-2">
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Titulo *" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-              <input value={newClient} onChange={e => setNewClient(e.target.value)} placeholder="Cliente (opcional)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-              <input value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Categoría (ej: Ventas, Soporte)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <div className="grid grid-cols-2 gap-2">
+                <input value={newClient} onChange={e => setNewClient(e.target.value)} placeholder="Cliente (opcional)" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <input value={newProject} onChange={e => setNewProject(e.target.value)} placeholder="Proyecto (opcional)" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              </div>
+              <input value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Categoría" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              {/* Tags selector */}
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                <div className="flex flex-wrap gap-1">
+                  {tags.map(t => (
+                    <button key={t.id} type="button" onClick={() => setNewTags(newTags.includes(t.name) ? newTags.filter(x => x !== t.name) : [...newTags, t.name])} className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${newTags.includes(t.name) ? "text-white" : "border"}`} style={newTags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button onClick={createEmpty} disabled={!newTitle.trim()} className="w-full rounded bg-brand py-2 text-sm text-white hover:bg-brand-hover disabled:opacity-50">Crear</button>
             </div>
           </div>
