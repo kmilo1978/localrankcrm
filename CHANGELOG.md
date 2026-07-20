@@ -7,37 +7,30 @@ Todos los cambios notables de este proyecto se documentan aquí.
 ## [2026-07-20]
 
 ### Agregado
-- **Módulo Focus** (`/focus`): Modo enfoque con timer Pomodoro (15/25/45/60 min), progreso circular, tareas de enfoque con prioridad, botón "Enfocar" para vincular tarea al timer, historial de sesiones, estadísticas diarias.
-- **Módulo Archivos & IA** (`/files`): Importar archivos (txt, csv, json, md, imágenes, pdf), visualizarlos inline, y preguntarle a la IA sobre su contenido. La IA extrae emails, teléfonos, hace resúmenes y busca dentro del archivo.
-- **Menú personalizable**: Botón ⚙️ junto a "Más módulos" activa modo edición. Puedes agregar (📌) o quitar (✕) módulos del menú principal. Se guarda en localStorage.
-- **Dark mode fix**: Override global CSS para que todos los componentes con `bg-white` hardcoded se adapten al modo oscuro. Inputs, tablas, modals y bordes ahora respetan el tema.
-- **Workspace — Personalizar nombre**: Botón editar para renombrar cualquier espacio de trabajo inline.
-- **Workspace — Claves por espacio**: Cada workspace tiene su propia bóveda de claves (label + valor). Agregar, copiar y eliminar claves sin salir del espacio.
-- **Workspace — Copiar info**: Botón para copiar al portapapeles toda la info del espacio (nombre, cliente, miembros, carpetas).
-- **Workspace — Límite configurable**: Máximo de espacios de trabajo (default 10). Se muestra contador X/10 y se bloquea creación al llegar al límite.
-- **Admin — Control de módulos por miembro**: Desde Equipo, el admin puede hacer clic en ⚙️ de cualquier miembro y activar/desactivar módulos individuales. Opciones rápidas "Activar todos" y "Solo Dashboard".
-- **Contactos — Detección de duplicados**: Botón "Duplicados" que escanea contactos por teléfono, email o nombre+empresa coincidente. Modal con opción de fusionar conservando datos de ambos registros.
-- **Contactos — Transferencia de leads**: Botón "Transferir a Prospección" en cada contacto para moverlo al módulo de cold-contacts/prospección.
-- **Checklists — Etiquetas y proyectos**: Campo "Proyecto" y selector de etiquetas compartidas (tags del CRM) al crear checklists. Las etiquetas se muestran en cada card con su color.
-- **Calendario — Modal sincronización**: El botón "Sincronizar" ahora abre un modal con opciones (Google Calendar, Outlook, Apple Calendar), valida API key de Composio antes de conectar, feedback visual y toast de confirmación.
-- **Componente ViewToggle** (`src/components/view-toggle.tsx`): Selector de vistas reutilizable para todo el CRM. Soporta: Lista, Kanban, Tablero (grid), Calendario y Mapa mental. Cada módulo elige cuáles mostrar.
-- **Tareas — Vistas múltiples**: Lista (original), Kanban (columnas por estado), Calendario (mes con tareas por fecha), Tablero (cards compactas en grid).
-- **Notas — Vistas múltiples**: Grid (original, cards), Lista (filas compactas), Board (columnas kanban por categoría/etiqueta).
-- **Notas — Enviar a recordatorio**: Botón "Recordatorio" en el modal de nota que crea un recordatorio automático programado a 1 hora desde ahora, con el título y contenido de la nota.
-- **Checklists — Bloqueo**: Botón para bloquear/desbloquear checklists. Cuando está bloqueado, no se pueden marcar, agregar ni eliminar items.
-- **Checklists — Paginación**: Navegación por páginas (8 checklists por página) con controles anterior/siguiente.
-- **Checklists — Categorías**: Cada checklist puede tener una categoría asignada. Filtro por categoría en la barra superior.
-- **Checklists — Búsqueda**: Campo de búsqueda por título o cliente.
-- **Bóveda — Generador de claves seguras**: Panel colapsable en la parte superior de la bóveda que genera contraseñas criptográficamente seguras (usa `crypto.getRandomValues`). Opciones configurables: longitud (6-64), mayúsculas, minúsculas, números y símbolos. Botón copiar integrado.
-- **Sistema de etiquetas compartido** (`src/lib/tags.ts`): Store centralizado para etiquetas del CRM. Tipo `CrmTag` con nombre, color, descripción y módulos asignados. Funciones CRUD exportables: `loadTags`, `saveTags`, `createTag`, `updateTag`, `deleteTag`, `getTagsByModule`, `getTagColor`, `addModuleToTag`.
-- **Notas — Etiquetas personalizables**: Las notas ahora usan el sistema compartido de etiquetas. Soporte para múltiples etiquetas por nota, colores personalizados (20 presets + hex custom), descripción, y posibilidad de importar etiquetas desde otros módulos del CRM.
-- **Labels — Integración compartida**: El módulo de etiquetas ahora comparte store con todo el CRM. Filtro por módulo (contactos, notas, tareas, oportunidades). Edición con selector de módulos donde aplica cada etiqueta.
+- **Módulo Acortador de URL** (`/url-shortener`): Crea enlaces cortos con tracking de clicks, etiquetas y botón copiar.
+- **Módulo Enriquecimiento de datos** (`/enrichment`): 8 templates (Email Finder, Company Info, Social Profiles, Phone Verification, Tech Stack, Domain Analysis, Lead Scoring, Full Contact). Conecta con Composio/Snov.io/Apollo.
+- **Módulo Constructor IA** (`/ai-builder`): Interfaz de lenguaje natural que auto-detecta módulo y ejecuta (tareas, notas, emails, pipeline, calendario, propuestas, automatizaciones). Historial de acciones.
+- **Drag-and-drop sortable** (`src/components/sortable-list.tsx`): Componente reutilizable con @dnd-kit. Integrado en Tareas y Notas.
+- **Módulo Focus** (`/focus`): Timer Pomodoro (15/25/45/60 min), progreso circular, tareas de enfoque, historial de sesiones.
+- **Módulo Archivos & IA** (`/files`): Importar archivos, visualizar inline, preguntar a la IA sobre contenido.
+- **Menú personalizable**: Agregar/quitar módulos del menú principal con persistencia.
+- **Dark mode**: Override CSS global para compatibilidad completa en modo oscuro.
+- **Workspace — Eliminación segura**: Modal que pide escribir nombre en MAYÚSCULAS para confirmar.
+- **Workspace — Claves por espacio**: Bóveda de credenciales por workspace.
+- **Workspace — Renombrar, copiar info, límite configurable (10 max)**.
+- **Admin — Control de módulos por miembro**: Activar/desactivar funcionalidades por usuario.
+- **ViewToggle**: Selector de vistas (Lista/Kanban/Calendario/Tablero) reutilizable.
+- **Tareas**: 4 vistas + drag-and-drop en lista.
+- **Notas**: 3 vistas + drag-and-drop en grid + enviar a recordatorio + etiquetas compartidas.
+- **Contactos**: Detección de duplicados con fusión + transferencia a Prospección.
+- **Checklists**: Bloqueo, paginación, categorías, etiquetas, proyectos, ↑↓ reordenar.
+- **Calendario**: Sincronización via Composio (valida API key).
+- **Radar**: Editable (email/phone/notas), exportar a pipeline, reabrir páginas.
+- **ToDo**: Clonar, mover entre periodos, enviar a recordatorio.
+- **Bóveda**: Generador de claves seguras (crypto) + modal cambiar clave.
+- **Sistema de etiquetas compartido** (`src/lib/tags.ts`): Importable entre todos los módulos.
 
 ### Corregido
-- **Radar — Importación email/teléfono**: La sincronización con la extensión ahora importa correctamente email y teléfono (acepta campos `email`, `correo`, `phone`, `telefono`). Los teléfonos se aceptan en cualquier formato con indicativo.
-- **Radar — Editable**: Modal completo de edición para cada clip (título, URL, email, teléfono, notas, descripción, carpeta, etiquetas). Botón "Abrir página" para reabrir la URL guardada.
-- **Radar — Exportar a Pipeline**: Botón para enviar cualquier clip directamente al Pipeline de ventas.
-- **ToDo — Modular**: Cada item ahora tiene botones para clonar, mover entre periodos (diario→semanal→mensual) y enviar a recordatorio.
-- **Checklists — Mover cards**: Botones ↑↓ para reorganizar el orden de los checklists (subir/bajar).
-- **Menú — Reorganizado**: Módulos principales (12) siempre visibles, el resto (26) en sección colapsable "Más módulos".
-- **Bóveda — Modal cambiar clave**: Reemplazado `prompt()` nativo (que causaba popup vacío) por modal propio integrado con input de contraseña y confirmación.
+- Build Vercel: localStorage en render, NodeJS.Timeout, email/phone en radar, JSX workspaces, prefix duplicado app-nav.
+- Bóveda: prompt() → modal propio.
+- Calendario: botón sincronizar → modal con opciones y feedback.
