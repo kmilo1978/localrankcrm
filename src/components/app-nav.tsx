@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  Bell,
   Book,
   Bookmark,
   Bot,
@@ -84,6 +85,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   { label: "Conversaciones", items: [
     { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
     { href: "/omnichannel", label: "Omnicanal", icon: Activity },
+    { href: "/meeting-reminders", label: "Meeting Reminders", icon: Bell },
     { href: "/templates", label: "Plantillas", icon: Send },
     { href: "/settings/quick-replies", label: "Resp. Rápidas", icon: Send },
     { href: "/scheduler", label: "Scheduler", icon: Clock },
