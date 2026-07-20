@@ -28,6 +28,7 @@ import {
   LayoutDashboard,
   Link2,
   LogOut,
+  Mail,
   Menu,
   MessageSquare,
   Pin,
@@ -93,6 +94,7 @@ const ALL_NAV = [
   { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
   { href: "/enrichment", label: "Enriquecimiento", icon: Database },
   { href: "/ai-builder", label: "Constructor IA", icon: Bot },
+  { href: "/email-finder", label: "Email Finder", icon: Mail },
 ] as const;
 
 const DEFAULT_MAIN_HREFS = ["/dashboard", "/cold-contacts", "/contacts", "/companies", "/opportunities", "/pipeline", "/inbox", "/tasks", "/calendar", "/focus", "/ai-hub", "/analytics", "/files"];
