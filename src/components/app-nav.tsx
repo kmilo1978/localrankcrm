@@ -63,6 +63,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/email-finder", label: "Email Finder", icon: Mail },
     { href: "/enrichment", label: "Enriquecimiento", icon: Database },
     { href: "/social-outreach", label: "Social Outreach", icon: MessageSquare },
+    { href: "/social", label: "Social Engagement", icon: Heart },
     { href: "/forms", label: "Formularios", icon: ClipboardList },
     { href: "/import", label: "Importar", icon: Database },
     { href: "/suppliers", label: "Proveedores", icon: Building2 },
