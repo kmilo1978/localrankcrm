@@ -112,6 +112,54 @@
   }
 }
 
+/* ===== Dark mode compatibility for bg-white hardcoded components ===== */
+@layer base {
+  .dark .bg-white {
+    background-color: var(--bg-subtle) !important;
+  }
+  .dark .bg-gray-50 {
+    background-color: var(--bg-panel) !important;
+  }
+  .dark .bg-gray-100 {
+    background-color: var(--bg-hover) !important;
+  }
+  .dark .border {
+    border-color: var(--border) !important;
+  }
+  .dark .text-gray-700, .dark .text-gray-800, .dark .text-gray-900 {
+    color: var(--text) !important;
+  }
+  .dark .text-gray-600, .dark .text-gray-500 {
+    color: var(--text-2) !important;
+  }
+  .dark .border-gray-200, .dark .border-gray-300 {
+    border-color: var(--border) !important;
+  }
+  .dark .bg-amber-50, .dark .bg-blue-50, .dark .bg-green-50, .dark .bg-red-50, .dark .bg-purple-50, .dark .bg-violet-50 {
+    opacity: 0.85;
+  }
+  .dark input, .dark textarea, .dark select {
+    background-color: var(--bg-panel) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+  }
+  .dark input::placeholder, .dark textarea::placeholder {
+    color: var(--text-3) !important;
+  }
+  /* Modal backdrops */
+  .dark .shadow-2xl, .dark .shadow-xl {
+    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+  /* Tables */
+  .dark th {
+    background-color: var(--bg-panel) !important;
+    color: var(--text-2) !important;
+  }
+  .dark tr:hover {
+    background-color: var(--bg-hover) !important;
+  }
+}
+
 /* ===== Mobile Responsive Fixes ===== */
 @layer base {
   /* Prevent horizontal overflow on mobile */

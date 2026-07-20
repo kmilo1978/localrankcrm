@@ -10,6 +10,11 @@ Todos los cambios notables de este proyecto se documentan aquí.
 - **Módulo Focus** (`/focus`): Modo enfoque con timer Pomodoro (15/25/45/60 min), progreso circular, tareas de enfoque con prioridad, botón "Enfocar" para vincular tarea al timer, historial de sesiones, estadísticas diarias.
 - **Módulo Archivos & IA** (`/files`): Importar archivos (txt, csv, json, md, imágenes, pdf), visualizarlos inline, y preguntarle a la IA sobre su contenido. La IA extrae emails, teléfonos, hace resúmenes y busca dentro del archivo.
 - **Menú personalizable**: Botón ⚙️ junto a "Más módulos" activa modo edición. Puedes agregar (📌) o quitar (✕) módulos del menú principal. Se guarda en localStorage.
+- **Dark mode fix**: Override global CSS para que todos los componentes con `bg-white` hardcoded se adapten al modo oscuro. Inputs, tablas, modals y bordes ahora respetan el tema.
+- **Workspace — Personalizar nombre**: Botón editar para renombrar cualquier espacio de trabajo inline.
+- **Workspace — Claves por espacio**: Cada workspace tiene su propia bóveda de claves (label + valor). Agregar, copiar y eliminar claves sin salir del espacio.
+- **Workspace — Copiar info**: Botón para copiar al portapapeles toda la info del espacio (nombre, cliente, miembros, carpetas).
+- **Workspace — Límite configurable**: Máximo de espacios de trabajo (default 10). Se muestra contador X/10 y se bloquea creación al llegar al límite.
 - **Contactos — Detección de duplicados**: Botón "Duplicados" que escanea contactos por teléfono, email o nombre+empresa coincidente. Modal con opción de fusionar conservando datos de ambos registros.
 - **Contactos — Transferencia de leads**: Botón "Transferir a Prospección" en cada contacto para moverlo al módulo de cold-contacts/prospección.
 - **Checklists — Etiquetas y proyectos**: Campo "Proyecto" y selector de etiquetas compartidas (tags del CRM) al crear checklists. Las etiquetas se muestran en cada card con su color.

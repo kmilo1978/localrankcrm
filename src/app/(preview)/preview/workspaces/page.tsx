@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, ChevronDown, ChevronRight, FileText, Folder, FolderPlus, Plus, Trash2, Users, X } from "lucide-react";
+import { Building2, ChevronDown, ChevronRight, ClipboardCopy, Edit3, FileText, Folder, FolderPlus, Key, Plus, Trash2, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type WorkspaceFile = { id: string; name: string; type: string; addedAt: string };
 type SubFolder = { id: string; name: string; color: string; files: WorkspaceFile[] };
 type FolderItem = { id: string; name: string; color: string; files: WorkspaceFile[]; responsible: string; subfolders: SubFolder[] };
 type Client = { id: string; name: string; color: string; industry: string };
-type Workspace = { id: string; name: string; description: string; members: string[]; folders: FolderItem[]; createdAt: string; clientId: string };
+type WorkspaceKey = { id: string; label: string; value: string };
+type Workspace = { id: string; name: string; description: string; members: string[]; folders: FolderItem[]; keys: WorkspaceKey[]; createdAt: string; clientId: string };
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#e91e8c", "#8b5cf6", "#ef4444", "#06b6d4", "#6366f1"];
 
@@ -20,7 +21,7 @@ const SEED_CLIENTS: Client[] = [
 ];
 
 const SEED: Workspace[] = [
-  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del trimestre", members: ["Camilo", "Ana", "Juan"], createdAt: "2026-07-01", clientId: "cl1", folders: [
+  { id: "ws1", name: "Ventas Q3 2026", description: "Pipeline y propuestas del trimestre", members: ["Camilo", "Ana", "Juan"], createdAt: "2026-07-01", clientId: "cl1", keys: [{ id: "k1", label: "API Supabase", value: "sb-xxxx-project-ref" }], folders: [
     { id: "f1", name: "Propuestas", color: "#3b82f6", responsible: "Juan Pérez", files: [
       { id: "fl1", name: "Propuesta Enterprise.pdf", type: "proposal", addedAt: "2026-07-15" },
     ], subfolders: [
@@ -37,7 +38,7 @@ const SEED: Workspace[] = [
       { id: "sf4", name: "Pendientes revisión", color: "#f59e0b", files: [] },
     ]},
   ]},
-  { id: "ws2", name: "Campaña TechCorp", description: "Material para campaña Q3", members: ["María", "Ana"], createdAt: "2026-06-15", clientId: "cl2", folders: [
+  { id: "ws2", name: "Campaña TechCorp", description: "Material para campaña Q3", members: ["María", "Ana"], createdAt: "2026-06-15", clientId: "cl2", keys: [], folders: [
     { id: "f4", name: "Diseño", color: "#e91e8c", responsible: "María", files: [
       { id: "fl7", name: "Logo-TechCorp.png", type: "image", addedAt: "2026-06-20" },
     ], subfolders: [
@@ -89,7 +90,8 @@ export default function WorkspacesPage() {
 
   function addWorkspace() {
     if (!wsForm.name.trim()) return;
-    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Camilo"], folders: [], createdAt: new Date().toISOString().split("T")[0]!, clientId: wsForm.clientId || clients[0]?.id || "" };
+    if (!canCreateMore) { setToast(`Límite de ${MAX_WORKSPACES} espacios alcanzado`); setTimeout(() => setToast(""), 2500); return; }
+    const ws: Workspace = { id: generateId(), name: wsForm.name, description: wsForm.description, members: ["Camilo"], folders: [], keys: [], createdAt: new Date().toISOString().split("T")[0]!, clientId: wsForm.clientId || clients[0]?.id || "" };
     save([...workspaces, ws]); setActiveWs(ws.id);
     setWsForm({ name: "", description: "", clientId: "" }); setShowNewWs(false);
   }
@@ -132,13 +134,40 @@ export default function WorkspacesPage() {
   function toggleFolder(id: string) { setExpandedFolders((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
   function toggleSub(id: string) { setExpandedSubs((p) => { const n = new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
+  // Rename workspace
+  function renameWorkspace(id: string, newName: string) {
+    if (!newName.trim()) return;
+    save(workspaces.map(w => w.id === id ? { ...w, name: newName } : w));
+  }
+
+  // Copy workspace info to clipboard
+  function copyWorkspaceInfo(ws: Workspace) {
+    const client = clients.find(c => c.id === ws.clientId);
+    const info = `📂 ${ws.name}\nCliente: ${client?.name || "—"}\nMiembros: ${ws.members.join(", ")}\nCarpetas: ${ws.folders.map(f => f.name).join(", ")}\nCreado: ${ws.createdAt}`;
+    navigator.clipboard.writeText(info);
+    setToast("Info del espacio copiada");
+  }
+
+  // Max workspaces limit
+  const MAX_WORKSPACES = loadFromStorage<number>("workspace_max_limit", 10);
+  const canCreateMore = workspaces.length < MAX_WORKSPACES;
+
+  const [toast, setToast] = useState("");
+  const [editingWsName, setEditingWsName] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [showVault, setShowVault] = useState<string | null>(null);
+  const [vaultKey, setVaultKey] = useState({ label: "", value: "" });
+
   return (
     <div className="flex h-full">
       {/* Sidebar */}
       <div className="w-60 shrink-0 border-r flex flex-col overflow-hidden">
         <div className="border-b px-3 py-3 flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase text-muted-foreground">Espacios</h3>
-          <button onClick={() => setShowNewWs(true)} className="rounded p-1 hover:bg-gray-100 text-muted-foreground"><Plus className="h-3.5 w-3.5" /></button>
+          <div>
+            <h3 className="text-xs font-semibold uppercase text-muted-foreground">Espacios</h3>
+            <span className="text-[9px] text-muted-foreground">{workspaces.length}/{MAX_WORKSPACES}</span>
+          </div>
+          <button onClick={() => setShowNewWs(true)} disabled={!canCreateMore} className="rounded p-1 hover:bg-gray-100 text-muted-foreground disabled:opacity-30" title={canCreateMore ? "Nuevo espacio" : `Límite de ${MAX_WORKSPACES} alcanzado`}><Plus className="h-3.5 w-3.5" /></button>
         </div>
 
         {/* Clients section */}
@@ -213,11 +242,45 @@ export default function WorkspacesPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold">{active.name}</h2>
+                  {editingWsName === active.id ? (
+                    <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={() => { renameWorkspace(active.id, editName); setEditingWsName(null); }} onKeyDown={e => { if (e.key === "Enter") { renameWorkspace(active.id, editName); setEditingWsName(null); } }} className="text-xl font-bold border-b border-brand px-1 focus:outline-none" autoFocus />
+                  ) : (
+                    <h2 className="text-xl font-bold">{active.name}</h2>
+                  )}
                   {activeClient && <span className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: activeClient.color }}>{activeClient.name}</span>}
                 </div>
                 <p className="text-sm text-muted-foreground">{active.description}</p>
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><Users className="h-3 w-3" />{active.members.join(", ")}</div>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => { setEditingWsName(active.id); setEditName(active.name); }} className="rounded p-1.5 hover:bg-gray-100 text-muted-foreground hover:text-brand" title="Renombrar"><Edit3 className="h-3.5 w-3.5" /></button>
+                <button onClick={() => copyWorkspaceInfo(active)} className="rounded p-1.5 hover:bg-gray-100 text-muted-foreground hover:text-brand" title="Copiar info"><ClipboardCopy className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setShowVault(active.id)} className="rounded p-1.5 hover:bg-amber-50 text-muted-foreground hover:text-amber-600" title="Claves del espacio"><Key className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+
+            {/* Workspace keys vault */}
+            {showVault === active.id && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold flex items-center gap-1.5"><Key className="h-3.5 w-3.5 text-amber-600" />Claves de este espacio</h4>
+                  <button onClick={() => setShowVault(null)} className="text-muted-foreground hover:text-gray-700"><X className="h-3.5 w-3.5" /></button>
+                </div>
+                {(active.keys || []).map(k => (
+                  <div key={k.id} className="flex items-center gap-2 mb-1.5 text-xs">
+                    <span className="font-medium w-28 truncate">{k.label}</span>
+                    <code className="flex-1 bg-white rounded px-2 py-1 border text-[10px] font-mono truncate">{k.value}</code>
+                    <button onClick={() => { navigator.clipboard.writeText(k.value); setToast("Clave copiada"); setTimeout(() => setToast(""), 2000); }} className="text-muted-foreground hover:text-brand shrink-0"><ClipboardCopy className="h-3 w-3" /></button>
+                    <button onClick={() => { save(workspaces.map(w => w.id === active.id ? { ...w, keys: (w.keys || []).filter(x => x.id !== k.id) } : w)); }} className="text-muted-foreground hover:text-red-500 shrink-0"><Trash2 className="h-3 w-3" /></button>
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-2">
+                  <input value={vaultKey.label} onChange={e => setVaultKey({...vaultKey, label: e.target.value})} placeholder="Etiqueta" className="w-28 rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none" />
+                  <input value={vaultKey.value} onChange={e => setVaultKey({...vaultKey, value: e.target.value})} placeholder="Valor / API Key / Contraseña" className="flex-1 rounded border px-2 py-1 text-[10px] font-mono focus:border-brand focus:outline-none" />
+                  <button onClick={() => { if (!vaultKey.label.trim() || !vaultKey.value.trim()) return; save(workspaces.map(w => w.id === active.id ? { ...w, keys: [...(w.keys || []), { id: generateId(), ...vaultKey }] } : w)); setVaultKey({ label: "", value: "" }); }} className="rounded bg-amber-600 px-2 py-1 text-[10px] text-white hover:bg-amber-700">+ Clave</button>
+                </div>
+              </div>
+            )}
               </div>
               <button onClick={() => setShowNewFolder(active.id)} className="flex items-center gap-2 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><FolderPlus className="h-3.5 w-3.5" />Nueva carpeta</button>
             </div>
@@ -368,6 +431,8 @@ export default function WorkspacesPage() {
       ) : (
         <div className="flex flex-1 items-center justify-center"><p className="text-sm text-muted-foreground">Selecciona o crea un espacio de trabajo</p></div>
       )}
+
+      {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
   );
 }
