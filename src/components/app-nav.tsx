@@ -279,10 +279,10 @@ export function AppNav({
 
       {/* Help & Support */}
       <div className="mb-1 space-y-0.5 border-t border-white/10 pt-2">
-        <Link href={`${prefix}/settings/docs`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/settings/docs") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+        <Link href={`${prefix}/docs`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname === `${prefix}/docs` || pathname === "/docs" ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
           <Book className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Documentación</span>
         </Link>
-        <Link href={`${prefix}/settings/suggestions`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/settings/suggestions") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
+        <Link href={`${prefix}/suggestions`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname === `${prefix}/suggestions` || pathname === "/suggestions" ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
           <Lightbulb className="h-[14px] w-[14px]" strokeWidth={1.5} /><span>Sugerencias</span>
         </Link>
         <Link href={`${prefix}/trash`} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", pathname.includes("/trash") ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/50 hover:text-white/80 hover:bg-white/5")}>
