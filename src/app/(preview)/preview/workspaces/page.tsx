@@ -96,6 +96,8 @@ export default function WorkspacesPage() {
     setWsForm({ name: "", description: "", clientId: "" }); setShowNewWs(false);
   }
   function deleteWorkspace(id: string) { save(workspaces.filter((w) => w.id !== id)); if (activeWs === id) setActiveWs(workspaces[0]?.id || null); }
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmText, setConfirmText] = useState("");
 
   function addFolder(wsId: string) {
     if (!folderForm.name.trim()) return;
@@ -228,7 +230,7 @@ export default function WorkspacesPage() {
                     <span>· {ws.folders.length} carpetas</span>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); deleteWorkspace(ws.id); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                <button onClick={(e) => { e.stopPropagation(); setConfirmDelete(ws.id); setConfirmText(""); }} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
               </div>
             );
           })}
@@ -434,6 +436,35 @@ export default function WorkspacesPage() {
       ) : (
         <div className="flex flex-1 items-center justify-center"><p className="text-sm text-muted-foreground">Selecciona o crea un espacio de trabajo</p></div>
       )}
+
+      {/* Confirm Delete Modal */}
+      {confirmDelete && (() => {
+        const ws = workspaces.find(w => w.id === confirmDelete);
+        if (!ws) return null;
+        const requiredText = ws.name.toUpperCase();
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setConfirmDelete(null)}>
+            <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+              <div className="text-center mb-4">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <Trash2 className="h-6 w-6 text-red-600" />
+                </div>
+                <h3 className="text-sm font-bold">Eliminar espacio de trabajo</h3>
+                <p className="text-xs text-muted-foreground mt-1">Esta acción eliminará <strong>"{ws.name}"</strong> con todas sus carpetas y archivos. No se puede deshacer.</p>
+              </div>
+              <div className="mb-4">
+                <label className="text-xs font-medium text-red-600">Para confirmar, escribe el nombre en MAYÚSCULAS:</label>
+                <p className="text-[10px] text-muted-foreground mb-1.5 font-mono bg-gray-100 rounded px-2 py-1">{requiredText}</p>
+                <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder={requiredText} className="w-full rounded border border-red-200 px-3 py-2 text-sm font-mono focus:border-red-400 focus:outline-none" autoFocus />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">Cancelar</button>
+                <button onClick={() => { if (confirmText === requiredText) { deleteWorkspace(confirmDelete); setConfirmDelete(null); setConfirmText(""); } }} disabled={confirmText !== requiredText} className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-30 disabled:cursor-not-allowed">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
