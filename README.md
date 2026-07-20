@@ -84,8 +84,9 @@ Construido con Next.js 15, React 19, TypeScript y Tailwind CSS. Desplegable en V
 | **Analytics** | KPIs 30d, funnel de ventas, rendimiento por rep, conversaciones por canal |
 | **Social** | Engagement: likes, comments, DMs, mentions por plataforma |
 | **Omnicanal** | Dashboard unificado con status de cada canal + actividad |
-| **Etiquetas** | Ilimitadas con colores personalizados + hex custom |
-| **Notas** | Categorías con colores, filtros, fijadas |
+| **Etiquetas** | Sistema compartido: ilimitadas con colores personalizados + hex custom, descripción, asignables a múltiples módulos (notas, contactos, tareas, oportunidades), importación cruzada entre módulos |
+| **Notas** | Etiquetas compartidas con colores, múltiples tags por nota, filtros, fijadas, importación de etiquetas del CRM |
+| **Bóveda** | Gestor de credenciales con clave maestra, generador de contraseñas seguras (crypto), categorías por servicio |
 | **Auditoría** | Logs: quién hizo qué, workflows, errores, logins |
 
 ---
