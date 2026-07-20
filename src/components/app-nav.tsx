@@ -51,56 +51,73 @@ import { signOut } from "@/lib/auth/client";
 import { getActiveWorkspaceId, loadFromStorage } from "@/lib/local-storage";
 import { useEvents } from "@/components/use-events";
 
-// All nav items (combined pool)
-const ALL_NAV = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
-  { href: "/contacts", label: "Contactos", icon: Users },
-  { href: "/companies", label: "Compañías", icon: Building2 },
-  { href: "/opportunities", label: "Oportunidades", icon: Target },
-  { href: "/pipeline", label: "Pipeline", icon: Kanban },
-  { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
-  { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/calendar", label: "Calendario", icon: Calendar },
-  { href: "/focus", label: "Focus", icon: Target },
-  { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/files", label: "Archivos & IA", icon: FileText },
-  { href: "/templates", label: "Plantillas", icon: Send },
-  { href: "/proposals", label: "Propuestas", icon: FileText },
-  { href: "/cartera", label: "Cartera", icon: CreditCard },
-  { href: "/checklists", label: "Checklists", icon: CircleCheckBig },
-  { href: "/projects", label: "Proyectos", icon: FolderKanban },
-  { href: "/reminders", label: "Recordatorios", icon: Clock },
-  { href: "/todo", label: "To-Do", icon: CircleCheckBig },
-  { href: "/automations", label: "Automatizaciones", icon: Zap },
-  { href: "/sequences", label: "Secuencias", icon: GitBranch },
-  { href: "/scheduler", label: "Scheduler", icon: Clock },
-  { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
-  { href: "/scoring", label: "Scoring", icon: Star },
-  { href: "/omnichannel", label: "Omnicanal", icon: Activity },
-  { href: "/social", label: "Social", icon: Heart },
-  { href: "/radar", label: "Radar", icon: Bookmark },
-  { href: "/forms", label: "Formularios", icon: ClipboardList },
-  { href: "/import", label: "Importar", icon: Database },
-  { href: "/suppliers", label: "Proveedores", icon: Building2 },
-  { href: "/notes", label: "Notas", icon: StickyNote },
-  { href: "/labels", label: "Etiquetas", icon: Tag },
-  { href: "/team", label: "Equipo", icon: UsersRound },
-  { href: "/team-chat", label: "Chat interno", icon: MessageSquare },
-  { href: "/vault", label: "Bóveda", icon: Database },
-  { href: "/workspaces", label: "Workspace", icon: FolderOpen },
-  { href: "/audit", label: "Auditoría", icon: History },
-  { href: "/lab", label: "Laboratorio", icon: FlaskConical },
-  { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
-  { href: "/enrichment", label: "Enriquecimiento", icon: Database },
-  { href: "/ai-builder", label: "Constructor IA", icon: Bot },
-  { href: "/email-finder", label: "Email Finder", icon: Mail },
-  { href: "/lead-finder", label: "Lead Finder B2B", icon: Users },
-  { href: "/social-outreach", label: "Social Outreach", icon: MessageSquare },
-] as const;
+// Navigation organized by categories (as per architecture)
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: boolean };
+type NavCategory = { label: string; items: NavItem[] };
 
-const DEFAULT_MAIN_HREFS = ["/dashboard", "/cold-contacts", "/contacts", "/companies", "/opportunities", "/pipeline", "/inbox", "/tasks", "/calendar", "/focus", "/ai-hub", "/analytics", "/files"];
+const NAV_CATEGORIES: NavCategory[] = [
+  { label: "Prospección", items: [
+    { href: "/radar", label: "Radar", icon: Bookmark },
+    { href: "/lead-finder", label: "Lead Finder B2B", icon: Users },
+    { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
+    { href: "/email-finder", label: "Email Finder", icon: Mail },
+    { href: "/enrichment", label: "Enriquecimiento", icon: Database },
+    { href: "/social-outreach", label: "Social Outreach", icon: MessageSquare },
+    { href: "/forms", label: "Formularios", icon: ClipboardList },
+    { href: "/import", label: "Importar", icon: Database },
+    { href: "/suppliers", label: "Proveedores", icon: Building2 },
+  ]},
+  { label: "CRM & Ventas", items: [
+    { href: "/contacts", label: "Contactos", icon: Users },
+    { href: "/companies", label: "Compañías", icon: Building2 },
+    { href: "/opportunities", label: "Oportunidades", icon: Target },
+    { href: "/pipeline", label: "Pipeline", icon: Kanban },
+    { href: "/tasks", label: "Tareas", icon: CheckSquare },
+    { href: "/calendar", label: "Calendario", icon: Calendar },
+    { href: "/focus", label: "Focus", icon: Target },
+    { href: "/proposals", label: "Propuestas", icon: FileText },
+    { href: "/cartera", label: "Cartera", icon: CreditCard },
+  ]},
+  { label: "Conversaciones", items: [
+    { href: "/inbox", label: "Conversaciones", icon: MessageSquare, badge: true },
+    { href: "/omnichannel", label: "Omnicanal", icon: Activity },
+    { href: "/templates", label: "Plantillas", icon: Send },
+    { href: "/scheduler", label: "Scheduler", icon: Clock },
+  ]},
+  { label: "Automatización & IA", items: [
+    { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
+    { href: "/automations", label: "Automatizaciones", icon: Zap },
+    { href: "/sequences", label: "Secuencias", icon: GitBranch },
+    { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
+    { href: "/scoring", label: "Scoring", icon: Star },
+    { href: "/ai-builder", label: "Constructor IA", icon: Bot },
+  ]},
+  { label: "Operación", items: [
+    { href: "/projects", label: "Proyectos", icon: FolderKanban },
+    { href: "/checklists", label: "Checklists", icon: CircleCheckBig },
+    { href: "/reminders", label: "Recordatorios", icon: Clock },
+    { href: "/todo", label: "To-Do", icon: CircleCheckBig },
+    { href: "/notes", label: "Notas", icon: StickyNote },
+    { href: "/labels", label: "Etiquetas", icon: Tag },
+  ]},
+  { label: "Equipo & Espacios", items: [
+    { href: "/team", label: "Equipo", icon: UsersRound },
+    { href: "/team-chat", label: "Chat interno", icon: MessageSquare },
+    { href: "/workspaces", label: "Workspace", icon: FolderOpen },
+    { href: "/vault", label: "Bóveda", icon: Database },
+  ]},
+  { label: "Datos & Control", items: [
+    { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/files", label: "Archivos & IA", icon: FileText },
+    { href: "/audit", label: "Auditoría", icon: History },
+    { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
+    { href: "/lab", label: "Laboratorio", icon: FlaskConical },
+  ]},
+];
+
+// Flat list for customization
+const ALL_NAV = NAV_CATEGORIES.flatMap(c => c.items);
+const DEFAULT_MAIN_HREFS = ["/dashboard", "/radar", "/lead-finder", "/cold-contacts", "/contacts", "/pipeline", "/inbox", "/tasks", "/ai-hub", "/analytics"];
 
 export function AppNav({
   branding,
@@ -118,15 +135,14 @@ export function AppNav({
   const [moreOpen, setMoreOpen] = useState(false);
   const [customizing, setCustomizing] = useState(false);
   const [mainHrefs, setMainHrefs] = useState<string[]>(DEFAULT_MAIN_HREFS);
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(["Prospección", "CRM & Ventas"]));
   const [activeWsName, setActiveWsName] = useState("");
   const isPreview = pathname.startsWith("/preview");
   const prefix = isPreview ? "/preview" : "";
 
-  // Load custom menu and workspace name from localStorage
+  // Load workspace name from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("localrank_nav_main");
-      if (stored) { try { setMainHrefs(JSON.parse(stored)); } catch {} }
       // Get active workspace name
       const wsId = getActiveWorkspaceId();
       if (wsId && wsId !== "default") {
@@ -136,16 +152,6 @@ export function AppNav({
       }
     }
   }, []);
-
-  function saveMainHrefs(hrefs: string[]) {
-    setMainHrefs(hrefs);
-    localStorage.setItem("localrank_nav_main", JSON.stringify(hrefs));
-  }
-
-  function toggleMainItem(href: string) {
-    const next = mainHrefs.includes(href) ? mainHrefs.filter(h => h !== href) : [...mainHrefs, href];
-    saveMainHrefs(next);
-  }
 
   const navMain = ALL_NAV.filter(item => mainHrefs.includes(item.href));
   const navMore = ALL_NAV.filter(item => !mainHrefs.includes(item.href));
@@ -209,82 +215,40 @@ export function AppNav({
       </div>
 
       <nav className="flex flex-col gap-0.5 overflow-y-auto">
-        {navMain.map((item) => {
-          const href = `${prefix}${item.href}`;
-          const active =
-            pathname === href || pathname.startsWith(`${href}/`) ||
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+        {/* Dashboard — always visible */}
+        <Link href={`${prefix}/dashboard`} className={cn("flex items-center gap-[11px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors", (pathname === `${prefix}/dashboard` || pathname === "/dashboard") ? "bg-[var(--sidebar-active)] border-l-[3px] border-[var(--sidebar-active-text)] text-[var(--sidebar-active-text)]" : "text-white/70 hover:text-white hover:bg-white/10")}>
+          <LayoutDashboard className="h-[18px] w-[18px]" strokeWidth={1.7} /><span>Dashboard</span>
+        </Link>
+
+        {/* Categories */}
+        {NAV_CATEGORIES.map(cat => {
+          const isExpanded = expandedCats.has(cat.label);
+          const hasActive = cat.items.some(item => pathname === `${prefix}${item.href}` || pathname === item.href || pathname.startsWith(`${prefix}${item.href}/`));
           return (
-            <div key={item.href} className="flex items-center">
-              <Link
-                href={href}
-                className={cn(
-                  "flex flex-1 items-center gap-[11px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-[var(--sidebar-active)] border-l-[3px] border-[var(--sidebar-active-text)] text-[var(--sidebar-active-text)]"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                )}
-              >
-                <item.icon
-                  className={cn("h-[18px] w-[18px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/70")}
-                  strokeWidth={1.7}
-                />
-                <span className="flex-1">{item.label}</span>
-                {"badge" in item && item.badge && unread > 0 && (
-                  <span className={cn("flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold", active ? "bg-white text-[var(--sidebar-bg)]" : "bg-white/20 text-white")}>{unread}</span>
-                )}
-              </Link>
-              {customizing && (
-                <button onClick={() => toggleMainItem(item.href)} className="rounded p-1 text-white/40 hover:text-red-400 shrink-0" title="Quitar del menú principal"><X className="h-3 w-3" /></button>
+            <div key={cat.label}>
+              <button onClick={() => { const next = new Set(expandedCats); if (next.has(cat.label)) next.delete(cat.label); else next.add(cat.label); setExpandedCats(next); }} className={cn("flex w-full items-center gap-[11px] rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors mt-1", hasActive ? "text-[var(--sidebar-active-text)]" : "text-white/40 hover:text-white/60")}>
+                <ChevronDown className={cn("h-3 w-3 transition-transform", !isExpanded && "-rotate-90")} />
+                <span className="flex-1 text-left">{cat.label}</span>
+                <span className="text-[9px] font-normal opacity-60">{cat.items.length}</span>
+              </button>
+              {isExpanded && (
+                <div className="space-y-0.5 ml-1">
+                  {cat.items.map(item => {
+                    const href = `${prefix}${item.href}`;
+                    const active = pathname === href || pathname.startsWith(`${href}/`) || pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    return (
+                      <Link key={item.href} href={href} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", active ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/60 hover:text-white hover:bg-white/8")}>
+                        <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
+                        <span className="flex-1">{item.label}</span>
+                        {"badge" in item && item.badge && unread > 0 && <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-white/20 px-1 text-[9px] font-semibold text-white">{unread}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
             </div>
           );
         })}
-
-        {/* Customize + Collapse toggle */}
-        <div className="flex items-center gap-1 mt-1">
-          <button
-            onClick={() => setMoreOpen(!moreOpen)}
-            className="flex flex-1 items-center gap-[11px] rounded-lg px-3 py-2 text-xs font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
-          >
-            <ChevronDown className={cn("h-[14px] w-[14px] transition-transform", moreOpen && "rotate-180")} strokeWidth={1.7} />
-            <span className="flex-1 text-left">{moreOpen ? "Menos" : "Más módulos"}</span>
-            <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px]">{navMore.length}</span>
-          </button>
-          <button onClick={() => setCustomizing(!customizing)} className={cn("rounded p-1.5 transition-colors", customizing ? "bg-white/20 text-white" : "text-white/30 hover:text-white/60")} title="Personalizar menú">
-            <Settings2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-
-        {moreOpen && (
-          <div className="space-y-0.5 pl-1">
-            {navMore.map((item) => {
-              const href = `${prefix}${item.href}`;
-              const active =
-                pathname === href || pathname.startsWith(`${href}/`) ||
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <div key={item.href} className="flex items-center">
-                  <Link
-                    href={href}
-                    className={cn(
-                      "flex flex-1 items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                      active
-                        ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]"
-                        : "text-white/50 hover:text-white/80 hover:bg-white/5"
-                    )}
-                  >
-                    <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
-                    <span>{item.label}</span>
-                  </Link>
-                  {customizing && (
-                    <button onClick={() => toggleMainItem(item.href)} className="rounded p-1 text-white/40 hover:text-green-400 shrink-0" title="Agregar al menú principal"><Pin className="h-3 w-3" /></button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </nav>
 
       <div className="flex-1" />
