@@ -56,7 +56,6 @@ export default function RemindersPage() {
 
   function dismissPopup() {
     if (!activePopup) return;
-    // If repeating, schedule next occurrence
     if (activePopup.repeat !== "none") {
       const next = new Date(activePopup.dateTime);
       if (activePopup.repeat === "daily") next.setDate(next.getDate() + 1);
@@ -67,6 +66,24 @@ export default function RemindersPage() {
       save(reminders.map(r => r.id === activePopup.id ? { ...r, dismissed: true, active: false } : r));
     }
     setActivePopup(null);
+  }
+
+  function snoozePopup(minutes: number) {
+    if (!activePopup) return;
+    const snoozed = new Date(Date.now() + minutes * 60000);
+    save(reminders.map(r => r.id === activePopup.id ? { ...r, dateTime: snoozed.toISOString().slice(0, 16), dismissed: false } : r));
+    setActivePopup(null);
+    notify(`Pospuesto ${minutes} min`);
+  }
+
+  function reschedulePopup() {
+    if (!activePopup) return;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
+    save(reminders.map(r => r.id === activePopup.id ? { ...r, dateTime: tomorrow.toISOString().slice(0, 16), dismissed: false } : r));
+    setActivePopup(null);
+    notify("Reprogramado para mañana 9:00 AM");
   }
 
   function addReminder() {
@@ -192,8 +209,21 @@ export default function RemindersPage() {
             {activePopup.description && <p className="text-sm text-muted-foreground mb-2">{activePopup.description}</p>}
             <p className="text-xs text-muted-foreground mb-4">{new Date(activePopup.dateTime).toLocaleString("es-CO")}</p>
             {activePopup.repeat !== "none" && <p className="text-xs text-blue-600 mb-4 flex items-center justify-center gap-1"><Repeat className="h-3 w-3" />Se repetira {activePopup.repeat === "daily" ? "manana" : activePopup.repeat === "weekly" ? "en 7 dias" : "el proximo mes"}</p>}
-            <button onClick={dismissPopup} className="w-full rounded-lg bg-brand py-3 text-sm font-semibold text-white hover:bg-brand-hover">Entendido — Cerrar</button>
-            <p className="mt-2 text-[9px] text-muted-foreground">Este popup no se cierra solo. Debes cerrarlo manualmente.</p>
+            
+            {/* Main action */}
+            <button onClick={dismissPopup} className="w-full rounded-lg bg-brand py-3 text-sm font-semibold text-white hover:bg-brand-hover mb-2">✓ Entendido — Cerrar</button>
+            
+            {/* Snooze options */}
+            <div className="flex gap-2 mb-2">
+              <button onClick={() => snoozePopup(5)} className="flex-1 rounded-lg border py-2 text-xs font-medium hover:bg-gray-50">⏰ 5 min</button>
+              <button onClick={() => snoozePopup(15)} className="flex-1 rounded-lg border py-2 text-xs font-medium hover:bg-gray-50">⏰ 15 min</button>
+              <button onClick={() => snoozePopup(60)} className="flex-1 rounded-lg border py-2 text-xs font-medium hover:bg-gray-50">⏰ 1 hora</button>
+            </div>
+            
+            {/* Reschedule */}
+            <button onClick={() => reschedulePopup()} className="w-full rounded-lg border border-amber-200 bg-amber-50 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100">📅 Reprogramar para mañana</button>
+            
+            <p className="mt-3 text-[9px] text-muted-foreground">Este popup no se cierra solo. Debes cerrarlo o posponerlo.</p>
           </div>
         </div>
       )}
