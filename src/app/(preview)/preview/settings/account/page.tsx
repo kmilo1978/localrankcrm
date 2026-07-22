@@ -71,6 +71,25 @@ export default function AccountSettingsPage() {
         <p className="text-sm text-muted-foreground">Gestiona tu cuenta, exporta datos o elimina todo.</p>
       </div>
 
+      {/* PIN Protection */}
+      <div className="rounded-lg border p-5">
+        <h4 className="text-sm font-semibold mb-1 flex items-center gap-2">🔐 PIN de seguridad</h4>
+        <p className="text-xs text-muted-foreground mb-3">Protege módulos sensibles (Bóveda, Cartera) con un PIN. Se pide al entrar a esos módulos.</p>
+        {(() => {
+          const hasPin = typeof window !== "undefined" && !!localStorage.getItem("localrank_module_pin");
+          return (
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-xs font-medium text-muted-foreground">PIN (4-6 dígitos)</label>
+                <input id="pin-input" type="password" maxLength={6} placeholder={hasPin ? "••••" : "Ej: 1234"} className="w-full rounded border px-3 py-2 text-sm font-mono mt-1 focus:border-brand focus:outline-none" />
+              </div>
+              <button onClick={() => { const inp = document.getElementById("pin-input") as HTMLInputElement; if (inp?.value && inp.value.length >= 4) { localStorage.setItem("localrank_module_pin", inp.value); inp.value = ""; alert("PIN configurado ✓"); } }} className="rounded bg-brand px-4 py-2 text-sm text-white hover:bg-brand-hover">{hasPin ? "Cambiar" : "Configurar"}</button>
+              {hasPin && <button onClick={() => { localStorage.removeItem("localrank_module_pin"); alert("PIN eliminado"); }} className="rounded border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50">Quitar</button>}
+            </div>
+          );
+        })()}
+      </div>
+
       {/* Export & Import Data */}
       <div className="rounded-lg border p-5">
         <h4 className="text-sm font-semibold mb-1 flex items-center gap-2"><Download className="h-4 w-4 text-brand" />Copias de seguridad</h4>
