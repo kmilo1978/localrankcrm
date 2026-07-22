@@ -90,6 +90,11 @@
     @apply bg-background text-foreground antialiased;
     letter-spacing: -0.01em;
   }
+  /* Enable spellcheck on all text inputs */
+  input[type="text"], textarea, [contenteditable="true"] {
+    spellcheck: true;
+    -webkit-spellcheck: true;
+  }
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;

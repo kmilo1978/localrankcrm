@@ -56,7 +56,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: accentCssVariables(branding.accent) }}
         />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans" spellCheck>{children}</body>
     </html>
   );
 }
