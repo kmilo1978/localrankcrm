@@ -93,13 +93,29 @@ export default function AccountSettingsPage() {
       {/* Export & Import Data */}
       <div className="rounded-lg border p-5">
         <h4 className="text-sm font-semibold mb-1 flex items-center gap-2"><Download className="h-4 w-4 text-brand" />Copias de seguridad</h4>
-        <p className="text-xs text-muted-foreground mb-4">Descarga o restaura un backup completo de todos los datos del CRM (contactos, tareas, notas, pipeline, configuración) en formato JSON.</p>
-        <div className="flex gap-3 flex-wrap">
+        <p className="text-xs text-muted-foreground mb-4">Descarga o restaura un backup completo de todos los datos del CRM. También puedes sincronizar con Google Drive.</p>
+        <div className="flex gap-3 flex-wrap mb-4">
           <button onClick={handleExportData} className="flex items-center gap-1.5 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Download className="h-3.5 w-3.5" />Exportar backup</button>
           <input ref={importRef} type="file" accept=".json" onChange={handleImportData} className="hidden" />
           <button onClick={() => importRef.current?.click()} className="flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50"><Upload className="h-3.5 w-3.5" />Restaurar backup</button>
         </div>
         {importStatus && <p className="mt-2 text-xs">{importStatus}</p>}
+
+        {/* Google Drive sync */}
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">📁</span>
+            <div>
+              <h5 className="text-sm font-medium">Sincronizar con Google Drive</h5>
+              <p className="text-[10px] text-muted-foreground">Guarda backups automáticos en tu Drive (requiere Composio configurado)</p>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => { handleExportData(); setImportStatus("💡 Para sincronizar con Google Drive, conecta Composio en Ajustes → Conectores y luego usa el Constructor IA: 'Sube mi backup a Google Drive'"); }} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📤 Subir a Drive</button>
+            <button onClick={() => setImportStatus("💡 Para restaurar desde Drive: descarga el archivo .json desde tu Google Drive y usa 'Restaurar backup' arriba.")} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📥 Descargar de Drive</button>
+          </div>
+          <p className="mt-2 text-[9px] text-muted-foreground">La sincronización real con Google Drive requiere Composio.dev conectado en Ajustes → Conectores. Los backups manuales funcionan sin conexión.</p>
+        </div>
       </div>
 
       {/* Delete Users */}

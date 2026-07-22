@@ -38,29 +38,52 @@ export const AI_MODELS = [
 function getApiKey(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    // 1. Check AI providers config (settings page format — object by ID)
+    // 1. Direct key (from AI Builder quick connect)
+    const directKey = localStorage.getItem("localrank_openrouter_key");
+    if (directKey && directKey.startsWith("sk-")) return directKey;
+
+    // 2. AI providers config (settings page format)
     const providersObj = localStorage.getItem("localrank_ai_providers");
     if (providersObj) {
       const parsed = JSON.parse(providersObj);
-      // Settings page saves as { openrouter: { apiKey, enabled, ... }, openai: {...} }
-      if (parsed.openrouter?.apiKey && parsed.openrouter?.enabled) return parsed.openrouter.apiKey;
-      // Check any enabled provider with a key
-      for (const [, cfg] of Object.entries(parsed)) {
-        const c = cfg as { apiKey?: string; enabled?: boolean };
-        if (c.apiKey && c.enabled) return c.apiKey;
-      }
-      // Fallback: any provider with key even if not enabled
+      // Settings page saves as { openrouter: { apiKey, enabled }, nvidia: {...} }
+      // Priority: openrouter first, then any enabled, then any with key
       if (parsed.openrouter?.apiKey) return parsed.openrouter.apiKey;
+      if (parsed.nvidia?.apiKey) return parsed.nvidia.apiKey;
+      if (parsed.google?.apiKey) return parsed.google.apiKey;
       for (const [, cfg] of Object.entries(parsed)) {
         const c = cfg as { apiKey?: string };
         if (c.apiKey) return c.apiKey;
       }
     }
-    // 2. Direct key storage (from AI Builder quick connect)
-    const directKey = localStorage.getItem("localrank_openrouter_key");
-    if (directKey) return directKey;
+
+    // 3. Check all localStorage keys for any API key pattern
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      const val = localStorage.getItem(key) || "";
+      if (val.startsWith("sk-or-") && val.length > 20) return val;
+    }
+
     return null;
   } catch { return null; }
+}
+
+/** Get the base URL for the active provider */
+function getBaseUrl(): string {
+  if (typeof window === "undefined") return OPENROUTER_URL;
+  try {
+    const providersObj = localStorage.getItem("localrank_ai_providers");
+    if (providersObj) {
+      const parsed = JSON.parse(providersObj);
+      // Find first enabled provider with a baseUrl
+      for (const [, cfg] of Object.entries(parsed)) {
+        const c = cfg as { apiKey?: string; enabled?: boolean; baseUrl?: string };
+        if (c.apiKey && c.enabled && c.baseUrl) return c.baseUrl + "/chat/completions";
+      }
+    }
+  } catch {}
+  return OPENROUTER_URL;
 }
 
 /** Check if AI is configured */
@@ -83,11 +106,13 @@ export function getModelName(modelId: string): string {
 export async function callAI(messages: AiMessage[], model?: string): Promise<string> {
   const key = getApiKey();
   if (!key) {
-    return "[IA no conectada] Configura tu API key de OpenRouter en Ajustes → IA/APIs para respuestas reales.";
+    return "[IA no conectada] Configura tu API key de OpenRouter en Ajustes → IA/APIs o usa 'Conectar ahora' arriba.";
   }
 
+  const url = getBaseUrl();
+
   try {
-    const response = await fetch(OPENROUTER_URL, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -96,9 +121,9 @@ export async function callAI(messages: AiMessage[], model?: string): Promise<str
         "X-Title": "LocalRank CRM",
       },
       body: JSON.stringify({
-        model: model || "openai/gpt-4o-mini",
+        model: model || "deepseek/deepseek-chat-v3-0324:free",
         messages,
-        max_tokens: 1000,
+        max_tokens: 1500,
         temperature: 0.7,
       }),
     });
