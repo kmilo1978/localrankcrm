@@ -9,14 +9,29 @@ export type AiMessage = { role: "system" | "user" | "assistant"; content: string
 
 /** Available models */
 export const AI_MODELS = [
+  // Free models (OpenRouter)
+  { id: "google/gemma-3-1b-it:free", name: "Gemma 3 1B", provider: "Google", speed: "Muy rápido", cost: "Gratis" },
+  { id: "google/gemma-3-4b-it:free", name: "Gemma 3 4B", provider: "Google", speed: "Rápido", cost: "Gratis" },
+  { id: "meta-llama/llama-3.2-3b-instruct:free", name: "Llama 3.2 3B", provider: "Meta", speed: "Rápido", cost: "Gratis" },
+  { id: "mistralai/mistral-small-3.1-24b-instruct:free", name: "Mistral Small 3.1", provider: "Mistral", speed: "Medio", cost: "Gratis" },
+  { id: "deepseek/deepseek-chat-v3-0324:free", name: "DeepSeek V3", provider: "DeepSeek", speed: "Medio", cost: "Gratis" },
+  { id: "qwen/qwen3-14b:free", name: "Qwen 3 14B", provider: "Qwen", speed: "Medio", cost: "Gratis" },
+  { id: "qwen/qwen3-32b:free", name: "Qwen 3 32B", provider: "Qwen", speed: "Medio", cost: "Gratis" },
+  { id: "microsoft/phi-4-reasoning-plus:free", name: "Phi 4 Reasoning", provider: "Microsoft", speed: "Medio", cost: "Gratis" },
+  // Low cost
   { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", speed: "Rápido", cost: "$" },
-  { id: "openai/gpt-4o", name: "GPT-4o", provider: "OpenAI", speed: "Medio", cost: "$$" },
-  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", provider: "Anthropic", speed: "Medio", cost: "$$" },
   { id: "anthropic/claude-haiku-3.5", name: "Claude Haiku 3.5", provider: "Anthropic", speed: "Rápido", cost: "$" },
   { id: "google/gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", speed: "Rápido", cost: "$" },
-  { id: "meta-llama/llama-3.1-70b", name: "Llama 3.1 70B", provider: "Meta", speed: "Medio", cost: "$" },
   { id: "deepseek/deepseek-chat", name: "DeepSeek Chat", provider: "DeepSeek", speed: "Rápido", cost: "$" },
+  { id: "meta-llama/llama-3.1-70b-instruct", name: "Llama 3.1 70B", provider: "Meta", speed: "Medio", cost: "$" },
+  // Mid cost
+  { id: "openai/gpt-4o", name: "GPT-4o", provider: "OpenAI", speed: "Medio", cost: "$$" },
+  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", provider: "Anthropic", speed: "Medio", cost: "$$" },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "Google", speed: "Medio", cost: "$$" },
   { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", speed: "Medio", cost: "$$" },
+  // Premium
+  { id: "anthropic/claude-opus-4", name: "Claude Opus 4", provider: "Anthropic", speed: "Lento", cost: "$$$" },
+  { id: "openai/o1", name: "o1 (Reasoning)", provider: "OpenAI", speed: "Lento", cost: "$$$" },
 ];
 
 /** Get the configured AI API key from localStorage */

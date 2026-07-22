@@ -33,7 +33,7 @@ export default function AiBuilderPage() {
   const [prompt, setPrompt] = useState("");
   const [module, setModule] = useState("auto");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState("openai/gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState("deepseek/deepseek-chat-v3-0324:free");
   const [history, setHistory] = useState<AiAction[]>([]);
   const [loading, setLoading] = useState(false);
   const [showKeyInput, setShowKeyInput] = useState(false);
