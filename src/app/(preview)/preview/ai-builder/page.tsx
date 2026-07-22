@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Bot, CheckCircle2, Lightbulb, Send, Settings, Sparkles, Wand2, Zap } from "lucide-react";
 import { generateId } from "@/lib/local-storage";
-import { crmAI, isAiConfigured, AI_AGENTS, callAI } from "@/lib/ai-client";
+import { crmAI, isAiConfigured, AI_AGENTS, AI_MODELS, callAI } from "@/lib/ai-client";
 import type { AiMessage } from "@/lib/ai-client";
 
 type AiAction = { id: string; prompt: string; module: string; action: string; result: string; timestamp: string };
@@ -33,6 +33,7 @@ export default function AiBuilderPage() {
   const [prompt, setPrompt] = useState("");
   const [module, setModule] = useState("auto");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState("openai/gpt-4o-mini");
   const [history, setHistory] = useState<AiAction[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +50,7 @@ export default function AiBuilderPage() {
         { role: "system", content: agent?.system || "Eres un asistente de CRM." },
         { role: "user", content: prompt },
       ];
-      callAI(msgs).then(result => {
+      callAI(msgs, selectedModel).then(result => {
         const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: `${agent?.name || "IA"} respondió`, result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
         setHistory(prev => [entry, ...prev]);
         setPrompt(""); setLoading(false);
@@ -107,12 +108,17 @@ export default function AiBuilderPage() {
           <p className="text-sm text-muted-foreground">Dile qué hacer y la IA lo ejecuta en el módulo correcto. Mezcla manual + automático.</p>
         </div>
 
-        {/* AI Status + Agents */}
+        {/* AI Status + Agents + Model */}
         <div className="mb-4 flex items-center gap-3 flex-wrap">
           <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium ${isAiConfigured() ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
             {isAiConfigured() ? "✓ OpenRouter conectado" : "⚠ Sin API key — modo local"}
           </span>
           {!isAiConfigured() && <a href="/settings/ai-providers" className="text-[10px] text-brand hover:underline">Configurar IA →</a>}
+          {/* Model selector */}
+          <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className="rounded-full border px-2.5 py-1 text-[10px] focus:border-brand focus:outline-none">
+            {AI_MODELS.map(m => <option key={m.id} value={m.id}>{m.name} ({m.cost})</option>)}
+          </select>
+          {/* Agents */}
           <div className="flex gap-1 ml-auto">
             {AI_AGENTS.map(agent => (
               <button key={agent.id} onClick={() => setSelectedAgent(selectedAgent === agent.id ? null : agent.id)} className={`rounded-full px-2 py-1 text-[10px] font-medium ${selectedAgent === agent.id ? "bg-purple-100 text-purple-700" : "border hover:bg-gray-50"}`} title={agent.name}>

@@ -7,6 +7,18 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export type AiMessage = { role: "system" | "user" | "assistant"; content: string };
 
+/** Available models */
+export const AI_MODELS = [
+  { id: "openai/gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", speed: "Rápido", cost: "$" },
+  { id: "openai/gpt-4o", name: "GPT-4o", provider: "OpenAI", speed: "Medio", cost: "$$" },
+  { id: "anthropic/claude-sonnet-4", name: "Claude Sonnet 4", provider: "Anthropic", speed: "Medio", cost: "$$" },
+  { id: "anthropic/claude-haiku-3.5", name: "Claude Haiku 3.5", provider: "Anthropic", speed: "Rápido", cost: "$" },
+  { id: "google/gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", speed: "Rápido", cost: "$" },
+  { id: "meta-llama/llama-3.1-70b", name: "Llama 3.1 70B", provider: "Meta", speed: "Medio", cost: "$" },
+  { id: "deepseek/deepseek-chat", name: "DeepSeek Chat", provider: "DeepSeek", speed: "Rápido", cost: "$" },
+  { id: "mistralai/mistral-large", name: "Mistral Large", provider: "Mistral", speed: "Medio", cost: "$$" },
+];
+
 /** Get the configured AI API key from localStorage */
 function getApiKey(): string | null {
   if (typeof window === "undefined") return null;
