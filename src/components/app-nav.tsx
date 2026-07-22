@@ -96,7 +96,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/ai-hub", label: "IA & Automatización", icon: Bot },
     { href: "/automations", label: "Automatizaciones", icon: Zap },
     { href: "/sequences", label: "Secuencias", icon: GitBranch },
-    { href: "/settings/flows", label: "Flows", icon: GitBranch },
+    { href: "/flows", label: "Flows", icon: GitBranch },
     { href: "/lead-routing", label: "Lead Routing", icon: GitBranch },
     { href: "/scoring", label: "Scoring", icon: Star },
     { href: "/ai-builder", label: "Constructor IA", icon: Bot },
@@ -119,7 +119,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   { label: "Datos & Control", items: [
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/files", label: "Archivos & IA", icon: FileText },
-    { href: "/settings/ocr", label: "OCR", icon: FileText },
+    { href: "/ocr", label: "OCR", icon: FileText },
     { href: "/backup", label: "Backup", icon: Database },
     { href: "/audit", label: "Auditoría", icon: History },
     { href: "/url-shortener", label: "Acortador URL", icon: Link2 },

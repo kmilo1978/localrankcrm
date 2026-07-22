@@ -92,7 +92,7 @@ export default function AiHubPage() {
               </div>
               <div className="mt-4 flex gap-2">
                 <a href="/settings/ai-providers" className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Configurar proveedores IA</a>
-                <a href="/settings/flows" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">Ver flows</a>
+                <a href="/flows" className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50">Ver flows</a>
               </div>
             </div>
           </div>
