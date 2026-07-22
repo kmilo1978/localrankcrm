@@ -177,11 +177,20 @@ export default function ProposalsPage() {
 
   function addEmbed(sectionId: string) {
     if (!editing) return;
-    const url = prompt("Pega la URL o script:\n\n• URL de embed (YouTube, Loom, Figma, Google Slides)\n• URL de calendario (Calendly, Cal.com, TidyCal)\n• Código <script> o <iframe> completo");
-    if (!url) return;
-    const isScript = url.trim().startsWith("<");
-    const media: MediaItem = { id: generateId(), type: "embed", url: url.trim(), name: isScript ? "Script embed" : url.split("/").slice(2, 3).join("") || "embed" };
-    updateProposal({ ...editing, sections: editing.sections.map((s) => s.id === sectionId ? { ...s, media: [...(s.media || []), media] } : s) });
+    setEmbedSection(sectionId);
+    setEmbedUrl("");
+  }
+
+  const [embedSection, setEmbedSection] = useState<string | null>(null);
+  const [embedUrl, setEmbedUrl] = useState("");
+
+  function confirmEmbed() {
+    if (!editing || !embedSection || !embedUrl.trim()) return;
+    const isScript = embedUrl.trim().startsWith("<");
+    const media: MediaItem = { id: generateId(), type: "embed", url: embedUrl.trim(), name: isScript ? "Script embed" : embedUrl.split("/").slice(2, 3).join("") || "embed" };
+    updateProposal({ ...editing, sections: editing.sections.map((s) => s.id === embedSection ? { ...s, media: [...(s.media || []), media] } : s) });
+    setEmbedSection(null);
+    setEmbedUrl("");
   }
 
   function removeMedia(sectionId: string, mediaId: string) {
@@ -498,6 +507,26 @@ export default function ProposalsPage() {
                   <p className="mt-2 text-xs text-muted-foreground">{t.sections.length} secciones predefinidas</p>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Embed Modal */}
+      {embedSection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEmbedSection(null)}>
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold mb-3">Agregar Embed / Calendario</h3>
+            <p className="text-xs text-muted-foreground mb-4">Pega la URL o código embed. Compatible con:</p>
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {["Cal.com", "Calendly", "TidyCal", "YouTube", "Loom", "Figma", "Google Slides", "iframe"].map(t => (
+                <span key={t} className="rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-gray-600">{t}</span>
+              ))}
+            </div>
+            <textarea value={embedUrl} onChange={e => setEmbedUrl(e.target.value)} placeholder={"Ejemplos:\nhttps://cal.com/tu-usuario/30min\nhttps://calendly.com/tu-usuario/meeting\nhttps://www.youtube.com/embed/xxxxx\n<iframe src='...'></iframe>"} rows={4} className="w-full rounded-md border px-3 py-2 text-sm font-mono focus:border-brand focus:outline-none mb-3" autoFocus />
+            <div className="flex gap-2">
+              <button onClick={confirmEmbed} disabled={!embedUrl.trim()} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">Agregar embed</button>
+              <button onClick={() => setEmbedSection(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
             </div>
           </div>
         </div>
