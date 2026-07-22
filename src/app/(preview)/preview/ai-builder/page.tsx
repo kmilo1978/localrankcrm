@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bot, CheckCircle2, Lightbulb, Send, Settings, Sparkles, Wand2, Zap } from "lucide-react";
 import { generateId } from "@/lib/local-storage";
 import { crmAI, isAiConfigured, AI_AGENTS, AI_MODELS, callAI, saveAiKey } from "@/lib/ai-client";
@@ -38,39 +38,53 @@ export default function AiBuilderPage() {
   const [loading, setLoading] = useState(false);
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [keyInput, setKeyInput] = useState("");
-  const [connected, setConnected] = useState(isAiConfigured());
+  const [connected, setConnected] = useState(false);
+
+  // Check connection on mount
+  useEffect(() => { setConnected(isAiConfigured()); }, []);
 
   function executePrompt() {
     if (!prompt.trim()) return;
     setLoading(true);
 
     const detectedModule = detectModule(prompt);
+    
+    // Always try real AI first (key might have been set in Settings)
+    const hasKey = isAiConfigured();
+    if (hasKey !== connected) setConnected(hasKey);
 
-    if (connected && selectedAgent) {
-      // Use real AI with selected agent
-      const agent = AI_AGENTS.find(a => a.id === selectedAgent);
+    if (hasKey) {
+      // Use real AI
+      const agent = selectedAgent ? AI_AGENTS.find(a => a.id === selectedAgent) : null;
+      const systemContent = agent?.system || "Eres un asistente de CRM empresarial (LocalRank CRM). Ayudas a gestionar contactos, ventas, tareas, emails y automatizaciones. Responde en español, sé conciso y ejecuta las acciones que te pidan. Si te preguntan sobre datos del CRM, usa la información proporcionada para responder con datos reales.";
+      
+      // Gather CRM context
+      let crmContext = "";
+      try {
+        const contacts = JSON.parse(localStorage.getItem("localrank_contacts") || localStorage.getItem("contacts") || "[]");
+        const tasks = JSON.parse(localStorage.getItem("localrank_tasks") || localStorage.getItem("tasks") || "[]");
+        const opportunities = JSON.parse(localStorage.getItem("localrank_opportunities") || localStorage.getItem("opportunities") || "[]");
+        crmContext = `\n\nDATOS DEL CRM:\n- ${contacts.length} contactos: ${contacts.slice(0, 5).map((c: {name:string;company?:string;email?:string;phone?:string}) => `${c.name} (${c.company || ""}, ${c.email || ""}, ${c.phone || ""})`).join("; ")}\n- ${tasks.length} tareas (${tasks.filter((t:{status:string}) => t.status !== "completed").length} pendientes)\n- ${opportunities.length} oportunidades`;
+      } catch {}
+
       const msgs: AiMessage[] = [
-        { role: "system", content: agent?.system || "Eres un asistente de CRM." },
+        { role: "system", content: systemContent + crmContext },
         { role: "user", content: prompt },
       ];
+
       callAI(msgs, selectedModel).then(result => {
-        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: `${agent?.name || "IA"} respondió`, result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
+        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: agent ? `${agent.name} respondió` : "IA respondió", result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
         setHistory(prev => [entry, ...prev]);
         setPrompt(""); setLoading(false);
-      });
-    } else if (connected) {
-      // Use real AI without specific agent — pass selected model
-      const msgs: AiMessage[] = [
-        { role: "system", content: "Eres un asistente de CRM empresarial (LocalRank CRM). Ayudas a gestionar contactos, ventas, tareas, emails y automatizaciones. Responde en español, sé conciso y ejecuta las acciones que te pidan." },
-        { role: "user", content: prompt },
-      ];
-      callAI(msgs, selectedModel).then(result => {
-        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: "IA respondió", result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
+      }).catch(() => {
+        // Fallback if API fails
+        const action = generateAction(prompt, detectedModule);
+        const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: action.action, result: action.result + "\n\n⚠️ Error conectando con el modelo. Verifica tu API key.", timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
         setHistory(prev => [entry, ...prev]);
         setPrompt(""); setLoading(false);
       });
     } else {
-      // Fallback to local logic
+      // Fallback to local logic (no key)
       const action = generateAction(prompt, detectedModule);
       setTimeout(() => {
         const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: action.action, result: action.result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
