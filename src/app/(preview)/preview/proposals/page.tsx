@@ -127,6 +127,7 @@ export default function ProposalsPage() {
       sentVia: "",
       utm: { source: "", medium: "", campaign: "" },
       password: "",
+      locked: false,
       views: 0,
       lastViewedAt: "",
       linkEnabled: true,
