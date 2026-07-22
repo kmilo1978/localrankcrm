@@ -120,7 +120,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/files", label: "Archivos & IA", icon: FileText },
     { href: "/settings/ocr", label: "OCR", icon: FileText },
-    { href: "/settings/account", label: "Backup", icon: Database },
+    { href: "/backup", label: "Backup", icon: Database },
     { href: "/audit", label: "Auditoría", icon: History },
     { href: "/url-shortener", label: "Acortador URL", icon: Link2 },
     { href: "/lab", label: "Laboratorio", icon: FlaskConical },
