@@ -65,7 +65,7 @@ export default function AccountSettingsPage() {
   }
 
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="max-w-xl mx-auto space-y-6 p-6">
       <div>
         <h3 className="text-lg font-bold">Cuenta</h3>
         <p className="text-sm text-muted-foreground">Gestiona tu cuenta, exporta datos o elimina todo.</p>
