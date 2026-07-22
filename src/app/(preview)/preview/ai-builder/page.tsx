@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Bot, CheckCircle2, Lightbulb, Send, Settings, Sparkles, Wand2, Zap } from "lucide-react";
 import { generateId } from "@/lib/local-storage";
-import { crmAI, isAiConfigured, AI_AGENTS, AI_MODELS, callAI } from "@/lib/ai-client";
+import { crmAI, isAiConfigured, AI_AGENTS, AI_MODELS, callAI, saveAiKey } from "@/lib/ai-client";
 import type { AiMessage } from "@/lib/ai-client";
 
 type AiAction = { id: string; prompt: string; module: string; action: string; result: string; timestamp: string };
@@ -36,6 +36,9 @@ export default function AiBuilderPage() {
   const [selectedModel, setSelectedModel] = useState("openai/gpt-4o-mini");
   const [history, setHistory] = useState<AiAction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [connected, setConnected] = useState(isAiConfigured());
 
   function executePrompt() {
     if (!prompt.trim()) return;
@@ -43,7 +46,7 @@ export default function AiBuilderPage() {
 
     const detectedModule = detectModule(prompt);
 
-    if (isAiConfigured() && selectedAgent) {
+    if (connected && selectedAgent) {
       // Use real AI with selected agent
       const agent = AI_AGENTS.find(a => a.id === selectedAgent);
       const msgs: AiMessage[] = [
@@ -55,9 +58,13 @@ export default function AiBuilderPage() {
         setHistory(prev => [entry, ...prev]);
         setPrompt(""); setLoading(false);
       });
-    } else if (isAiConfigured()) {
-      // Use real AI without specific agent
-      crmAI(prompt).then(result => {
+    } else if (connected) {
+      // Use real AI without specific agent — pass selected model
+      const msgs: AiMessage[] = [
+        { role: "system", content: "Eres un asistente de CRM empresarial (LocalRank CRM). Ayudas a gestionar contactos, ventas, tareas, emails y automatizaciones. Responde en español, sé conciso y ejecuta las acciones que te pidan." },
+        { role: "user", content: prompt },
+      ];
+      callAI(msgs, selectedModel).then(result => {
         const entry: AiAction = { id: generateId(), prompt, module: detectedModule, action: "IA respondió", result, timestamp: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) };
         setHistory(prev => [entry, ...prev]);
         setPrompt(""); setLoading(false);
@@ -110,10 +117,10 @@ export default function AiBuilderPage() {
 
         {/* AI Status + Agents + Model */}
         <div className="mb-4 flex items-center gap-3 flex-wrap">
-          <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium ${isAiConfigured() ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-            {isAiConfigured() ? "✓ OpenRouter conectado" : "⚠ Sin API key — modo local"}
+          <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-medium ${connected ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+            {connected ? "✓ OpenRouter conectado" : "⚠ Sin API key — modo local"}
           </span>
-          {!isAiConfigured() && <a href="/settings/ai-providers" className="text-[10px] text-brand hover:underline">Configurar IA →</a>}
+          {!connected && <button onClick={() => setShowKeyInput(!showKeyInput)} className="text-[10px] text-brand hover:underline">Conectar ahora →</button>}
           {/* Model selector */}
           <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className="rounded-full border px-2.5 py-1 text-[10px] focus:border-brand focus:outline-none">
             {AI_MODELS.map(m => <option key={m.id} value={m.id}>{m.name} ({m.cost})</option>)}
@@ -128,6 +135,18 @@ export default function AiBuilderPage() {
           </div>
           {selectedAgent && <span className="text-[10px] text-purple-600">{AI_AGENTS.find(a => a.id === selectedAgent)?.name}</span>}
         </div>
+
+        {/* Quick API key input */}
+        {showKeyInput && !connected && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="text-xs font-medium text-amber-800">API Key de OpenRouter</label>
+              <input value={keyInput} onChange={e => setKeyInput(e.target.value)} type="password" placeholder="sk-or-v1-..." className="w-full rounded border px-3 py-2 text-xs mt-1 font-mono focus:border-brand focus:outline-none" />
+              <p className="text-[9px] text-amber-600 mt-1">Obtenla en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="underline">openrouter.ai/keys</a> — gratis para empezar</p>
+            </div>
+            <button onClick={() => { if (keyInput.trim()) { saveAiKey(keyInput.trim()); setConnected(true); setShowKeyInput(false); setKeyInput(""); } }} disabled={!keyInput.trim()} className="rounded bg-brand px-4 py-2 text-xs text-white hover:bg-brand-hover disabled:opacity-50 shrink-0">Conectar</button>
+          </div>
+        )}
 
         {/* Main input */}
         <div className="mb-6 rounded-xl border bg-white p-5 shadow-sm">

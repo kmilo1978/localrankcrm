@@ -23,18 +23,43 @@ export const AI_MODELS = [
 function getApiKey(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    const providers = JSON.parse(localStorage.getItem("localrank_ai_providers") || "[]");
-    const openrouter = providers.find((p: { id: string; key: string }) => p.id === "openrouter" && p.key);
-    if (openrouter) return openrouter.key;
-    // Also check settings
-    const settings = localStorage.getItem("localrank_openrouter_key");
-    return settings || null;
+    // Check multiple possible storage locations for the key
+    // 1. AI providers array (settings page format)
+    const providers = localStorage.getItem("localrank_ai_providers");
+    if (providers) {
+      const parsed = JSON.parse(providers);
+      const openrouter = parsed.find((p: { id?: string; platform?: string; key?: string; token?: string }) => 
+        (p.id === "openrouter" || p.platform === "openrouter") && (p.key || p.token)
+      );
+      if (openrouter) return openrouter.key || openrouter.token;
+    }
+    // 2. Direct key storage
+    const directKey = localStorage.getItem("localrank_openrouter_key");
+    if (directKey) return directKey;
+    // 3. AI settings format from the settings page
+    const aiSettings = localStorage.getItem("localrank_ai_settings");
+    if (aiSettings) {
+      const parsed = JSON.parse(aiSettings);
+      if (parsed.openrouterKey) return parsed.openrouterKey;
+    }
+    return null;
   } catch { return null; }
 }
 
 /** Check if AI is configured */
 export function isAiConfigured(): boolean {
   return !!getApiKey();
+}
+
+/** Save API key to localStorage (for quick setup from AI Builder) */
+export function saveAiKey(key: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("localrank_openrouter_key", key);
+}
+
+/** Get current model name */
+export function getModelName(modelId: string): string {
+  return AI_MODELS.find(m => m.id === modelId)?.name || modelId;
 }
 
 /** Call OpenRouter AI with messages */
