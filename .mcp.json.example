@@ -31,6 +31,16 @@
       "//": "OpenClaw — Gateway de agentes IA self-hosted. Conecta Discord, WhatsApp, Telegram, Slack, Teams, iMessage. Docs: https://docs.openclaw.ai. Install: curl -fsSL https://openclaw.ai/install.sh | sh"
     },
 
+    "obsidian": {
+      "command": "npx",
+      "args": ["-y", "obsidian-mcp-server@latest"],
+      "env": {
+        "OBSIDIAN_VAULT_PATH": "${OBSIDIAN_VAULT_PATH}",
+        "OBSIDIAN_API_PORT": "27123"
+      },
+      "//": "Obsidian — Super cerebro. Conecta tu vault de notas/knowledge base con el CRM. Requiere plugin 'Local REST API' en Obsidian. El agente IA puede buscar, leer y crear notas. Docs: https://github.com/MarkusPfworlds/obsidian-mcp"
+    },
+
     "composio": {
       "command": "npx",
       "args": ["-y", "composio-mcp-server@latest"],

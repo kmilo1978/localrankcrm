@@ -12,6 +12,7 @@ const SEED: McpServer[] = [
 
 const POPULAR_SERVERS = [
   { name: "supabase", command: "npx", args: "supabase-mcp-server@latest", desc: "Acceso a tu base de datos Supabase" },
+  { name: "obsidian", command: "npx", args: "obsidian-mcp-server@latest", desc: "Obsidian Vault — Super cerebro: notas, knowledge base, procesos" },
   { name: "hermes-agent", command: "npx", args: "hermes-mcp@latest", desc: "Hermes Agent (NousResearch) — Agente IA multicanal (Telegram, Discord, Slack, Signal)" },
   { name: "openclaw", command: "npx", args: "openclaw-mcp-server@latest", desc: "OpenClaw — Gateway de agentes IA self-hosted (WhatsApp, Teams, Discord, Telegram)" },
   { name: "github", command: "npx", args: "@anthropic/mcp-github-server", desc: "Integración con GitHub repos" },
