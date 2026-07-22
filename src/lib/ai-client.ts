@@ -40,29 +40,28 @@ function getApiKey(): string | null {
   try {
     // 1. Direct key (from AI Builder quick connect)
     const directKey = localStorage.getItem("localrank_openrouter_key");
-    if (directKey && directKey.startsWith("sk-")) return directKey;
+    if (directKey && directKey.trim().length > 10) return directKey.trim();
 
-    // 2. AI providers config (settings page format)
+    // 2. AI providers config — format: { openrouter: { apiKey, baseUrl, model, enabled } }
     const providersObj = localStorage.getItem("localrank_ai_providers");
     if (providersObj) {
-      const parsed = JSON.parse(providersObj);
-      // Settings page saves as { openrouter: { apiKey, enabled }, nvidia: {...} }
-      // Priority: openrouter first, then any enabled, then any with key
-      if (parsed.openrouter?.apiKey) return parsed.openrouter.apiKey;
-      if (parsed.nvidia?.apiKey) return parsed.nvidia.apiKey;
-      if (parsed.google?.apiKey) return parsed.google.apiKey;
+      const parsed = JSON.parse(providersObj) as Record<string, { apiKey?: string; enabled?: boolean }>;
+      // Priority 1: enabled providers with key
       for (const [, cfg] of Object.entries(parsed)) {
-        const c = cfg as { apiKey?: string };
-        if (c.apiKey) return c.apiKey;
+        if (cfg?.enabled && cfg.apiKey && cfg.apiKey.trim().length > 10) return cfg.apiKey.trim();
+      }
+      // Priority 2: any provider with a key (even if not explicitly enabled)
+      for (const [, cfg] of Object.entries(parsed)) {
+        if (cfg?.apiKey && cfg.apiKey.trim().length > 10) return cfg.apiKey.trim();
       }
     }
 
-    // 3. Check all localStorage keys for any API key pattern
+    // 3. Scan all localStorage for any API key pattern (openrouter, openai, etc.)
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (!key) continue;
       const val = localStorage.getItem(key) || "";
-      if (val.startsWith("sk-or-") && val.length > 20) return val;
+      if ((val.startsWith("sk-") || val.startsWith("AIza")) && val.length > 10) return val;
     }
 
     return null;
@@ -75,13 +74,25 @@ function getBaseUrl(): string {
   try {
     const providersObj = localStorage.getItem("localrank_ai_providers");
     if (providersObj) {
-      const parsed = JSON.parse(providersObj);
-      // Find first enabled provider with a baseUrl
+      const parsed = JSON.parse(providersObj) as Record<string, { apiKey?: string; enabled?: boolean; baseUrl?: string }>;
+      // Priority 1: enabled provider with key and baseUrl
       for (const [, cfg] of Object.entries(parsed)) {
-        const c = cfg as { apiKey?: string; enabled?: boolean; baseUrl?: string };
-        if (c.apiKey && c.enabled && c.baseUrl) return c.baseUrl + "/chat/completions";
+        if (cfg?.enabled && cfg.apiKey && cfg.apiKey.trim().length > 10 && cfg.baseUrl) {
+          const base = cfg.baseUrl.replace(/\/$/, "");
+          return base + "/chat/completions";
+        }
+      }
+      // Priority 2: any provider with key and baseUrl
+      for (const [, cfg] of Object.entries(parsed)) {
+        if (cfg?.apiKey && cfg.apiKey.trim().length > 10 && cfg.baseUrl) {
+          const base = cfg.baseUrl.replace(/\/$/, "");
+          return base + "/chat/completions";
+        }
       }
     }
+    // Direct key = use OpenRouter
+    const directKey = localStorage.getItem("localrank_openrouter_key");
+    if (directKey && directKey.trim().length > 10) return OPENROUTER_URL;
   } catch {}
   return OPENROUTER_URL;
 }

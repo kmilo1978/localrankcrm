@@ -25,6 +25,7 @@ type Proposal = {
   sentVia: string;
   utm: { source: string; medium: string; campaign: string };
   password: string;
+  locked: boolean;
   views: number;
   lastViewedAt: string;
   linkEnabled: boolean;
@@ -88,12 +89,12 @@ const STATUS_STYLES = {
 const STATUS_LABELS = { draft: "Borrador", sent: "Enviada", accepted: "Aceptada", rejected: "Rechazada" };
 
 const SEED_PROPOSALS: Proposal[] = [
-  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", sentVia: "email", utm: { source: "crm", medium: "email", campaign: "propuestas_julio" }, password: "", views: 4, lastViewedAt: "Hace 2h", linkEnabled: true, sections: [
+  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", sentVia: "email", utm: { source: "crm", medium: "email", campaign: "propuestas_julio" }, password: "", locked: false, views: 4, lastViewedAt: "Hace 2h", linkEnabled: true, sections: [
     { id: "s1", title: "Resumen Ejecutivo", content: "Estimado Carlos Ruiz,\n\nGracias por la oportunidad de presentar nuestra propuesta. A continuación detallamos nuestra solución para TechCorp Solutions.", media: [] },
     { id: "s2", title: "Alcance", content: "• Rediseño completo del sitio web\n• SEO técnico + estrategia de contenido\n• Landing pages para campañas\n• Google Ads (setup + 3 meses)", media: [] },
     { id: "s3", title: "Inversión", content: "Setup: $8,500 USD\nMantenimiento mensual: $1,500 USD\nTotal primer año: $12,500 USD", media: [] },
   ]},
-  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "", sentVia: "", utm: { source: "", medium: "", campaign: "" }, password: "demo2026", views: 0, lastViewedAt: "", linkEnabled: false, sections: [
+  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "", sentVia: "", utm: { source: "", medium: "", campaign: "" }, password: "demo2026", locked: false, views: 0, lastViewedAt: "", linkEnabled: false, sections: [
     { id: "s4", title: "Introducción", content: "Propuesta de consultoría para optimizar la estrategia digital de MediaGroup.", media: [] },
     { id: "s5", title: "Plan", content: "4 semanas de análisis + implementación.", media: [] },
     { id: "s6", title: "Inversión", content: "$5,000 USD - pago en 2 partes", media: [] },
@@ -295,7 +296,10 @@ export default function ProposalsPage() {
                   <p className="text-sm font-medium truncate">{p.title}</p>
                   <p className="text-xs text-muted-foreground">{p.client || "Sin cliente"}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {p.locked && <span title="Bloqueada" className="text-amber-500">🔒</span>}
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
+                </div>
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{p.createdAt}</span>
@@ -334,6 +338,9 @@ export default function ProposalsPage() {
                 </button>
                 <button onClick={() => setSaveAsTemplate(true)} className="flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100">
                   🏷️ Guardar template
+                </button>
+                <button onClick={() => updateProposal({ ...editing, locked: !editing.locked })} className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${editing.locked ? "border-amber-200 bg-amber-50 text-amber-700" : "hover:bg-gray-50"}`}>
+                  {editing.locked ? "🔒 Bloqueada" : "🔓 Bloquear"}
                 </button>
                 <button onClick={() => deleteProposal(editing.id)} className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
                   <Trash2 className="h-3.5 w-3.5" />Eliminar
@@ -394,19 +401,29 @@ export default function ProposalsPage() {
               ) : (
                 /* Editor mode */
                 <div className="mx-auto max-w-2xl space-y-4">
+                  {/* Locked banner */}
+                  {editing.locked && (
+                    <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                      <span className="text-lg">🔒</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-amber-800">Propuesta bloqueada</p>
+                        <p className="text-xs text-amber-600">No se puede editar el contenido. Haz clic en "Bloqueada" en la barra de acciones para desbloquear.</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-xs font-medium">Título de la propuesta</label>
-                      <input value={editing.title} onChange={(e) => updateProposal({ ...editing, title: e.target.value })} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                      <input value={editing.title} onChange={(e) => !editing.locked && updateProposal({ ...editing, title: e.target.value })} readOnly={editing.locked} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-medium">Cliente</label>
-                      <input value={editing.client} onChange={(e) => updateProposal({ ...editing, client: e.target.value })} placeholder="Nombre del cliente" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                      <input value={editing.client} onChange={(e) => !editing.locked && updateProposal({ ...editing, client: e.target.value })} readOnly={editing.locked} placeholder="Nombre del cliente" className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                     </div>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium">Total / Inversión</label>
-                    <input value={editing.total} onChange={(e) => updateProposal({ ...editing, total: e.target.value })} placeholder="$10,000 USD" className="w-48 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+                    <input value={editing.total} onChange={(e) => !editing.locked && updateProposal({ ...editing, total: e.target.value })} readOnly={editing.locked} placeholder="$10,000 USD" className={`w-48 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                   </div>
 
                   {/* Logo & Signature */}
@@ -492,13 +509,13 @@ export default function ProposalsPage() {
                   <hr />
 
                   {/* Sections */}
-                  {editing.sections.map((section, idx) => (
+                  {editing.sections.map((section) => (
                     <div key={section.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <input value={section.title} onChange={(e) => updateSection(section.id, "title", e.target.value)} className="font-medium text-sm border-0 bg-transparent focus:outline-none focus:ring-0 p-0 flex-1" placeholder="Título de sección" />
-                        <button onClick={() => removeSection(section.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <input value={section.title} onChange={(e) => !editing.locked && updateSection(section.id, "title", e.target.value)} readOnly={editing.locked} className={`font-medium text-sm border-0 bg-transparent focus:outline-none focus:ring-0 p-0 flex-1 ${editing.locked ? "cursor-not-allowed" : ""}`} placeholder="Título de sección" />
+                        {!editing.locked && <button onClick={() => removeSection(section.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>}
                       </div>
-                      <textarea value={section.content} onChange={(e) => updateSection(section.id, "content", e.target.value)} rows={6} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" placeholder="Contenido de esta sección..." />
+                      <textarea value={section.content} onChange={(e) => !editing.locked && updateSection(section.id, "content", e.target.value)} readOnly={editing.locked} rows={6} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} placeholder="Contenido de esta sección..." />
                       {/* Media items */}
                       {(section.media || []).length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -523,6 +540,7 @@ export default function ProposalsPage() {
                         </div>
                       )}
                       {/* Media buttons */}
+                      {!editing.locked && (
                       <div className="mt-2 flex items-center gap-2">
                         <label className="flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-gray-50">
                           <Image className="h-3.5 w-3.5" />Imagen
@@ -539,6 +557,7 @@ export default function ProposalsPage() {
                           🔘 Botón CTA
                         </button>
                       </div>
+                      )}
                       {/* Button editor */}
                       {(section.buttons || []).length > 0 && (
                         <div className="mt-2 space-y-1.5">
@@ -555,7 +574,7 @@ export default function ProposalsPage() {
                     </div>
                   ))}
 
-                  <button onClick={addSection} className="w-full rounded-md border border-dashed py-3 text-sm text-muted-foreground hover:bg-gray-50 hover:text-foreground">+ Agregar sección</button>
+                  {!editing.locked && <button onClick={addSection} className="w-full rounded-md border border-dashed py-3 text-sm text-muted-foreground hover:bg-gray-50 hover:text-foreground">+ Agregar sección</button>}
                 </div>
               )}
             </div>
