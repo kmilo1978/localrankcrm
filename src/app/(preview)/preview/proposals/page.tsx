@@ -5,7 +5,8 @@ import { Copy, Download, Edit2, Eye, FileText, Image, Link, Mic, PenTool, Plus, 
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type MediaItem = { id: string; type: "image" | "audio" | "embed"; url: string; name: string };
-type ProposalSection = { id: string; title: string; content: string; media: MediaItem[] };
+type ButtonItem = { id: string; label: string; url: string; color: string };
+type ProposalSection = { id: string; title: string; content: string; media: MediaItem[]; buttons?: ButtonItem[] };
 
 type Proposal = {
   id: string;
@@ -193,6 +194,22 @@ export default function ProposalsPage() {
     setEmbedUrl("");
   }
 
+  function addButton(sectionId: string) {
+    if (!editing) return;
+    const btn: ButtonItem = { id: generateId(), label: "Agendar reunión", url: "https://cal.com/", color: "#e91e8c" };
+    updateProposal({ ...editing, sections: editing.sections.map(s => s.id === sectionId ? { ...s, buttons: [...(s.buttons || []), btn] } : s) });
+  }
+
+  function updateButton(sectionId: string, btnId: string, field: keyof ButtonItem, value: string) {
+    if (!editing) return;
+    updateProposal({ ...editing, sections: editing.sections.map(s => s.id === sectionId ? { ...s, buttons: (s.buttons || []).map(b => b.id === btnId ? { ...b, [field]: value } : b) } : s) });
+  }
+
+  function removeButton(sectionId: string, btnId: string) {
+    if (!editing) return;
+    updateProposal({ ...editing, sections: editing.sections.map(s => s.id === sectionId ? { ...s, buttons: (s.buttons || []).filter(b => b.id !== btnId) } : s) });
+  }
+
   function removeMedia(sectionId: string, mediaId: string) {
     if (!editing) return;
     updateProposal({ ...editing, sections: editing.sections.map((s) => s.id === sectionId ? { ...s, media: (s.media || []).filter((m) => m.id !== mediaId) } : s) });
@@ -323,6 +340,14 @@ export default function ProposalsPage() {
                               )}
                             </div>
                           ))}
+                          {/* CTA Buttons */}
+                          {(s.buttons || []).length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {(s.buttons || []).map(btn => (
+                                <a key={btn.id} href={btn.url} target="_blank" rel="noopener noreferrer" className="rounded-lg px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity" style={{ backgroundColor: btn.color }}>{btn.label}</a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -467,9 +492,25 @@ export default function ProposalsPage() {
                           <input type="file" accept="audio/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(section.id, f, "audio"); e.target.value = ""; }} />
                         </label>
                         <button onClick={() => addEmbed(section.id)} className="flex items-center gap-1 rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-gray-50">
-                          <Link className="h-3.5 w-3.5" />Embed / Cal / Script
+                          <Link className="h-3.5 w-3.5" />Embed / Cal
+                        </button>
+                        <button onClick={() => addButton(section.id)} className="flex items-center gap-1 rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-gray-50">
+                          🔘 Botón CTA
                         </button>
                       </div>
+                      {/* Button editor */}
+                      {(section.buttons || []).length > 0 && (
+                        <div className="mt-2 space-y-1.5">
+                          {(section.buttons || []).map(btn => (
+                            <div key={btn.id} className="flex items-center gap-2 rounded border px-2 py-1.5">
+                              <input value={btn.label} onChange={e => updateButton(section.id, btn.id, "label", e.target.value)} placeholder="Texto" className="w-28 rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none" />
+                              <input value={btn.url} onChange={e => updateButton(section.id, btn.id, "url", e.target.value)} placeholder="URL destino" className="flex-1 rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none" />
+                              <input type="color" value={btn.color} onChange={e => updateButton(section.id, btn.id, "color", e.target.value)} className="h-6 w-6 rounded border cursor-pointer" />
+                              <button onClick={() => removeButton(section.id, btn.id)} className="text-muted-foreground hover:text-red-500"><X className="h-3 w-3" /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
 
