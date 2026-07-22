@@ -85,12 +85,42 @@ export default function ColdContactsPage() {
   const [quickForm, setQuickForm] = useState({ name: "", phone: "", website: "", category: "", notes: "" });
   const [extLeads, setExtLeads] = useState<Record<string, unknown>[]>([]);
   const [fieldForms, setFieldForms] = useState<Record<string, { label: string; value: string }>>({});
+  const [pipelineModal, setPipelineModal] = useState<ColdContact | null>(null);
+  const [pipelineStageId, setPipelineStageId] = useState("s1");
+  const [pipelineValue, setPipelineValue] = useState("$0");
+  const [pipelineToast, setPipelineToast] = useState("");
+  const [pipelineStages, setPipelineStages] = useState<{ id: string; name: string }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setContacts(loadFromStorage("cold_contacts", IMPORTED_DATA)); }, []);
   // Load extension leads from localStorage (synced by content script)
   useEffect(() => {
     try { setExtLeads(JSON.parse(localStorage.getItem("extension_leads") || "[]")); } catch { setExtLeads([]); }
+  }, []);
+  // Load pipeline stages for the "Send to Pipeline" modal
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("localrank_pipeline_stages") || localStorage.getItem("pipeline_stages") || "[]");
+      if (stored.length > 0) {
+        setPipelineStages(stored);
+        setPipelineStageId(stored[0].id);
+      } else {
+        // Default stages if pipeline hasn't been opened yet
+        const defaults = [
+          { id: "s1", name: "Nuevo" },
+          { id: "s2", name: "Contactado" },
+          { id: "s3", name: "Propuesta" },
+          { id: "s4", name: "Negociación" },
+          { id: "s5", name: "Ganado" },
+          { id: "s6", name: "Perdido" },
+        ];
+        setPipelineStages(defaults);
+        setPipelineStageId("s1");
+      }
+    } catch {
+      setPipelineStages([{ id: "s1", name: "Nuevo" }, { id: "s2", name: "Contactado" }, { id: "s3", name: "Propuesta" }, { id: "s4", name: "Negociación" }]);
+      setPipelineStageId("s1");
+    }
   }, []);
   function save(u: ColdContact[]) { setContacts(u); saveToStorage("cold_contacts", u); }
 
@@ -152,11 +182,41 @@ export default function ColdContactsPage() {
   function deleteContact(id: string) { save(contacts.filter((c) => c.id !== id)); }
 
   function sendToPipeline(contact: ColdContact) {
-    const leads = JSON.parse(localStorage.getItem("pipeline_leads") || "[]");
-    const exists = leads.some((l: { name: string }) => l.name === contact.name);
-    if (exists) return;
-    leads.unshift({ id: Date.now().toString(), name: contact.name, company: contact.category || contact.website, value: "$0", stageId: "s1" });
-    localStorage.setItem("pipeline_leads", JSON.stringify(leads));
+    // Open modal to choose pipeline stage
+    setPipelineModal(contact);
+    setPipelineValue("$0");
+  }
+
+  function confirmSendToPipeline() {
+    if (!pipelineModal) return;
+    try {
+      const leads = JSON.parse(localStorage.getItem("localrank_pipeline_leads") || localStorage.getItem("pipeline_leads") || "[]");
+      const exists = leads.some((l: { name: string }) => l.name === pipelineModal.name);
+      if (exists) {
+        setPipelineToast(`⚠️ "${pipelineModal.name}" ya está en el Pipeline`);
+        setPipelineModal(null);
+        setTimeout(() => setPipelineToast(""), 3000);
+        return;
+      }
+      const newLead = {
+        id: Date.now().toString(),
+        name: pipelineModal.name,
+        company: pipelineModal.category || pipelineModal.website || "",
+        value: pipelineValue || "$0",
+        stageId: pipelineStageId,
+      };
+      leads.unshift(newLead);
+      // Save to both possible keys for compatibility
+      localStorage.setItem("localrank_pipeline_leads", JSON.stringify(leads));
+      localStorage.setItem("pipeline_leads", JSON.stringify(leads));
+      const stageName = pipelineStages.find(s => s.id === pipelineStageId)?.name || pipelineStageId;
+      setPipelineToast(`✅ "${pipelineModal.name}" enviado al Pipeline → ${stageName}`);
+      setTimeout(() => setPipelineToast(""), 3000);
+    } catch {
+      setPipelineToast("❌ Error al enviar al Pipeline");
+      setTimeout(() => setPipelineToast(""), 3000);
+    }
+    setPipelineModal(null);
   }
 
   function getFieldForm(id: string) { return fieldForms[id] || { label: "", value: "" }; }
@@ -421,6 +481,7 @@ export default function ColdContactsPage() {
                       <select value={c.stageId} onChange={(e) => moveStage(c.id, e.target.value)} className="mt-1.5 w-full rounded border px-1 py-0.5 text-[10px] focus:outline-none">
                         {stages.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
+                      <button onClick={() => sendToPipeline(c)} className="mt-1 w-full rounded border border-green-200 py-0.5 text-[10px] font-medium text-green-600 hover:bg-green-50">→ Pipeline CRM</button>
                     </div>
                   ))}
                   {stageContacts.length === 0 && <div className="flex h-16 items-center justify-center rounded border border-dashed text-xs text-muted-foreground">Vacío</div>}
@@ -552,6 +613,44 @@ export default function ColdContactsPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Pipeline stage picker modal */}
+      {pipelineModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setPipelineModal(null)}>
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-sm">Enviar al Pipeline</h3>
+              <button onClick={() => setPipelineModal(null)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              <span className="font-medium text-foreground">{pipelineModal.name}</span> · {pipelineModal.category}
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium mb-1">Etapa del embudo</label>
+                <select value={pipelineStageId} onChange={e => setPipelineStageId(e.target.value)} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
+                  {pipelineStages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Valor estimado (opcional)</label>
+                <input value={pipelineValue} onChange={e => setPipelineValue(e.target.value)} placeholder="$0" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setPipelineModal(null)} className="flex-1 rounded-md border px-3 py-2 text-sm font-medium hover:bg-gray-50">Cancelar</button>
+                <button onClick={confirmSendToPipeline} className="flex-1 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-hover">Enviar al Pipeline</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {pipelineToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-gray-900 px-4 py-2.5 text-sm text-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
+          {pipelineToast}
         </div>
       )}
     </div>
