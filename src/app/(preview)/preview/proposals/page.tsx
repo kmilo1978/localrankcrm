@@ -186,6 +186,26 @@ export default function ProposalsPage() {
 
   const [embedSection, setEmbedSection] = useState<string | null>(null);
   const [embedUrl, setEmbedUrl] = useState("");
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateTag, setTemplateTag] = useState("");
+
+  function confirmSaveAsTemplate() {
+    if (!editing || !templateName.trim()) return;
+    const userTemplates = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
+    userTemplates.unshift({
+      id: generateId(),
+      name: templateName,
+      description: templateTag,
+      tag: templateTag,
+      createdAt: new Date().toISOString().split("T")[0]!,
+      sections: editing.sections.map(s => ({ title: s.title, content: s.content })),
+    });
+    localStorage.setItem("localrank_proposal_templates", JSON.stringify(userTemplates));
+    setSaveAsTemplate(false);
+    setTemplateName("");
+    setTemplateTag("");
+  }
 
   function confirmEmbed() {
     if (!editing || !embedSection || !embedUrl.trim()) return;
@@ -311,6 +331,9 @@ export default function ProposalsPage() {
                 </button>
                 <button onClick={() => duplicateProposal(editing)} className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">
                   <Copy className="h-3.5 w-3.5" />Duplicar
+                </button>
+                <button onClick={() => setSaveAsTemplate(true)} className="flex items-center gap-1.5 rounded-md border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-100">
+                  🏷️ Guardar template
                 </button>
                 <button onClick={() => deleteProposal(editing.id)} className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
                   <Trash2 className="h-3.5 w-3.5" />Eliminar
@@ -550,11 +573,35 @@ export default function ProposalsPage() {
       {/* Template picker modal */}
       {showTemplates && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowTemplates(false)}>
-          <div className="w-full max-w-2xl rounded-lg border bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-lg border bg-white p-6 shadow-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-lg">Crear propuesta desde plantilla</h3>
               <button onClick={() => setShowTemplates(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
             </div>
+            {/* User saved templates */}
+            {(() => {
+              const userTpls = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
+              if (userTpls.length === 0) return null;
+              return (
+                <div className="mb-5">
+                  <h4 className="text-xs font-semibold uppercase text-purple-700 mb-2 flex items-center gap-1">🏷️ Mis templates guardados</h4>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {userTpls.map((t: { id: string; name: string; description: string; tag: string; sections: { title: string; content: string }[] }) => (
+                      <button key={t.id} onClick={() => createFromTemplate({ id: t.id, name: t.name, description: t.description, sections: t.sections })} className="rounded-lg border border-purple-200 bg-purple-50/50 p-4 text-left hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-base">🏷️</span>
+                          <span className="font-medium text-sm">{t.name}</span>
+                          {t.tag && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] text-purple-700">{t.tag}</span>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{t.sections.length} secciones · {t.description || "Template personalizado"}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="border-t my-4" />
+                </div>
+              );
+            })()}
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Plantillas predefinidas</h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {TEMPLATES.map((t) => (
                 <button key={t.id} onClick={() => createFromTemplate(t)} className="rounded-lg border p-4 text-left hover:border-brand hover:bg-brand-tint/20 transition-colors">
@@ -566,6 +613,35 @@ export default function ProposalsPage() {
                   <p className="mt-2 text-xs text-muted-foreground">{t.sections.length} secciones predefinidas</p>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save As Template Modal */}
+      {saveAsTemplate && editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSaveAsTemplate(false)}>
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">🏷️ Guardar como template</h3>
+            <p className="text-xs text-muted-foreground mb-4">Esta propuesta se guardará como plantilla reutilizable con {editing.sections.length} secciones.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Nombre del template *</label>
+                <input value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Ej: Propuesta Enterprise SaaS" className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" autoFocus />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Etiqueta / Categoría</label>
+                <input value={templateTag} onChange={e => setTemplateTag(e.target.value)} placeholder="Ej: SaaS, Consultoría, Marketing..." className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {["SaaS", "Consultoría", "Marketing", "E-commerce", "Desarrollo", "Diseño", "SEO", "Enterprise"].map(tag => (
+                  <button key={tag} onClick={() => setTemplateTag(tag)} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${templateTag === tag ? "bg-purple-100 text-purple-700" : "border hover:bg-gray-50"}`}>{tag}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={confirmSaveAsTemplate} disabled={!templateName.trim()} className="flex-1 rounded-md bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">Guardar template</button>
+              <button onClick={() => setSaveAsTemplate(false)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
             </div>
           </div>
         </div>
