@@ -18,6 +18,7 @@ type Proposal = {
   createdAt: string;
   templateId?: string;
   logoUrl: string;
+  bannerUrl: string;
   signatureUrl: string;
   signatureName: string;
   // Tracking & security
@@ -119,6 +120,7 @@ export default function ProposalsPage() {
       createdAt: new Date().toISOString().split("T")[0]!,
       templateId: template.id,
       logoUrl: "",
+      bannerUrl: "",
       signatureUrl: "",
       signatureName: "",
       sentVia: "",
@@ -238,6 +240,7 @@ export default function ProposalsPage() {
       img.logo{height:48px;margin-bottom:16px}img.media{max-height:240px;border-radius:8px;margin-top:12px}img.sig{height:40px;margin-top:24px}
       .signature{border-top:1px solid #e5e7eb;padding-top:16px;margin-top:32px}
       </style></head><body>
+      ${proposal.bannerUrl ? `<img style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:16px" src="${proposal.bannerUrl}" />` : ""}
       ${proposal.logoUrl ? `<img class="logo" src="${proposal.logoUrl}" />` : ""}
       <h1>${proposal.title}</h1>
       <p class="meta">Cliente: ${proposal.client || "—"} | Fecha: ${proposal.createdAt}</p>
@@ -320,6 +323,7 @@ export default function ProposalsPage() {
               {previewing ? (
                 /* Preview mode */
                 <div ref={printRef} className="mx-auto max-w-2xl">
+                  {editing.bannerUrl && <img src={editing.bannerUrl} alt="Banner" className="w-full h-32 object-cover rounded-lg mb-4" />}
                   {editing.logoUrl && <img src={editing.logoUrl} alt="Logo" className="h-12 w-auto mb-4" />}
                   <h1 className="text-2xl font-bold">{editing.title}</h1>
                   <p className="text-sm text-muted-foreground mt-1">Cliente: {editing.client || "—"} | {editing.createdAt}</p>
@@ -384,6 +388,20 @@ export default function ProposalsPage() {
 
                   {/* Logo & Signature */}
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 rounded-lg border p-4 bg-gray-50/50">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-medium flex items-center gap-1"><Image className="h-3.5 w-3.5" />Banner superior</label>
+                      {editing.bannerUrl ? (
+                        <div className="flex items-center gap-3">
+                          <img src={editing.bannerUrl} alt="Banner" className="h-16 w-full object-cover rounded border" />
+                          <button onClick={() => updateProposal({ ...editing, bannerUrl: "" })} className="text-xs text-red-500 hover:underline shrink-0">Eliminar</button>
+                        </div>
+                      ) : (
+                        <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground hover:bg-gray-50">
+                          <Upload className="h-3.5 w-3.5" />Subir banner (1200x300 recomendado)
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (!f || !editing) return; const reader = new FileReader(); reader.onload = (ev) => { const url = ev.target?.result as string; if (url) updateProposal({ ...editing, bannerUrl: url }); }; reader.readAsDataURL(f); e.target.value = ""; }} />
+                        </label>
+                      )}
+                    </div>
                     <div>
                       <label className="mb-1.5 block text-xs font-medium flex items-center gap-1"><Image className="h-3.5 w-3.5" />Logo de la propuesta</label>
                       {editing.logoUrl ? (
