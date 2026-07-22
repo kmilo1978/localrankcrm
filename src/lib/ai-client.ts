@@ -23,25 +23,27 @@ export const AI_MODELS = [
 function getApiKey(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    // Check multiple possible storage locations for the key
-    // 1. AI providers array (settings page format)
-    const providers = localStorage.getItem("localrank_ai_providers");
-    if (providers) {
-      const parsed = JSON.parse(providers);
-      const openrouter = parsed.find((p: { id?: string; platform?: string; key?: string; token?: string }) => 
-        (p.id === "openrouter" || p.platform === "openrouter") && (p.key || p.token)
-      );
-      if (openrouter) return openrouter.key || openrouter.token;
+    // 1. Check AI providers config (settings page format — object by ID)
+    const providersObj = localStorage.getItem("localrank_ai_providers");
+    if (providersObj) {
+      const parsed = JSON.parse(providersObj);
+      // Settings page saves as { openrouter: { apiKey, enabled, ... }, openai: {...} }
+      if (parsed.openrouter?.apiKey && parsed.openrouter?.enabled) return parsed.openrouter.apiKey;
+      // Check any enabled provider with a key
+      for (const [, cfg] of Object.entries(parsed)) {
+        const c = cfg as { apiKey?: string; enabled?: boolean };
+        if (c.apiKey && c.enabled) return c.apiKey;
+      }
+      // Fallback: any provider with key even if not enabled
+      if (parsed.openrouter?.apiKey) return parsed.openrouter.apiKey;
+      for (const [, cfg] of Object.entries(parsed)) {
+        const c = cfg as { apiKey?: string };
+        if (c.apiKey) return c.apiKey;
+      }
     }
-    // 2. Direct key storage
+    // 2. Direct key storage (from AI Builder quick connect)
     const directKey = localStorage.getItem("localrank_openrouter_key");
     if (directKey) return directKey;
-    // 3. AI settings format from the settings page
-    const aiSettings = localStorage.getItem("localrank_ai_settings");
-    if (aiSettings) {
-      const parsed = JSON.parse(aiSettings);
-      if (parsed.openrouterKey) return parsed.openrouterKey;
-    }
     return null;
   } catch { return null; }
 }

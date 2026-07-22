@@ -227,12 +227,20 @@ export default function AIProvidersPage() {
           Configura las API keys de los proveedores de inteligencia artificial.
           El CRM usará el proveedor activo para el agente de WhatsApp, análisis y automatizaciones.
         </p>
-        {enabledCount > 0 && (
-          <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
-            <Check className="h-4 w-4" />
-            {enabledCount} proveedor{enabledCount > 1 ? "es" : ""} activo{enabledCount > 1 ? "s" : ""}
-          </div>
-        )}
+        {/* Status summary */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {enabledCount > 0 && (
+            <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+              <Check className="h-3.5 w-3.5" />{enabledCount} activo{enabledCount > 1 ? "s" : ""}
+            </span>
+          )}
+          {Object.entries(configs).filter(([, c]) => c.apiKey && !c.enabled).length > 0 && (
+            <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+              {Object.entries(configs).filter(([, c]) => c.apiKey && !c.enabled).length} configurado{Object.entries(configs).filter(([, c]) => c.apiKey && !c.enabled).length > 1 ? "s" : ""} (inactivo)
+            </span>
+          )}
+          <span className="text-[10px] text-muted-foreground flex items-center">{AI_PROVIDERS.length} proveedores disponibles · Gratis: Groq, DeepSeek · Premium: OpenAI, Claude, Gemini</span>
+        </div>
       </div>
 
       {/* Default AI Model Selector */}
