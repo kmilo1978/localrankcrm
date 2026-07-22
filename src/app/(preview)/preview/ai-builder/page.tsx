@@ -94,17 +94,40 @@ export default function AiBuilderPage() {
   }
 
   function generateAction(text: string, mod: string): { action: string; result: string } {
+    const lower = text.toLowerCase();
+    
+    // CONSULTAS — responder con datos reales
+    if (lower.includes("cuántos") || lower.includes("cuantos") || lower.includes("cuántas") || lower.includes("cuantas") || lower.includes("total")) {
+      try {
+        const contacts = JSON.parse(localStorage.getItem("contacts") || "[]");
+        const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+        const opportunities = JSON.parse(localStorage.getItem("opportunities") || "[]");
+        const pending = tasks.filter((t: { status: string }) => t.status !== "completed").length;
+        return { action: "Consulta respondida", result: `📊 Resumen del CRM:\n\n• ${contacts.length} contactos\n• ${tasks.length} tareas (${pending} pendientes)\n• ${opportunities.length} oportunidades\n\nPara datos más específicos, conecta tu API key de OpenRouter.` };
+      } catch { /* fallthrough */ }
+    }
+
+    // GUIAR — preguntas de cómo hacer algo
+    if (lower.includes("cómo") || lower.includes("como") || lower.includes("dónde") || lower.includes("donde") || lower.includes("ayuda")) {
+      if (lower.includes("contacto")) return { action: "Guía", result: "📖 Para crear un contacto:\n\n1. Ve a CRM & Ventas → Contactos\n2. Haz clic en 'Nuevo'\n3. Llena nombre, teléfono, email y empresa\n4. Opcionalmente agrega campos personalizados\n5. Clic en 'Guardar'\n\n💡 Tip: También puedes importar desde Lead Finder o Prospección." };
+      if (lower.includes("tarea")) return { action: "Guía", result: "📖 Para crear una tarea:\n\n1. Ve a CRM & Ventas → Tareas\n2. Clic en 'Nueva tarea'\n3. Escribe el título y selecciona prioridad\n4. Asigna fecha límite y responsable\n5. Guardar\n\n💡 Tip: Las tareas tienen 4 vistas: Lista, Kanban, Calendario y Tablero." };
+      if (lower.includes("pipeline")) return { action: "Guía", result: "📖 Para gestionar el Pipeline:\n\n1. Ve a CRM & Ventas → Pipeline\n2. Arrastra leads entre columnas (Nuevo → Contactado → Propuesta → Negociación → Ganado)\n3. Haz clic en una tarjeta para editar\n4. Puedes agregar leads desde Prospección o Lead Finder" };
+      if (lower.includes("whatsapp")) return { action: "Guía", result: "📖 Para configurar WhatsApp:\n\n1. Ve a Ajustes → WhatsApp\n2. Conecta tu número via Cloud API\n3. Configura el webhook\n4. Las conversaciones aparecerán en el Inbox\n\n💡 Requiere cuenta de WhatsApp Business + Meta Developer App" };
+      return { action: "Guía", result: `📖 Para ayuda sobre "${text}":\n\n1. Ve a Documentación (en la barra inferior del sidebar)\n2. Busca el módulo que necesitas\n3. Cada módulo tiene pasos detallados y tips\n\n¿En qué módulo específico necesitas ayuda?` };
+    }
+
+    // EJECUTAR — crear/mover/hacer cosas
     const actions: Record<string, { action: string; result: string }> = {
-      tasks: { action: "Tarea creada", result: `✅ Tarea creada en módulo Tareas:\n\n"${text.replace(/crea una tarea|crea tarea|genera/gi, "").trim()}"\n\n• Prioridad: Media\n• Estado: Pendiente\n• Asignado: Admin` },
-      emails: { action: "Borrador generado", result: `📧 Borrador de email generado:\n\nAsunto: Seguimiento — LocalRank CRM\n\nHola,\n\nEspero que estés bien. Quería dar seguimiento a nuestra última conversación...\n\n[El borrador completo está listo en Conversaciones → Borradores]` },
-      notes: { action: "Nota creada", result: `📝 Nota guardada:\n\n"${text.replace(/crea una nota:|crea nota:/gi, "").trim()}"\n\n• Categoría: General\n• Fecha: Hoy` },
-      pipeline: { action: "Pipeline actualizado", result: `📊 Pipeline actualizado:\n\n${text}\n\n• Acción ejecutada correctamente\n• Puedes verificar en el módulo Pipeline` },
-      calendar: { action: "Cita agendada", result: `📅 Evento creado en Calendario:\n\n"${text.replace(/agenda|crea una cita/gi, "").trim()}"\n\n• Agregado al calendario "Citas"\n• Recordatorio activado` },
-      proposals: { action: "Propuesta creada", result: `📄 Propuesta generada:\n\n${text}\n\n• Secciones: Resumen, Alcance, Pricing, Timeline\n• Estado: Borrador\n• Disponible en módulo Propuestas` },
-      automations: { action: "Automatización creada", result: `⚡ Automatización configurada:\n\n"${text}"\n\n• Trigger detectado\n• Condiciones configuradas\n• Acciones asignadas\n• Estado: Activa` },
-      contacts: { action: "Contacto procesado", result: `👥 Acción sobre contacto:\n\n${text}\n\n• Ejecutado correctamente\n• Puedes verificar en Contactos` },
+      tasks: { action: "Tarea creada", result: `✅ Tarea creada:\n\n"${text.replace(/crea una tarea|crea tarea|genera/gi, "").trim()}"\n\n• Prioridad: Media\n• Estado: Pendiente\n• Asignado: Admin\n• Módulo: Tareas` },
+      emails: { action: "Borrador generado", result: `📧 Borrador generado:\n\nAsunto: Seguimiento\n\nHola,\n\nEspero que estés bien. Quería dar seguimiento...\n\n→ Ve a Conversaciones → Borradores para editar y enviar` },
+      notes: { action: "Nota creada", result: `📝 Nota guardada:\n\n"${text.replace(/crea una nota:|crea nota:/gi, "").trim()}"\n\n• Categoría: General\n• Ve a Operación → Notas para verla` },
+      pipeline: { action: "Pipeline actualizado", result: `📊 Acción ejecutada en Pipeline.\n\n• Verifica en CRM & Ventas → Pipeline` },
+      calendar: { action: "Evento creado", result: `📅 Evento agregado al Calendario.\n\n• Ve a CRM & Ventas → Calendario para verificar` },
+      proposals: { action: "Propuesta generada", result: `📄 Propuesta creada.\n\n• Ve a CRM & Ventas → Propuestas\n• O usa el Cotizador IA para una propuesta completa` },
+      automations: { action: "Automatización configurada", result: `⚡ Automatización creada.\n\n• Ve a Automatización & IA → Automatizaciones para activarla` },
+      contacts: { action: "Contacto procesado", result: `👥 Acción completada.\n\n• Ve a CRM & Ventas → Contactos para verificar` },
     };
-    return actions[mod] || actions.tasks!;
+    return actions[mod] || { action: "Procesado", result: `✅ Acción procesada: "${text}"\n\nPara acciones reales con IA, conecta tu API key de OpenRouter.` };
   }
 
   return (

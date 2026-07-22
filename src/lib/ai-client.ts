@@ -98,14 +98,54 @@ export async function callAI(messages: AiMessage[], model?: string): Promise<str
   }
 }
 
-/** Generate CRM-specific AI response */
-export async function crmAI(prompt: string, context?: string): Promise<string> {
+/** Generate CRM-specific AI response with full context */
+export async function crmAI(prompt: string, model?: string): Promise<string> {
+  // Gather CRM context from localStorage
+  let context = "";
+  if (typeof window !== "undefined") {
+    try {
+      const contacts = JSON.parse(localStorage.getItem("localrank_contacts") || localStorage.getItem("contacts") || "[]");
+      const tasks = JSON.parse(localStorage.getItem("localrank_tasks") || localStorage.getItem("tasks") || "[]");
+      const opportunities = JSON.parse(localStorage.getItem("localrank_opportunities") || localStorage.getItem("opportunities") || "[]");
+      const notes = JSON.parse(localStorage.getItem("localrank_notes") || localStorage.getItem("notes") || "[]");
+      const pipeline = JSON.parse(localStorage.getItem("localrank_pipeline_leads") || localStorage.getItem("pipeline_leads") || "[]");
+
+      const pendingTasks = tasks.filter((t: { status: string }) => t.status !== "completed").length;
+      const totalContacts = contacts.length;
+      const totalOpps = opportunities.length;
+      const totalPipeline = pipeline.length;
+
+      context = `
+DATOS ACTUALES DEL CRM:
+- ${totalContacts} contactos (${contacts.slice(0, 5).map((c: { name: string }) => c.name).join(", ")}${totalContacts > 5 ? "..." : ""})
+- ${pendingTasks} tareas pendientes de ${tasks.length} total
+- ${totalOpps} oportunidades activas
+- ${totalPipeline} leads en pipeline
+- ${notes.length} notas
+
+CONTACTOS RECIENTES: ${JSON.stringify(contacts.slice(0, 3).map((c: { name: string; company?: string; email?: string }) => ({ nombre: c.name, empresa: c.company, email: c.email })))}
+TAREAS PENDIENTES: ${JSON.stringify(tasks.filter((t: { status: string }) => t.status !== "completed").slice(0, 3).map((t: { title: string; dueDate?: string; priority?: string }) => ({ titulo: t.title, fecha: t.dueDate, prioridad: t.priority })))}
+OPORTUNIDADES: ${JSON.stringify(opportunities.slice(0, 3).map((o: { name: string; company?: string; value?: number; stage?: string }) => ({ nombre: o.name, empresa: o.company, valor: o.value, etapa: o.stage })))}
+`;
+    } catch {}
+  }
+
   const systemMessage: AiMessage = {
     role: "system",
-    content: `Eres un asistente de CRM empresarial (LocalRank CRM). Ayudas a gestionar contactos, ventas, tareas, emails y automatizaciones. Responde en español, sé conciso y ejecuta las acciones que te pidan. ${context || ""}`
+    content: `Eres el asistente central de LocalRank CRM. Tienes 3 funciones principales:
+
+1. CONSULTAR: Responde preguntas sobre los datos del CRM usando la información proporcionada. Sé preciso con números y nombres.
+2. GUIAR: Da instrucciones paso a paso cuando el usuario no sabe cómo hacer algo. Indica exactamente dónde hacer clic y qué escribir.
+3. EJECUTAR: Cuando te pidan crear algo (tarea, nota, contacto, etc.), confirma qué vas a hacer y muestra el resultado.
+
+Responde SIEMPRE en español. Sé conciso pero completo. Si no tienes datos suficientes para responder, dilo claramente y sugiere qué hacer.
+
+${context}
+
+MÓDULOS DISPONIBLES: Dashboard, Prospección (Radar, Lead Finder, Email Finder), CRM (Contactos, Pipeline, Oportunidades, Tareas, Calendario), Conversaciones, IA (Constructor, Cotizador, Scoring), Operación (Notas, Checklists, To-Do, Recordatorios), Equipo (Workspace, Bóveda), Datos (Analytics, Archivos, Auditoría).`
   };
 
-  return callAI([systemMessage, { role: "user", content: prompt }]);
+  return callAI([systemMessage, { role: "user", content: prompt }], model);
 }
 
 /** AI Agents by function */
