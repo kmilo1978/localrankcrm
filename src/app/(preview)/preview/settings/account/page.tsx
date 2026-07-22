@@ -103,18 +103,67 @@ export default function AccountSettingsPage() {
 
         {/* Google Drive sync */}
         <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">📁</span>
             <div>
-              <h5 className="text-sm font-medium">Sincronizar con Google Drive</h5>
-              <p className="text-[10px] text-muted-foreground">Guarda backups automáticos en tu Drive (requiere Composio configurado)</p>
+              <h5 className="text-sm font-medium">Sincronización con Google Drive</h5>
+              <p className="text-[10px] text-muted-foreground">Backups automáticos programados + permisos por rol</p>
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={() => { handleExportData(); setImportStatus("💡 Para sincronizar con Google Drive, conecta Composio en Ajustes → Conectores y luego usa el Constructor IA: 'Sube mi backup a Google Drive'"); }} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📤 Subir a Drive</button>
-            <button onClick={() => setImportStatus("💡 Para restaurar desde Drive: descarga el archivo .json desde tu Google Drive y usa 'Restaurar backup' arriba.")} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📥 Descargar de Drive</button>
+
+          {/* Schedule */}
+          <div className="mb-3">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Frecuencia de backup automático</label>
+            <div className="flex gap-2">
+              {[
+                { value: "off", label: "Desactivado" },
+                { value: "daily", label: "Diario" },
+                { value: "weekly", label: "Semanal" },
+                { value: "monthly", label: "Mensual" },
+              ].map(opt => {
+                const current = typeof window !== "undefined" ? localStorage.getItem("localrank_backup_schedule") || "off" : "off";
+                return (
+                  <button key={opt.value} onClick={() => { localStorage.setItem("localrank_backup_schedule", opt.value); setImportStatus(`Backup ${opt.value === "off" ? "desactivado" : `programado: ${opt.label}`}`); }} className={`rounded-full px-3 py-1.5 text-[10px] font-medium ${current === opt.value ? "bg-blue-600 text-white" : "border border-blue-200 text-blue-700 hover:bg-blue-100"}`}>{opt.label}</button>
+                );
+              })}
+            </div>
           </div>
-          <p className="mt-2 text-[9px] text-muted-foreground">La sincronización real con Google Drive requiere Composio.dev conectado en Ajustes → Conectores. Los backups manuales funcionan sin conexión.</p>
+
+          {/* Permissions */}
+          <div className="mb-3">
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Permisos de backup</label>
+            <div className="space-y-1.5">
+              {[
+                { key: "export", label: "Exportar datos", desc: "Quién puede descargar backups" },
+                { key: "import", label: "Restaurar datos", desc: "Quién puede restaurar un backup (sobreescribe)" },
+                { key: "drive", label: "Sincronizar Drive", desc: "Quién puede subir/bajar de Google Drive" },
+              ].map(perm => {
+                const current = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("localrank_backup_permissions") || "{}") : {};
+                return (
+                  <div key={perm.key} className="flex items-center justify-between rounded border border-blue-100 px-3 py-2">
+                    <div>
+                      <p className="text-xs font-medium">{perm.label}</p>
+                      <p className="text-[9px] text-muted-foreground">{perm.desc}</p>
+                    </div>
+                    <select defaultValue={current[perm.key] || "owner"} onChange={e => { const perms = JSON.parse(localStorage.getItem("localrank_backup_permissions") || "{}"); perms[perm.key] = e.target.value; localStorage.setItem("localrank_backup_permissions", JSON.stringify(perms)); }} className="rounded border px-2 py-1 text-[10px]">
+                      <option value="owner">Solo propietario</option>
+                      <option value="admin">Admin+</option>
+                      <option value="manager">Manager+</option>
+                      <option value="all">Todos</option>
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={() => { handleExportData(); setImportStatus("✅ Backup exportado. Para subirlo a Drive, conecta Composio."); }} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📤 Subir a Drive</button>
+            <button onClick={() => importRef.current?.click()} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">📥 Restaurar desde Drive</button>
+            <button onClick={() => { handleExportData(); setImportStatus("✅ Backup manual creado"); }} className="flex items-center gap-1.5 rounded border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">💾 Backup manual ahora</button>
+          </div>
+          <p className="mt-2 text-[9px] text-muted-foreground">La sincronización con Google Drive requiere Composio.dev conectado en Ajustes → Conectores.</p>
         </div>
       </div>
 
