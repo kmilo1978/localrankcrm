@@ -13,7 +13,7 @@ const SEED: McpServer[] = [
 const POPULAR_SERVERS = [
   { name: "supabase", command: "npx", args: "supabase-mcp-server@latest", desc: "Acceso a tu base de datos Supabase", envKeys: [{ key: "SUPABASE_URL", placeholder: "https://xxx.supabase.co", required: true }, { key: "SUPABASE_KEY", placeholder: "eyJhbGci...", required: true }] },
   { name: "obsidian", command: "npx", args: "obsidian-mcp-server@latest", desc: "Obsidian Vault — Super cerebro: notas, knowledge base, procesos", envKeys: [{ key: "OBSIDIAN_VAULT_PATH", placeholder: "C:/Users/tu-user/Obsidian/MiVault", required: true }, { key: "OBSIDIAN_API_PORT", placeholder: "27123", required: false }] },
-  { name: "hermes-agent", command: "npx", args: "hermes-mcp@latest", desc: "Hermes Agent — Agente IA multicanal (Telegram, Discord, Slack)", envKeys: [{ key: "HERMES_API_URL", placeholder: "http://localhost:3001", required: true }, { key: "HERMES_API_KEY", placeholder: "tu-api-key", required: true }] },
+  { name: "hermes", command: "npx", args: "-y @modelcontextprotocol/server-filesystem /path/to/dir", desc: "Hermes — Servidor MCP con acceso al filesystem (leer, escribir, buscar archivos)", envKeys: [{ key: "HERMES_DIR", placeholder: "C:/Users/tu-user/Projects o /path/to/dir", required: true }] },
   { name: "openclaw", command: "npx", args: "openclaw-mcp-server@latest", desc: "OpenClaw — Gateway agentes IA (WhatsApp, Teams, Discord)", envKeys: [{ key: "OPENCLAW_URL", placeholder: "http://localhost:4000", required: true }, { key: "OPENCLAW_TOKEN", placeholder: "tu-token", required: true }] },
   { name: "github", command: "npx", args: "@anthropic/mcp-github-server", desc: "Integración con GitHub repos", envKeys: [{ key: "GITHUB_PERSONAL_ACCESS_TOKEN", placeholder: "ghp_xxxxxxxxxxxx", required: true }] },
   { name: "slack", command: "npx", args: "@anthropic/mcp-slack-server", desc: "Enviar y leer mensajes de Slack", envKeys: [{ key: "SLACK_BOT_TOKEN", placeholder: "xoxb-xxxxxxxxx", required: true }] },
@@ -40,8 +40,12 @@ export default function McpSettingsPage() {
   function toggleServer(id: string) { save(servers.map((s) => s.id === id ? { ...s, enabled: !s.enabled, status: (!s.enabled ? "running" : "stopped") as McpServer["status"] } : s)); }
   function deleteServer(id: string) { save(servers.filter((s) => s.id !== id)); }
   function addFromPopular(p: typeof POPULAR_SERVERS[0], envValues: Record<string, string>) {
-    const envStr = Object.entries(envValues).filter(([,v]) => v.trim()).map(([k,v]) => `${k}=${v}`).join(",");
-    save([...servers, { id: generateId(), name: p.name, command: p.command, args: p.args, env: envStr, enabled: true, status: "running" }]);
+    const envStr = Object.entries(envValues).filter(([k, v]) => v.trim() && k !== "HERMES_DIR").map(([k,v]) => `${k}=${v}`).join(",");
+    // For hermes, the dir goes into args, not env
+    const finalArgs = p.name === "hermes" && envValues["HERMES_DIR"] 
+      ? `-y @modelcontextprotocol/server-filesystem ${envValues["HERMES_DIR"]}` 
+      : p.args;
+    save([...servers, { id: generateId(), name: p.name, command: p.command, args: finalArgs, env: envStr, enabled: true, status: "running" }]);
     setConfiguring(null);
   }
   function updateServerEnv(id: string, env: string) { save(servers.map(s => s.id === id ? { ...s, env } : s)); }
