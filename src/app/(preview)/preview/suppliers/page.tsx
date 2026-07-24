@@ -25,7 +25,10 @@ export default function SuppliersPage() {
   const [filterTag, setFilterTag] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editSup, setEditSup] = useState<Supplier | null>(null);
-  const [form, setForm] = useState({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia", tags: "" });
+  const [form, setForm] = useState({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia" });
+  const [formTags, setFormTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
@@ -38,22 +41,33 @@ export default function SuppliersPage() {
 
   function addSupplier() {
     if (!form.name.trim()) return;
-    const s: Supplier = { id: generateId(), name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, rating: 3, logo: "", tags: form.tags.split(",").map(t => t.trim()).filter(Boolean), notes: [], createdAt: new Date().toISOString().split("T")[0]! };
+    const s: Supplier = { id: generateId(), name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, rating: 3, logo: "", tags: formTags, notes: [], createdAt: new Date().toISOString().split("T")[0]! };
     save([s, ...suppliers]); resetForm(); setShowForm(false); notify("Proveedor agregado");
   }
 
   function openEdit(s: Supplier) {
     setEditSup(s);
-    setForm({ name: s.name, contact: s.contact, phone: s.phone, email: s.email, website: s.website, category: s.category, tags: s.tags.join(", ") });
+    setForm({ name: s.name, contact: s.contact, phone: s.phone, email: s.email, website: s.website, category: s.category });
+    setFormTags(s.tags);
   }
 
   function handleUpdate() {
     if (!editSup) return;
-    save(suppliers.map(s => s.id === editSup.id ? { ...s, name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, tags: form.tags.split(",").map(t => t.trim()).filter(Boolean) } : s));
+    save(suppliers.map(s => s.id === editSup.id ? { ...s, name: form.name, contact: form.contact, phone: form.phone, email: form.email, website: form.website, category: form.category, tags: formTags } : s));
     setEditSup(null); resetForm(); notify("Actualizado");
   }
 
-  function resetForm() { setForm({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia", tags: "" }); }
+  function resetForm() { setForm({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia" }); setFormTags([]); setTagInput(""); }
+
+  function addFormTag(tag: string) {
+    const clean = tag.trim();
+    if (!clean || formTags.includes(clean)) return;
+    setFormTags([...formTags, clean]);
+    setTagInput("");
+    setShowTagSuggestions(false);
+  }
+
+  function removeFormTag(tag: string) { setFormTags(formTags.filter(t => t !== tag)); }
   function deleteSupplier(id: string) { save(suppliers.filter(s => s.id !== id)); }
 
   function duplicateSupplier(s: Supplier) {
@@ -218,10 +232,44 @@ export default function SuppliersPage() {
                 <input value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="Email" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
                 <input value={form.website} onChange={e => setForm({...form, website: e.target.value})} placeholder="Website" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none">{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                <input value={form.tags} onChange={e => setForm({...form, tags: e.target.value})} placeholder="Tags (separar con ,)" className="rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none">{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+
+              {/* Tags with autocomplete */}
+              <div className="relative">
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Etiquetas</label>
+                {formTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {formTags.map(t => (
+                      <span key={t} className="flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
+                        <Tag className="h-2.5 w-2.5" />{t}
+                        <button onClick={() => removeFormTag(t)} className="hover:text-red-500"><X className="h-2.5 w-2.5" /></button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  value={tagInput}
+                  onChange={e => { setTagInput(e.target.value); setShowTagSuggestions(true); }}
+                  onFocus={() => setShowTagSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowTagSuggestions(false), 150)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addFormTag(tagInput); }
+                    if (e.key === "Backspace" && !tagInput && formTags.length > 0) removeFormTag(formTags[formTags.length - 1]!);
+                  }}
+                  placeholder="Escribe y presiona Enter..."
+                  className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none"
+                />
+                {showTagSuggestions && allTags.filter(t => !formTags.includes(t) && (!tagInput || t.toLowerCase().includes(tagInput.toLowerCase()))).length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full max-h-36 overflow-y-auto rounded-md border bg-white shadow-lg">
+                    {allTags.filter(t => !formTags.includes(t) && (!tagInput || t.toLowerCase().includes(tagInput.toLowerCase()))).slice(0, 8).map(t => (
+                      <button key={t} type="button" onMouseDown={e => { e.preventDefault(); addFormTag(t); }} className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs hover:bg-brand-tint">
+                        <Tag className="h-3 w-3 text-brand" />{t}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
               <button onClick={editSup ? handleUpdate : addSupplier} disabled={!form.name.trim()} className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">{editSup ? "Guardar" : "Agregar proveedor"}</button>
             </div>
           </div>
