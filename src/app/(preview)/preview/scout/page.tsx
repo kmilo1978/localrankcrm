@@ -114,12 +114,41 @@ export default function ScoutPage() {
         showToast(`❌ Error: ${err instanceof Error ? err.message : "No se pudo conectar con Scout API"}`);
       }
     } else {
-      // Demo mode
-      await new Promise(r => setTimeout(r, 2000));
-      const demoFiltered = DEMO_RESULTS.filter(r => r.platform === platform || bulkMode).slice(0, bulkMode ? 6 : 3);
-      setResults(prev => [...demoFiltered, ...prev]);
-      localStorage.setItem("localrank_scout_results", JSON.stringify([...demoFiltered, ...results]));
-      showToast(`✓ ${demoFiltered.length} leads (modo demo)`);
+      // Demo mode — generate realistic data based on input username
+      await new Promise(r => setTimeout(r, 1500));
+      const usernames = bulkMode ? bulkList.split("\n").map(u => u.trim()).filter(Boolean) : [username.trim()];
+      const bios = ["CEO & Founder", "Marketing Digital | Consultor", "Desarrollador Full Stack", "Diseñadora UX/UI", "Growth Hacker | SaaS", "Community Manager", "Emprendedor | Speaker", "Data Scientist", "Product Manager", "Freelancer & Creador de contenido"];
+      const companies = ["", "TechCorp", "Digital Media", "StartupX", "AgenciaPro", "InnovateHQ", "CloudBase", "NextLevel", "CreativeLab", "DataVentures"];
+      const domains = ["gmail.com", "outlook.com", "hotmail.com"];
+
+      const generated: ScoutResult[] = usernames.map(u => {
+        const clean = u.replace(/[@_.-]/g, " ").trim();
+        const parts = clean.split(/\s+/);
+        const firstName = parts[0] || u;
+        const lastName = parts[1] || "";
+        const displayName = lastName ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1)} ${lastName.charAt(0).toUpperCase() + lastName.slice(1)}` : firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        const randBio = bios[Math.floor(Math.random() * bios.length)]!;
+        const randCompany = companies[Math.floor(Math.random() * companies.length)]!;
+        const score = Math.floor(Math.random() * 40) + 55;
+        const followers = Math.floor(Math.random() * 50000) + 200;
+        const hasEmail = Math.random() > 0.3;
+        const domain = randCompany ? `${randCompany.toLowerCase().replace(/\s/g, "")}.com` : domains[Math.floor(Math.random() * domains.length)]!;
+        const email = hasEmail ? `${firstName.toLowerCase()}${lastName ? "." + lastName.toLowerCase() : ""}@${domain}` : "";
+        const hasPhone = Math.random() > 0.6;
+        const phone = hasPhone ? `+57 3${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)} ${Math.floor(Math.random() * 900) + 100} ${Math.floor(Math.random() * 9000) + 1000}` : "";
+        const website = randCompany ? `${randCompany.toLowerCase().replace(/\s/g, "")}.com` : "";
+
+        return {
+          id: generateId(), platform, username: u, name: displayName, bio: randBio,
+          followers, email, phone, website, company: randCompany, score,
+          verified: hasEmail && score > 75, links: website ? [`https://${website}`] : [],
+          scrapedAt: new Date().toISOString().split("T")[0]!,
+        };
+      });
+
+      setResults(prev => [...generated, ...prev]);
+      localStorage.setItem("localrank_scout_results", JSON.stringify([...generated, ...results]));
+      showToast(`✓ ${generated.length} leads encontrados (modo demo — conecta Scout API para datos reales)`);
     }
     setLoading(false);
     setUsername("");
