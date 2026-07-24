@@ -110,11 +110,12 @@ export default function SuppliersPage() {
                   {sup.logo ? <img src={sup.logo} alt="" className="h-9 w-9 rounded-lg object-cover" /> : <Building2 className="h-4 w-4 text-brand" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-sm font-semibold truncate">{sup.name}</h4>
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-gray-600">{sup.category}</span>
+                    {sup.tags.map((t, i) => <span key={i} className="flex items-center gap-0.5 rounded-full bg-brand/10 px-2 py-0.5 text-[9px] font-medium text-brand"><Tag className="h-2.5 w-2.5" />{t}</span>)}
                   </div>
-                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
                     <span>{sup.contact}</span>
                     {sup.phone && <span className="flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" />{sup.phone}</span>}
                     {sup.email && <span className="flex items-center gap-0.5"><Mail className="h-2.5 w-2.5" />{sup.email}</span>}
@@ -139,7 +140,6 @@ export default function SuppliersPage() {
                     <button onClick={async () => { const img = await openImagePicker(); if (img) save(suppliers.map(s => s.id === sup.id ? {...s, logo: img} : s)); }} className="flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Logo</button>
                     {sup.logo && <><img src={sup.logo} alt="" className="h-8 w-8 rounded object-cover border" /><button onClick={() => save(suppliers.map(s => s.id === sup.id ? {...s, logo: ""} : s))} className="text-[9px] text-red-500">Quitar</button></>}
                   </div>
-                  {sup.tags.length > 0 && <div className="flex gap-1 flex-wrap">{sup.tags.map((t, i) => <span key={i} className="rounded-full bg-brand/10 px-2 py-0.5 text-[9px] font-medium text-brand">{t}</span>)}</div>}
                   {sup.website && <a href={sup.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand hover:underline">{sup.website}</a>}
                   <div>
                     <p className="text-[10px] font-semibold uppercase text-muted-foreground mb-2">Notas ({sup.notes.length})</p>
