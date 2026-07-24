@@ -57,14 +57,14 @@ import { getActiveWorkspaceId, loadFromStorage } from "@/lib/local-storage";
 import { useEvents } from "@/components/use-events";
 
 // Navigation organized by categories (as per architecture)
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: boolean };
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; badge?: boolean | string };
 type NavCategory = { label: string; items: NavItem[] };
 
 const NAV_CATEGORIES: NavCategory[] = [
   { label: "Prospección", items: [
     { href: "/radar", label: "Radar", icon: Bookmark },
     { href: "/lead-finder", label: "Lead Finder B2B", icon: Users },
-    { href: "/scout", label: "Scout Scraper", icon: Search },
+    { href: "/scout", label: "Scout Scraper", icon: Search, badge: "soon" },
     { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
     { href: "/email-finder", label: "Email Finder", icon: Mail },
     { href: "/enrichment", label: "Enriquecimiento", icon: Database },
@@ -267,7 +267,8 @@ export function AppNav({
                       <Link key={item.href} href={href} className={cn("flex items-center gap-[10px] rounded-lg px-3 py-1.5 text-xs font-medium transition-colors", active ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-text)]" : "text-white/60 hover:text-white hover:bg-white/8")}>
                         <item.icon className={cn("h-[14px] w-[14px]", active ? "text-[var(--sidebar-active-text)]" : "text-white/50")} strokeWidth={1.5} />
                         <span className="flex-1">{item.label}</span>
-                        {"badge" in item && item.badge && unread > 0 && <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-white/20 px-1 text-[9px] font-semibold text-white">{unread}</span>}
+                        {item.badge === true && unread > 0 && <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-white/20 px-1 text-[9px] font-semibold text-white">{unread}</span>}
+                        {typeof item.badge === "string" && <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-bold uppercase text-amber-300">{item.badge}</span>}
                       </Link>
                     );
                   })}
