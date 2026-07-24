@@ -22,12 +22,15 @@ export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
+  const [filterTag, setFilterTag] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editSup, setEditSup] = useState<Supplier | null>(null);
   const [form, setForm] = useState({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia", tags: "" });
   const [expanded, setExpanded] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 20;
 
   useEffect(() => { setSuppliers(loadFromStorage("suppliers", SEED)); }, []);
   function save(u: Supplier[]) { setSuppliers(u); saveToStorage("suppliers", u); }
@@ -77,9 +80,18 @@ export default function SuppliersPage() {
     save(suppliers.map(s => s.id === id ? { ...s, rating } : s));
   }
 
+  const allTags = [...new Set(suppliers.flatMap(s => s.tags))].sort();
+
   const filtered = suppliers
     .filter(s => filterCat === "all" || s.category === filterCat)
+    .filter(s => filterTag === "all" || s.tags.includes(filterTag))
     .filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.contact.toLowerCase().includes(search.toLowerCase()) || s.tags.some(t => t.toLowerCase().includes(search.toLowerCase())));
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setPage(1); }, [search, filterCat, filterTag]);
 
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6">
@@ -87,23 +99,42 @@ export default function SuppliersPage() {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2"><Building2 className="h-5 w-5 text-brand" />Proveedores</h1>
-            <p className="text-xs text-muted-foreground">{suppliers.length} proveedores registrados</p>
+            <p className="text-xs text-muted-foreground">{suppliers.length} proveedores registrados{filtered.length !== suppliers.length ? ` · ${filtered.length} filtrados` : ""}</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-2 text-xs font-medium text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" />Nuevo proveedor</button>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <div className="relative"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-44 rounded border py-1.5 pl-8 pr-3 text-xs focus:border-brand focus:outline-none" /></div>
-          <div className="flex gap-1 flex-wrap">
-            <button onClick={() => setFilterCat("all")} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === "all" ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>Todos</button>
-            {CATEGORIES.map(c => <button key={c} onClick={() => setFilterCat(c)} className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${filterCat === c ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{c}</button>)}
-          </div>
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
+          <div className="relative"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, contacto o etiqueta..." className="w-64 rounded border py-1.5 pl-8 pr-3 text-xs focus:border-brand focus:outline-none" /></div>
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value)} className="rounded border px-2.5 py-1.5 text-[10px] focus:border-brand focus:outline-none">
+            <option value="all">Todas las categorías</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filterTag} onChange={e => setFilterTag(e.target.value)} className="rounded border px-2.5 py-1.5 text-[10px] focus:border-brand focus:outline-none">
+            <option value="all">Todas las etiquetas</option>
+            {allTags.map(t => <option key={t} value={t}>🏷️ {t}</option>)}
+          </select>
+          {(filterCat !== "all" || filterTag !== "all" || search) && (
+            <button onClick={() => { setFilterCat("all"); setFilterTag("all"); setSearch(""); }} className="text-[10px] text-muted-foreground hover:text-red-500 underline">Limpiar filtros</button>
+          )}
         </div>
+
+        {/* Popular tags quick-filter */}
+        {allTags.length > 0 && (
+          <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+            <span className="text-[9px] text-muted-foreground">Etiquetas:</span>
+            {allTags.slice(0, 12).map(t => (
+              <button key={t} onClick={() => setFilterTag(filterTag === t ? "all" : t)} className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[9px] font-medium transition-colors ${filterTag === t ? "bg-brand text-white" : "bg-brand/10 text-brand hover:bg-brand/20"}`}>
+                <Tag className="h-2.5 w-2.5" />{t}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Suppliers list */}
         <div className="space-y-3">
-          {filtered.map(sup => (
+          {paginated.map(sup => (
             <div key={sup.id} className="rounded-lg border bg-white overflow-hidden">
               <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50" onClick={() => setExpanded(expanded === sup.id ? null : sup.id)}>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 shrink-0">
@@ -160,7 +191,16 @@ export default function SuppliersPage() {
           ))}
         </div>
 
-        {filtered.length === 0 && <div className="py-16 text-center text-muted-foreground text-sm">Sin proveedores. Agrega uno con el boton "Nuevo proveedor".</div>}
+        {filtered.length === 0 && <div className="py-16 text-center text-muted-foreground text-sm">{suppliers.length === 0 ? `Sin proveedores. Agrega uno con el boton "Nuevo proveedor".` : "Sin resultados para estos filtros."}</div>}
+
+        {/* Pagination */}
+        {filtered.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Anterior</button>
+            <span className="text-xs text-muted-foreground">Página {page} de {totalPages} ({filtered.length} proveedores)</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-40 hover:bg-gray-50">Siguiente</button>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
