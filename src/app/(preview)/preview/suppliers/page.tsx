@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Building2, ClipboardCopy, Copy, Edit3, ImagePlus, Mail, Phone, Plus, Search, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
+import { TagInput } from "@/components/tag-input";
 
 type SupplierNote = { id: string; text: string; date: string };
 type Supplier = {
@@ -27,8 +28,6 @@ export default function SuppliersPage() {
   const [editSup, setEditSup] = useState<Supplier | null>(null);
   const [form, setForm] = useState({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia" });
   const [formTags, setFormTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState<Record<string, string>>({});
   const [toast, setToast] = useState("");
@@ -57,17 +56,7 @@ export default function SuppliersPage() {
     setEditSup(null); resetForm(); notify("Actualizado");
   }
 
-  function resetForm() { setForm({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia" }); setFormTags([]); setTagInput(""); }
-
-  function addFormTag(tag: string) {
-    const clean = tag.trim();
-    if (!clean || formTags.includes(clean)) return;
-    setFormTags([...formTags, clean]);
-    setTagInput("");
-    setShowTagSuggestions(false);
-  }
-
-  function removeFormTag(tag: string) { setFormTags(formTags.filter(t => t !== tag)); }
+  function resetForm() { setForm({ name: "", contact: "", phone: "", email: "", website: "", category: "Tecnologia" }); setFormTags([]); }
   function deleteSupplier(id: string) { save(suppliers.filter(s => s.id !== id)); }
 
   function duplicateSupplier(s: Supplier) {
@@ -235,39 +224,9 @@ export default function SuppliersPage() {
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none">{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
 
               {/* Tags with autocomplete */}
-              <div className="relative">
+              <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">Etiquetas</label>
-                {formTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-1.5">
-                    {formTags.map(t => (
-                      <span key={t} className="flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
-                        <Tag className="h-2.5 w-2.5" />{t}
-                        <button onClick={() => removeFormTag(t)} className="hover:text-red-500"><X className="h-2.5 w-2.5" /></button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <input
-                  value={tagInput}
-                  onChange={e => { setTagInput(e.target.value); setShowTagSuggestions(true); }}
-                  onFocus={() => setShowTagSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowTagSuggestions(false), 150)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addFormTag(tagInput); }
-                    if (e.key === "Backspace" && !tagInput && formTags.length > 0) removeFormTag(formTags[formTags.length - 1]!);
-                  }}
-                  placeholder="Escribe y presiona Enter..."
-                  className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none"
-                />
-                {showTagSuggestions && allTags.filter(t => !formTags.includes(t) && (!tagInput || t.toLowerCase().includes(tagInput.toLowerCase()))).length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full max-h-36 overflow-y-auto rounded-md border bg-white shadow-lg">
-                    {allTags.filter(t => !formTags.includes(t) && (!tagInput || t.toLowerCase().includes(tagInput.toLowerCase()))).slice(0, 8).map(t => (
-                      <button key={t} type="button" onMouseDown={e => { e.preventDefault(); addFormTag(t); }} className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs hover:bg-brand-tint">
-                        <Tag className="h-3 w-3 text-brand" />{t}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <TagInput value={formTags} onChange={setFormTags} suggestions={allTags} />
               </div>
 
               <button onClick={editSup ? handleUpdate : addSupplier} disabled={!form.name.trim()} className="w-full rounded-md bg-brand py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">{editSup ? "Guardar" : "Agregar proveedor"}</button>

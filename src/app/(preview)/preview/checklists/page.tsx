@@ -47,6 +47,7 @@ export default function ChecklistsPage() {
   const [newCategory, setNewCategory] = useState("General");
   const [newProject, setNewProject] = useState("");
   const [newTags, setNewTags] = useState<string[]>([]);
+  const [tagSearch, setTagSearch] = useState("");
   const [pasteTitle, setPasteTitle] = useState("");
   const [pasteClient, setPasteClient] = useState("");
   const [pasteText, setPasteText] = useState("");
@@ -290,9 +291,22 @@ export default function ChecklistsPage() {
               {/* Tags selector */}
               <div>
                 <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                {newTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {newTags.map(name => { const t = tags.find(c => c.name === name); return (
+                      <span key={name} className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: t?.color || "#78716c" }}>
+                        {name}
+                        <button type="button" onClick={() => setNewTags(newTags.filter(x => x !== name))} className="hover:opacity-70"><X className="h-2.5 w-2.5" /></button>
+                      </span>
+                    ); })}
+                  </div>
+                )}
+                {tags.length > 6 && (
+                  <input value={tagSearch} onChange={e => setTagSearch(e.target.value)} placeholder="Buscar etiqueta..." className="w-full rounded border px-2.5 py-1.5 text-xs mb-1.5 focus:border-brand focus:outline-none" />
+                )}
                 <div className="flex flex-wrap gap-1">
-                  {tags.map(t => (
-                    <button key={t.id} type="button" onClick={() => setNewTags(newTags.includes(t.name) ? newTags.filter(x => x !== t.name) : [...newTags, t.name])} className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${newTags.includes(t.name) ? "text-white" : "border"}`} style={newTags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                  {tags.filter(t => !newTags.includes(t.name) && (!tagSearch || t.name.toLowerCase().includes(tagSearch.toLowerCase()))).map(t => (
+                    <button key={t.id} type="button" onClick={() => { setNewTags([...newTags, t.name]); setTagSearch(""); }} className="rounded-full px-2 py-0.5 text-[9px] font-medium border" style={{ borderColor: t.color, color: t.color }}>
                       {t.name}
                     </button>
                   ))}

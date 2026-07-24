@@ -45,6 +45,8 @@ export default function NotesPage() {
   const [editForm, setEditForm] = useState({ title: "", content: "", image: "", relatedTo: "", category: "", tags: [] as string[] });
   const [toast, setToast] = useState("");
   const [editingTag, setEditingTag] = useState<CrmTag | null>(null);
+  const [tagSearch, setTagSearch] = useState("");
+  const [editTagSearch, setEditTagSearch] = useState("");
 
   useEffect(() => {
     setNotes(loadFromStorage("notes", SEED_NOTES));
@@ -235,9 +237,22 @@ export default function NotesPage() {
               {/* Tag selector */}
               <div>
                 <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                {form.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {form.tags.map(name => { const t = categories.find(c => c.name === name); return (
+                      <span key={name} className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: t?.color || "#78716c" }}>
+                        {name}
+                        <button type="button" onClick={() => setForm({...form, tags: form.tags.filter(x => x !== name)})} className="hover:opacity-70"><X className="h-2.5 w-2.5" /></button>
+                      </span>
+                    ); })}
+                  </div>
+                )}
+                {categories.length > 6 && (
+                  <input value={tagSearch} onChange={e => setTagSearch(e.target.value)} placeholder="Buscar etiqueta..." className="w-full rounded border px-2.5 py-1.5 text-xs mb-1.5 focus:border-brand focus:outline-none" />
+                )}
                 <div className="flex flex-wrap gap-1.5">
-                  {categories.map(t => (
-                    <button key={t.id} type="button" onClick={() => { const has = form.tags.includes(t.name); setForm({...form, tags: has ? form.tags.filter(x => x !== t.name) : [...form.tags, t.name]}); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${form.tags.includes(t.name) ? "text-white scale-105" : "border opacity-70 hover:opacity-100"}`} style={form.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                  {categories.filter(t => !form.tags.includes(t.name) && (!tagSearch || t.name.toLowerCase().includes(tagSearch.toLowerCase()))).map(t => (
+                    <button key={t.id} type="button" onClick={() => { setForm({...form, tags: [...form.tags, t.name]}); setTagSearch(""); }} className="rounded-full px-2.5 py-1 text-[10px] font-medium border opacity-70 hover:opacity-100 transition-all" style={{ borderColor: t.color, color: t.color }}>
                       {t.name}
                     </button>
                   ))}
@@ -393,9 +408,22 @@ export default function NotesPage() {
               {/* Edit tags */}
               <div>
                 <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Etiquetas</label>
+                {editForm.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {editForm.tags.map(name => { const t = categories.find(c => c.name === name); return (
+                      <span key={name} className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-white" style={{ backgroundColor: t?.color || "#78716c" }}>
+                        {name}
+                        <button type="button" onClick={() => setEditForm({...editForm, tags: editForm.tags.filter(x => x !== name)})} className="hover:opacity-70"><X className="h-2.5 w-2.5" /></button>
+                      </span>
+                    ); })}
+                  </div>
+                )}
+                {categories.length > 6 && (
+                  <input value={editTagSearch} onChange={e => setEditTagSearch(e.target.value)} placeholder="Buscar etiqueta..." className="w-full rounded border px-2.5 py-1.5 text-xs mb-1.5 focus:border-brand focus:outline-none" />
+                )}
                 <div className="flex flex-wrap gap-1.5">
-                  {categories.map(t => (
-                    <button key={t.id} type="button" onClick={() => { const has = editForm.tags.includes(t.name); setEditForm({...editForm, tags: has ? editForm.tags.filter(x => x !== t.name) : [...editForm.tags, t.name]}); }} className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-all ${editForm.tags.includes(t.name) ? "text-white scale-105" : "border opacity-70 hover:opacity-100"}`} style={editForm.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>
+                  {categories.filter(t => !editForm.tags.includes(t.name) && (!editTagSearch || t.name.toLowerCase().includes(editTagSearch.toLowerCase()))).map(t => (
+                    <button key={t.id} type="button" onClick={() => { setEditForm({...editForm, tags: [...editForm.tags, t.name]}); setEditTagSearch(""); }} className="rounded-full px-2.5 py-1 text-[10px] font-medium border opacity-70 hover:opacity-100 transition-all" style={{ borderColor: t.color, color: t.color }}>
                       {t.name}
                     </button>
                   ))}

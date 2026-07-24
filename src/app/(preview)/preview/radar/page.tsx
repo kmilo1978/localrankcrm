@@ -56,6 +56,7 @@ export default function RadarPage() {
   const [showAddFolder, setShowAddFolder] = useState(false);
   const [editingClip, setEditingClip] = useState<WebClip | null>(null);
   const [clipForm, setClipForm] = useState({ url: "", title: "", description: "", folderId: "", notes: "", email: "", phone: "" });
+  const [editTagSearch, setEditTagSearch] = useState("");
   const [folderForm, setFolderForm] = useState({ name: "", color: COLORS[0]! });
 
   useEffect(() => {
@@ -356,8 +357,21 @@ export default function RadarPage() {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Etiquetas</label>
-                  <div className="flex flex-wrap gap-1">{tags.map(t => (
-                    <button key={t.id} onClick={() => setEditingClip({...editingClip, tags: editingClip.tags.includes(t.name) ? editingClip.tags.filter(x => x !== t.name) : [...editingClip.tags, t.name]})} className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${editingClip.tags.includes(t.name) ? "text-white" : "border"}`} style={editingClip.tags.includes(t.name) ? { backgroundColor: t.color } : { borderColor: t.color, color: t.color }}>{t.name}</button>
+                  {editingClip.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      {editingClip.tags.map(name => { const t = tags.find(c => c.name === name); return (
+                        <span key={name} className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium text-white" style={{ backgroundColor: t?.color || "#78716c" }}>
+                          {name}
+                          <button onClick={() => setEditingClip({...editingClip, tags: editingClip.tags.filter(x => x !== name)})} className="hover:opacity-70"><X className="h-2.5 w-2.5" /></button>
+                        </span>
+                      ); })}
+                    </div>
+                  )}
+                  {tags.length > 6 && (
+                    <input value={editTagSearch} onChange={e => setEditTagSearch(e.target.value)} placeholder="Buscar etiqueta..." className="w-full rounded border px-2.5 py-1.5 text-xs mb-1.5 focus:border-brand focus:outline-none" />
+                  )}
+                  <div className="flex flex-wrap gap-1">{tags.filter(t => !editingClip.tags.includes(t.name) && (!editTagSearch || t.name.toLowerCase().includes(editTagSearch.toLowerCase()))).map(t => (
+                    <button key={t.id} onClick={() => { setEditingClip({...editingClip, tags: [...editingClip.tags, t.name]}); setEditTagSearch(""); }} className="rounded-full px-2 py-0.5 text-[9px] font-medium border" style={{ borderColor: t.color, color: t.color }}>{t.name}</button>
                   ))}</div>
                 </div>
                 <div className="flex gap-2 pt-2">
