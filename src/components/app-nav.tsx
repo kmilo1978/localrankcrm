@@ -35,6 +35,7 @@ import {
   Menu,
   MessageSquare,
   Pin,
+  Search,
   Send,
   Settings,
   Settings2,
@@ -63,6 +64,7 @@ const NAV_CATEGORIES: NavCategory[] = [
   { label: "Prospección", items: [
     { href: "/radar", label: "Radar", icon: Bookmark },
     { href: "/lead-finder", label: "Lead Finder B2B", icon: Users },
+    { href: "/scout", label: "Scout Scraper", icon: Search },
     { href: "/cold-contacts", label: "Prospección", icon: Thermometer },
     { href: "/email-finder", label: "Email Finder", icon: Mail },
     { href: "/enrichment", label: "Enriquecimiento", icon: Database },
