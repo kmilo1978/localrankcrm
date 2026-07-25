@@ -32,6 +32,7 @@ const NAV_PAGES: SearchResult[] = [
   { title: "Radar", description: "Captura web + extensión", href: "/preview/radar", module: "Prospección", icon: "📡" },
   { title: "Lead Finder B2B", description: "Buscar leads con IA", href: "/preview/lead-finder", module: "Prospección", icon: "🔍" },
   { title: "Scout Scraper", description: "Scrapear perfiles de 8 plataformas", href: "/preview/scout", module: "Prospección", icon: "📡" },
+  { title: "LinkedIn", description: "Perfiles capturados desde la extensión", href: "/preview/linkedin", module: "Prospección", icon: "💼" },
   { title: "Email Finder", description: "Encontrar y verificar emails", href: "/preview/email-finder", module: "Prospección", icon: "📧" },
   { title: "Enriquecimiento", description: "Templates de datos", href: "/preview/enrichment", module: "Prospección", icon: "⚡" },
   { title: "Social Outreach", description: "LinkedIn, Twitter, Instagram", href: "/preview/social-outreach", module: "Prospección", icon: "💼" },
