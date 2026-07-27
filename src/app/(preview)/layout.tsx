@@ -2,6 +2,7 @@ import { DEFAULT_BRANDING } from "@/lib/branding";
 import { AppNav } from "@/components/app-nav";
 import { PageHelp } from "@/components/page-help";
 import { AiAssistant } from "@/components/ai-assistant";
+import { BackupReminder } from "@/components/backup-reminder";
 import { BlurWrapper } from "@/components/blur-wrapper";
 import { GlobalSearch } from "@/components/global-search";
 import { UpdateBanner } from "@/components/update-banner";
@@ -24,6 +25,7 @@ export default function PreviewLayout({
       <GlobalSearch />
       <PageHelp />
       <AiAssistant />
+      <BackupReminder />
     </div>
   );
 }
