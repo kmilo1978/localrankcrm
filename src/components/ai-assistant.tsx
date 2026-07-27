@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Bot, Minimize2, Send, Sparkles, X } from "lucide-react";
+import { loadFromStorage } from "@/lib/local-storage";
 
 type Message = {
   id: string;
@@ -11,11 +12,30 @@ type Message = {
 };
 
 const SUGGESTIONS = [
-  "¿Cuántos leads tengo activos?",
+  "¿Cuántos contactos tengo?",
   "¿Cómo va el pipeline?",
-  "Resumen de contactos recientes",
-  "¿Quién está en etapa de negociación?",
+  "Resumen de leads activos",
+  "¿Quién es Cristian Botero?",
 ];
+
+/** Collect CRM data from localStorage to send as context to the AI. */
+function getCrmContext(): Record<string, unknown> {
+  const contacts = loadFromStorage("contacts", []);
+  const pipelineStages = loadFromStorage("pipeline_stages", []);
+  const pipelineLeads = loadFromStorage("pipeline_leads", []);
+  const inboxConversations = loadFromStorage("inbox_conversations", []);
+  const calendarAppointments = loadFromStorage("calendar_appointments", []);
+  const focusTasks = loadFromStorage("focus_tasks", []);
+
+  return {
+    contacts,
+    pipelineStages,
+    pipelineLeads,
+    inboxConversations,
+    calendarAppointments,
+    focusTasks,
+  };
+}
 
 export function AiAssistant() {
   const [open, setOpen] = useState(false);
@@ -24,7 +44,7 @@ export function AiAssistant() {
       id: "welcome",
       role: "assistant",
       content:
-        "¡Hola! 👋 Soy tu asistente IA. Pregúntame sobre clientes, leads, pipeline o métricas de tu CRM. Tengo acceso a tus datos reales.",
+        "¡Hola! 👋 Soy tu asistente IA. Pregúntame sobre tus clientes, leads, pipeline o cualquier dato de tu CRM.",
       timestamp: new Date().toLocaleTimeString("es", {
         hour: "2-digit",
         minute: "2-digit",
@@ -57,17 +77,18 @@ export function AiAssistant() {
     setLoading(true);
 
     try {
-      // Build history from recent messages (skip the welcome message)
       const history = messages
         .filter((m) => m.id !== "welcome")
         .slice(-10)
         .map((m) => ({ role: m.role, content: m.content }));
 
+      // Gather CRM data from localStorage
+      const crmContext = getCrmContext();
+
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, crmContext }),
       });
 
       let reply: string;
@@ -76,10 +97,7 @@ export function AiAssistant() {
         const err = await res.json().catch(() => null);
         if (res.status === 503) {
           reply =
-            "⚠️ El asistente IA no está configurado. Agrega GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno de Vercel.";
-        } else if (res.status === 404) {
-          reply =
-            "No se encontró una organización en el sistema. Verifica que la base de datos tenga datos.";
+            "⚠️ El asistente IA no está configurado. Agrega GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno.";
         } else {
           reply =
             err?.error?.message ??
