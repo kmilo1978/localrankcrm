@@ -213,24 +213,27 @@ export default function ContactsPreviewPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <h2 className="font-semibold">Contactos</h2>
-          <span className="text-xs text-muted-foreground">{contacts.filter((c) => !c.archived).length} activos</span>
-          {pendingReminders > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-              <Bell className="h-3 w-3" />{pendingReminders} recordatorio{pendingReminders > 1 ? "s" : ""}
-            </span>
-          )}
+      <header className="sticky top-0 z-10 border-b bg-white px-6 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="font-semibold">Contactos</h2>
+            <span className="text-xs text-muted-foreground">{contacts.filter((c) => !c.archived).length} activos</span>
+            {pendingReminders > 0 && (
+              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                <Bell className="h-3 w-3" />{pendingReminders} recordatorio{pendingReminders > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
+              <Plus className="h-4 w-4" />Nuevo
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="accent-[var(--accent)]" />
-            Archivados
-          </label>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="w-56 rounded-md border bg-white py-2 pl-8 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+            <input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="w-48 rounded-md border bg-white py-2 pl-8 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
           </div>
           {allTags.length > 0 && (
             <select value={filterTag} onChange={(e) => { setFilterTag(e.target.value); setPage(1); }} className="rounded-md border bg-white px-2 py-2 text-xs focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
@@ -238,11 +241,12 @@ export default function ContactsPreviewPage() {
               {allTags.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           )}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="accent-[var(--accent)]" />
+            Archivados
+          </label>
           <button onClick={() => setShowDuplicates(true)} className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100">
             <AlertCircle className="h-3.5 w-3.5" />Duplicados
-          </button>
-          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover transition-colors">
-            <Plus className="h-4 w-4" />Nuevo
           </button>
         </div>
       </header>
