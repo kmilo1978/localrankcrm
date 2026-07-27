@@ -125,14 +125,16 @@ export default function ContactsPreviewPage() {
   }
   function deselectAll() { setSelected(new Set()); }
   function restoreSelected() {
+    const count = selected.size;
     save(contacts.map((c) => selected.has(c.id) ? { ...c, archived: false } : c));
     setSelected(new Set());
-    notify(`${selected.size} contacto${selected.size > 1 ? "s" : ""} restaurado${selected.size > 1 ? "s" : ""}`);
+    notify(`${count} contacto${count > 1 ? "s" : ""} restaurado${count > 1 ? "s" : ""}`);
   }
   function deleteSelected() {
+    const count = selected.size;
     save(contacts.filter((c) => !selected.has(c.id)));
     setSelected(new Set());
-    notify("Contactos eliminados");
+    notify(`${count} contacto${count > 1 ? "s" : ""} eliminado${count > 1 ? "s" : ""}`);
   }
 
   // Custom fields
