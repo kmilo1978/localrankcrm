@@ -39,6 +39,7 @@ export default function ContactsPreviewPage() {
   const [showForm, setShowForm] = useState(false);
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ name: "", phone: "", email: "", company: "", role: "" });
   const [formExtraFields, setFormExtraFields] = useState<{ label: string; value: string }[]>([]);
   // Inline forms - per contact
@@ -101,6 +102,30 @@ export default function ContactsPreviewPage() {
 
   function handleDelete(id: string) { save(contacts.filter((c) => c.id !== id)); if (expanded === id) setExpanded(null); }
   function toggleArchive(id: string) { save(contacts.map((c) => c.id === id ? { ...c, archived: !c.archived } : c)); }
+
+  // Bulk selection
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function selectAll() {
+    const visibleIds = filtered.map((c) => c.id);
+    setSelected(new Set(visibleIds));
+  }
+  function deselectAll() { setSelected(new Set()); }
+  function restoreSelected() {
+    save(contacts.map((c) => selected.has(c.id) ? { ...c, archived: false } : c));
+    setSelected(new Set());
+    notify(`${selected.size} contacto${selected.size > 1 ? "s" : ""} restaurado${selected.size > 1 ? "s" : ""}`);
+  }
+  function deleteSelected() {
+    save(contacts.filter((c) => !selected.has(c.id)));
+    setSelected(new Set());
+    notify("Contactos eliminados");
+  }
 
   // Custom fields
   function getFieldForm(id: string) { return fieldForms[id] || { label: "", value: "" }; }
@@ -186,6 +211,26 @@ export default function ContactsPreviewPage() {
       </header>
 
       <div className="p-6">
+        {/* Bulk action bar when archived view with selections */}
+        {showArchived && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border bg-blue-50 px-4 py-2">
+            <input type="checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={() => selected.size === filtered.length ? deselectAll() : selectAll()} className="accent-[var(--accent)]" />
+            <span className="text-xs font-medium text-blue-700">
+              {selected.size > 0 ? `${selected.size} seleccionado${selected.size > 1 ? "s" : ""}` : "Seleccionar todos"}
+            </span>
+            {selected.size > 0 && (
+              <>
+                <button onClick={restoreSelected} className="ml-auto flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover">
+                  <ArchiveRestore className="h-3.5 w-3.5" />Restaurar a Contactos
+                </button>
+                <button onClick={deleteSelected} className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100">
+                  <Trash2 className="h-3.5 w-3.5" />Eliminar
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {showForm && (
           <div className="mb-6 rounded-lg border bg-white p-5">
             <h3 className="mb-4 font-semibold">Agregar contacto</h3>
@@ -231,6 +276,9 @@ export default function ContactsPreviewPage() {
                 <div key={contact.id} className="rounded-lg border bg-white overflow-hidden">
                   {/* Row */}
                   <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50/50" onClick={() => setExpanded(isExpanded ? null : contact.id)}>
+                    {showArchived && (
+                      <input type="checkbox" checked={selected.has(contact.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(contact.id); }} onClick={(e) => e.stopPropagation()} className="accent-[var(--accent)] shrink-0" />
+                    )}
                     {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                     {contact.image ? (
                       <img src={contact.image} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover border" />
