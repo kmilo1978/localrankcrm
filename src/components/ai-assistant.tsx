@@ -191,7 +191,7 @@ export function AiAssistant() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      setInput("(Tu navegador no soporta voz. Usa Chrome o Edge)");
+      alert("Tu navegador no soporta reconocimiento de voz. Usa Google Chrome o Microsoft Edge.");
       return;
     }
 
@@ -199,10 +199,19 @@ export function AiAssistant() {
     recognition.lang = "es-ES";
     recognition.interimResults = true;
     recognition.continuous = false;
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (e: unknown) => {
+      setListening(false);
+      const err = e as Record<string, unknown>;
+      if (err.error === "not-allowed") {
+        alert("Permiso de micrófono denegado. Haz clic en el ícono de candado en la barra de direcciones y permite el micrófono.");
+      } else if (err.error === "no-speech") {
+        setInput("(No se detectó voz. Intenta de nuevo)");
+      }
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
@@ -222,7 +231,11 @@ export function AiAssistant() {
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (e) {
+      alert("Error al iniciar el micrófono. Asegúrate de estar en HTTPS y que el navegador sea Chrome o Edge.");
+    }
   }, [listening]);
 
   async function send() {
