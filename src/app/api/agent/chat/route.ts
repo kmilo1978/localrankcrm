@@ -22,6 +22,9 @@ const bodySchema = z.object({
 /** Esquema de respuesta del modelo. */
 const CrmChatResponse = z.object({
   text: z.string().min(1),
+  action: z.object({
+    type: z.string(),
+  }).passthrough().optional(),
 });
 
 export async function GET() {
@@ -61,8 +64,26 @@ REGLAS:
 
 ${dataSummary}
 
-FORMATO: Responde ÚNICAMENTE un JSON: {"text": "tu respuesta aquí"}
-Usa **negritas** y bullet points (•) para organizar. No agregues nada fuera del JSON.`;
+ACCIONES DISPONIBLES:
+Cuando el usuario te PIDA ejecutar una acción (crear, agregar, archivar), incluye un campo "action" en tu respuesta JSON con estos formatos:
+
+• Crear contacto: {"type":"create_contact","name":"...","phone":"...","email":"...","company":"...","role":"...","tags":["..."]}
+• Crear tarea: {"type":"create_task","title":"...","priority":"alta|media|baja","dueDate":"YYYY-MM-DD","assignee":"..."}
+• Crear nota: {"type":"create_note","title":"...","content":"...","tags":["..."]}
+• Crear lead: {"type":"create_lead","name":"...","company":"...","value":"$X"}
+• Crear compañía: {"type":"create_company","name":"...","industry":"...","phone":"...","website":"...","city":"..."}
+• Archivar contacto: {"type":"archive_contact","name":"nombre del contacto"}
+
+REGLAS DE ACCIONES:
+- Solo ejecuta acciones si el usuario EXPLÍCITAMENTE lo pide (crear, agregar, archivar, hacer).
+- Si solo pregunta información, NO incluyas "action".
+- Confirma en el "text" lo que vas a crear con los datos que entendiste.
+- Si faltan datos importantes (ej: crear contacto sin nombre), pregunta antes de crear.
+
+FORMATO DE RESPUESTA:
+- Sin acción: {"text": "tu respuesta aquí"}
+- Con acción: {"text": "Voy a crear...", "action": {"type": "create_contact", "name": "...", ...}}
+Usa **negritas** y bullet points (•). No agregues nada fuera del JSON.`;
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
@@ -96,7 +117,7 @@ Usa **negritas** y bullet points (•) para organizar. No agregues nada fuera de
     );
   }
 
-  return Response.json({ text: result.data.text });
+  return Response.json({ text: result.data.text, action: result.data.action ?? null });
 }
 
 /** Builds a human-readable summary of the CRM data sent from the client. */
