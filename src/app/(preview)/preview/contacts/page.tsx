@@ -565,6 +565,11 @@ export default function ContactsPreviewPage() {
         </div>
       )}
 
+      {/* Floating add button (always visible) */}
+      <button onClick={() => { setShowForm(true); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="fixed bottom-16 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow-lg hover:bg-brand-hover hover:scale-105 transition-transform" title="Agregar contacto">
+        <Plus className="h-5 w-5" />
+      </button>
+
       {/* Toast */}
       {toast && <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">{toast}</div>}
     </div>
