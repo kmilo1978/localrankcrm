@@ -9,6 +9,32 @@ import { getSessionOrNull } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
+/** GET /api/agent/chat — diagnóstico: verifica BD y datos disponibles. */
+export async function GET() {
+  const db = getDb();
+  try {
+    const [orgs, contacts, leads, stages] = await Promise.all([
+      db.select({ id: schema.organization.id, name: schema.organization.name }).from(schema.organization).limit(5),
+      db.select({ total: count() }).from(schema.contact),
+      db.select({ total: count() }).from(schema.lead),
+      db.select({ total: count() }).from(schema.pipelineStage),
+    ]);
+    return Response.json({
+      status: "ok",
+      aiConfigured: isAiConfigured(),
+      organizations: orgs,
+      totalContacts: contacts[0]?.total ?? 0,
+      totalLeads: leads[0]?.total ?? 0,
+      totalStages: stages[0]?.total ?? 0,
+    });
+  } catch (err) {
+    return Response.json(
+      { status: "error", message: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
+}
+
 const bodySchema = z.object({
   message: z.string().trim().min(1).max(2000),
   history: z
