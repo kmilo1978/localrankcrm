@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { ClipboardCopy, ExternalLink, Linkedin, MessageSquare, Plus, Send, Trash2, Twitter, Users } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ClipboardCopy, Edit3, ExternalLink, FileUp, Linkedin, MessageSquare, Plus, Send, Trash2, Twitter, Upload, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { exportToCSV } from "@/lib/email-tools";
 
@@ -68,9 +68,13 @@ export default function SocialOutreachPage() {
   const [filterPlatform, setFilterPlatform] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [showCompose, setShowCompose] = useState<string | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [importData, setImportData] = useState<Record<string, string>[]>([]);
+  const [importEditing, setImportEditing] = useState<number | null>(null);
   const [addForm, setAddForm] = useState({ platform: "linkedin" as SocialProfile["platform"], profileUrl: "", name: "", title: "", company: "", notes: "" });
   const [composeForm, setComposeForm] = useState({ type: "connection" as OutreachMessage["type"], content: "" });
   const [toast, setToast] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setProfiles(loadFromStorage("social_profiles", SEED_PROFILES));
@@ -113,6 +117,110 @@ export default function SocialOutreachPage() {
     notify("Exportado");
   }
 
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const rows = parseCSV(text);
+      if (rows.length > 0) {
+        setImportData(rows);
+        setShowImport(true);
+      } else {
+        notify("No se encontraron datos en el archivo");
+      }
+    };
+    reader.readAsText(file, "utf-8");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function parseCSV(text: string): Record<string, string>[] {
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return [];
+    // Parse header
+    const headers = parseCSVLine(lines[0]!);
+    const rows: Record<string, string>[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]!);
+      const row: Record<string, string> = {};
+      headers.forEach((h, idx) => { row[h.trim()] = (values[idx] || "").trim(); });
+      // Skip empty rows
+      if (Object.values(row).some(v => v && v !== "—")) rows.push(row);
+    }
+    return rows;
+  }
+
+  function parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]!;
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (char === "," && !inQuotes) {
+        result.push(current); current = "";
+      } else {
+        current += char;
+      }
+    }
+    result.push(current);
+    return result.map(s => s.replace(/^"|"$/g, "").trim());
+  }
+
+  function detectPlatform(url: string): SocialProfile["platform"] {
+    const lower = url.toLowerCase();
+    if (lower.includes("linkedin")) return "linkedin";
+    if (lower.includes("twitter") || lower.includes("x.com")) return "twitter";
+    if (lower.includes("instagram")) return "instagram";
+    if (lower.includes("facebook") || lower.includes("fb.com")) return "facebook";
+    if (lower.includes("tiktok")) return "tiktok";
+    return "instagram";
+  }
+
+  function importSelectedRows() {
+    const newProfiles: SocialProfile[] = importData.map(row => {
+      const url = row["Profile URL"] || row["URL"] || row["profileUrl"] || row["url"] || "";
+      const name = row["Name"] || row["Nombre"] || row["name"] || row["nombre"] || "";
+      const email = row["Email"] || row["email"] || row["correo"] || "";
+      const phone = row["Phone"] || row["Teléfono"] || row["phone"] || row["telefono"] || "";
+      const platform = row["Platform"] || row["Plataforma"] || row["platform"] || "";
+      const country = row["Country"] || row["País"] || row["country"] || "";
+      const title = row["Title"] || row["Cargo"] || row["title"] || "";
+      const company = row["Company"] || row["Empresa"] || row["company"] || "";
+      const notes = [email !== "—" && email ? `Email: ${email}` : "", phone !== "—" && phone ? `Tel: ${phone}` : "", country !== "—" && country ? `País: ${country}` : ""].filter(Boolean).join(" · ");
+
+      return {
+        id: generateId(),
+        platform: detectPlatform(platform || url),
+        profileUrl: url,
+        name: name.length > 80 ? name.slice(0, 80) + "..." : name,
+        title: title || "",
+        company: company || "",
+        followers: 0,
+        connected: false,
+        notes,
+        lastAction: "Importado",
+        addedAt: new Date().toISOString().split("T")[0]!,
+      };
+    }).filter(p => p.name || p.profileUrl);
+
+    saveProfiles([...newProfiles, ...profiles]);
+    setShowImport(false);
+    setImportData([]);
+    notify(`${newProfiles.length} perfil(es) importado(s)`);
+  }
+
+  function updateImportRow(idx: number, field: string, value: string) {
+    setImportData(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+  }
+
+  function removeImportRow(idx: number) {
+    setImportData(prev => prev.filter((_, i) => i !== idx));
+  }
+
   const filtered = filterPlatform === "all" ? profiles : profiles.filter(p => p.platform === filterPlatform);
 
   return (
@@ -124,6 +232,8 @@ export default function SocialOutreachPage() {
             <p className="text-sm text-muted-foreground">{profiles.length} perfiles · Gestiona outreach en LinkedIn, Twitter, Instagram, Facebook y TikTok</p>
           </div>
           <div className="flex gap-2">
+            <input ref={fileInputRef} type="file" accept=".csv,.txt" onChange={handleFileUpload} className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50"><FileUp className="h-3.5 w-3.5" />Importar CSV</button>
             <button onClick={exportProfiles} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50">📊 Exportar</button>
             <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"><Plus className="h-4 w-4" />Agregar perfil</button>
           </div>
@@ -210,6 +320,72 @@ export default function SocialOutreachPage() {
               <div className="flex gap-2">
                 <button onClick={sendMessage} className="flex-1 rounded-md bg-brand py-2 text-sm font-medium text-white hover:bg-brand-hover flex items-center justify-center gap-2"><Send className="h-4 w-4" />Enviar</button>
                 <button onClick={() => setShowCompose(null)} className="rounded-md border px-4 py-2 text-sm">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import CSV Modal */}
+      {showImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowImport(false)}>
+          <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl mx-4 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b px-6 py-4">
+              <div>
+                <h3 className="text-sm font-bold flex items-center gap-2"><Upload className="h-4 w-4" />Importar perfiles ({importData.length})</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Revisa y edita los datos antes de importar. Haz click en una fila para editar.</p>
+              </div>
+              <button onClick={() => setShowImport(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="flex-1 overflow-auto px-6 py-4">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="pb-2 font-medium text-muted-foreground">#</th>
+                    {importData[0] && Object.keys(importData[0]).map(h => (
+                      <th key={h} className="pb-2 px-2 font-medium text-muted-foreground">{h}</th>
+                    ))}
+                    <th className="pb-2 font-medium text-muted-foreground">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importData.map((row, idx) => (
+                    <tr key={idx} className={`border-b hover:bg-gray-50 ${importEditing === idx ? "bg-blue-50" : ""}`}>
+                      <td className="py-2 text-muted-foreground">{idx + 1}</td>
+                      {Object.entries(row).map(([field, value]) => (
+                        <td key={field} className="py-2 px-2">
+                          {importEditing === idx ? (
+                            <input
+                              value={value}
+                              onChange={(e) => updateImportRow(idx, field, e.target.value)}
+                              className="w-full min-w-[100px] rounded border px-2 py-1 text-xs focus:border-brand focus:outline-none"
+                            />
+                          ) : (
+                            <span className="truncate block max-w-[200px]" title={value}>{value || "—"}</span>
+                          )}
+                        </td>
+                      ))}
+                      <td className="py-2">
+                        <div className="flex gap-1">
+                          <button onClick={() => setImportEditing(importEditing === idx ? null : idx)} className="rounded p-1 hover:bg-blue-50 text-muted-foreground hover:text-blue-600" title="Editar">
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => removeImportRow(idx)} className="rounded p-1 hover:bg-red-50 text-muted-foreground hover:text-red-500" title="Eliminar">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {importData.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No hay datos para importar</p>}
+            </div>
+            <div className="border-t px-6 py-4 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{importData.length} fila(s) a importar</span>
+              <div className="flex gap-2">
+                <button onClick={() => setShowImport(false)} className="rounded-md border px-4 py-2 text-sm hover:bg-gray-50">Cancelar</button>
+                <button onClick={importSelectedRows} disabled={importData.length === 0} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50">Importar {importData.length} perfil(es)</button>
               </div>
             </div>
           </div>
