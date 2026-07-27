@@ -74,7 +74,11 @@ export default function SocialOutreachPage() {
   const [addForm, setAddForm] = useState({ platform: "linkedin" as SocialProfile["platform"], profileUrl: "", name: "", title: "", company: "", notes: "" });
   const [composeForm, setComposeForm] = useState({ type: "connection" as OutreachMessage["type"], content: "" });
   const [toast, setToast] = useState("");
+  const [page, setPage] = useState(1);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<SocialProfile>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const PAGE_SIZE = 15;
 
   useEffect(() => {
     setProfiles(loadFromStorage("social_profiles", SEED_PROFILES));
@@ -222,6 +226,23 @@ export default function SocialOutreachPage() {
   }
 
   const filtered = filterPlatform === "all" ? profiles : profiles.filter(p => p.platform === filterPlatform);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  function startEdit(profile: SocialProfile) {
+    setEditingId(profile.id);
+    setEditForm({ name: profile.name, title: profile.title, company: profile.company, profileUrl: profile.profileUrl, notes: profile.notes, platform: profile.platform, followers: profile.followers });
+  }
+
+  function saveEdit() {
+    if (!editingId) return;
+    saveProfiles(profiles.map(p => p.id === editingId ? { ...p, ...editForm } : p));
+    setEditingId(null);
+    setEditForm({});
+    notify("Perfil actualizado");
+  }
+
+  function cancelEdit() { setEditingId(null); setEditForm({}); }
 
   return (
     <div className="h-full overflow-y-auto p-6">
@@ -250,9 +271,58 @@ export default function SocialOutreachPage() {
 
         {/* Profiles list */}
         <div className="space-y-2">
-          {filtered.map(profile => {
+          {paginated.map(profile => {
             const platform = PLATFORMS[profile.platform];
             const profileMessages = messages.filter(m => m.profileId === profile.id);
+            const isEditing = editingId === profile.id;
+
+            if (isEditing) {
+              return (
+                <div key={profile.id} className="rounded-lg border-2 border-brand bg-white p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">{platform.icon}</span>
+                    <span className="text-xs font-semibold text-brand">Editando perfil</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">Nombre</label>
+                      <input value={editForm.name ?? ""} onChange={e => setEditForm({...editForm, name: e.target.value})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">Cargo</label>
+                      <input value={editForm.title ?? ""} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">Empresa</label>
+                      <input value={editForm.company ?? ""} onChange={e => setEditForm({...editForm, company: e.target.value})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">URL del perfil</label>
+                      <input value={editForm.profileUrl ?? ""} onChange={e => setEditForm({...editForm, profileUrl: e.target.value})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">Plataforma</label>
+                      <select value={editForm.platform ?? "instagram"} onChange={e => setEditForm({...editForm, platform: e.target.value as SocialProfile["platform"]})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none">
+                        {Object.entries(PLATFORMS).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground">Seguidores</label>
+                      <input type="number" value={editForm.followers ?? 0} onChange={e => setEditForm({...editForm, followers: parseInt(e.target.value) || 0})} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-[10px] font-medium text-muted-foreground">Notas</label>
+                    <textarea value={editForm.notes ?? ""} onChange={e => setEditForm({...editForm, notes: e.target.value})} rows={2} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={saveEdit} className="rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover">Guardar</button>
+                    <button onClick={cancelEdit} className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">Cancelar</button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={profile.id} className="group rounded-lg border bg-white p-4 hover:shadow-sm">
                 <div className="flex items-start gap-3">
@@ -263,12 +333,13 @@ export default function SocialOutreachPage() {
                       {profile.connected && <span className="rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-medium text-green-700">Conectado</span>}
                       <span className="rounded-full px-2 py-0.5 text-[9px] font-medium" style={{ backgroundColor: platform.color + "15", color: platform.color }}>{platform.label}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{profile.title} · {profile.company} · {profile.followers.toLocaleString()} seguidores</p>
+                    <p className="text-xs text-muted-foreground">{profile.title}{profile.title && profile.company ? " · " : ""}{profile.company}{profile.followers ? ` · ${profile.followers.toLocaleString()} seguidores` : ""}</p>
                     {profile.notes && <p className="text-xs mt-1 text-amber-700 bg-amber-50 rounded px-2 py-0.5 inline-block">{profile.notes}</p>}
                     {profile.lastAction && <p className="text-[10px] text-muted-foreground mt-1">Última acción: {profile.lastAction}</p>}
                     {profileMessages.length > 0 && <p className="text-[10px] text-brand mt-0.5">{profileMessages.length} mensaje(s) enviados</p>}
                   </div>
                   <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100">
+                    <button onClick={() => startEdit(profile)} className="rounded p-1.5 hover:bg-yellow-50 text-muted-foreground hover:text-yellow-600" title="Editar"><Edit3 className="h-3.5 w-3.5" /></button>
                     <button onClick={() => openCompose(profile.id)} className="rounded p-1.5 hover:bg-blue-50 text-muted-foreground hover:text-blue-600" title="Enviar mensaje"><Send className="h-3.5 w-3.5" /></button>
                     <a href={profile.profileUrl} target="_blank" rel="noopener noreferrer" className="rounded p-1.5 hover:bg-gray-100 text-muted-foreground hover:text-brand" title="Abrir perfil"><ExternalLink className="h-3.5 w-3.5" /></a>
                     <button onClick={() => { navigator.clipboard.writeText(profile.profileUrl); notify("URL copiada"); }} className="rounded p-1.5 hover:bg-gray-100 text-muted-foreground"><ClipboardCopy className="h-3.5 w-3.5" /></button>
@@ -281,6 +352,27 @@ export default function SocialOutreachPage() {
         </div>
 
         {filtered.length === 0 && <div className="text-center py-12 text-muted-foreground"><Users className="h-10 w-10 mx-auto mb-2 text-gray-300" /><p className="text-sm">Sin perfiles. Agrega uno para empezar.</p></div>}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded border p-1.5 text-xs hover:bg-gray-50 disabled:opacity-40">←</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .map((p, idx, arr) => (
+                  <span key={p} className="flex items-center">
+                    {idx > 0 && arr[idx - 1]! < p - 1 && <span className="px-1 text-xs text-muted-foreground">…</span>}
+                    <button onClick={() => setPage(p)} className={`rounded px-2.5 py-1 text-xs font-medium ${p === page ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{p}</button>
+                  </span>
+                ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded border p-1.5 text-xs hover:bg-gray-50 disabled:opacity-40">→</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Profile Modal */}
