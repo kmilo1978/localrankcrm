@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Archive, ArchiveRestore, AlertCircle, ArrowRightLeft, Bell, ChevronDown, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Trash2, Users, X } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Archive, ArchiveRestore, AlertCircle, ArrowRightLeft, Bell, ChevronDown, ChevronLeft, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Tag, Trash2, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 
@@ -18,6 +18,7 @@ type Contact = {
   role: string;
   image: string;
   archived: boolean;
+  tags: string[];
   createdAt: string;
   customFields: CustomField[];
   notes: ContactNote[];
@@ -25,12 +26,14 @@ type Contact = {
 };
 
 const SEED: Contact[] = [
-  { id: "ct1", name: "Carlos Ruiz", phone: "+52 55 1234 5678", email: "carlos@techcorp.com", company: "TechCorp Solutions", role: "CTO", image: "", archived: false, createdAt: "2026-07-10", customFields: [{ id: "f1", label: "LinkedIn", value: "linkedin.com/in/cruiz" }], notes: [{ id: "n1", content: "Decisor principal. Interesado en plan Enterprise.", createdAt: "2026-07-17" }], reminders: [{ id: "r1", text: "Llamar para confirmar propuesta", date: "2026-07-18", done: false }] },
-  { id: "ct2", name: "María García", phone: "+1 305 555 0123", email: "maria@loginext.io", company: "LogiNext International", role: "VP Operaciones", image: "", archived: false, createdAt: "2026-07-08", customFields: [], notes: [{ id: "n2", content: "Prefiere comunicación por email.", createdAt: "2026-07-15" }], reminders: [] },
-  { id: "ct3", name: "Roberto Méndez", phone: "+52 33 9876 5432", email: "roberto@mediagroup.mx", company: "MediaGroup Digital", role: "Director Marketing", image: "", archived: false, createdAt: "2026-07-05", customFields: [{ id: "f2", label: "Presupuesto anual", value: "$200K" }], notes: [], reminders: [{ id: "r2", text: "Enviar demo grabada", date: "2026-07-20", done: false }] },
-  { id: "ct4", name: "Ana Sofía Torres", phone: "+52 81 2345 6789", email: "ana@innovatelab.co", company: "InnovateLab", role: "CEO", image: "", archived: false, createdAt: "2026-06-28", customFields: [], notes: [], reminders: [] },
-  { id: "ct5", name: "Jorge Hernández", phone: "+52 55 8765 4321", email: "jorge@retailmax.com.mx", company: "RetailMax", role: "Gerente Compras", image: "", archived: true, createdAt: "2026-06-15", customFields: [], notes: [{ id: "n3", content: "Sin respuesta últimas 2 semanas", createdAt: "2026-07-01" }], reminders: [] },
+  { id: "ct1", name: "Carlos Ruiz", phone: "+52 55 1234 5678", email: "carlos@techcorp.com", company: "TechCorp Solutions", role: "CTO", image: "", archived: false, tags: ["VIP", "Enterprise"], createdAt: "2026-07-10", customFields: [{ id: "f1", label: "LinkedIn", value: "linkedin.com/in/cruiz" }], notes: [{ id: "n1", content: "Decisor principal. Interesado en plan Enterprise.", createdAt: "2026-07-17" }], reminders: [{ id: "r1", text: "Llamar para confirmar propuesta", date: "2026-07-18", done: false }] },
+  { id: "ct2", name: "María García", phone: "+1 305 555 0123", email: "maria@loginext.io", company: "LogiNext International", role: "VP Operaciones", image: "", archived: false, tags: ["Internacional"], createdAt: "2026-07-08", customFields: [], notes: [{ id: "n2", content: "Prefiere comunicación por email.", createdAt: "2026-07-15" }], reminders: [] },
+  { id: "ct3", name: "Roberto Méndez", phone: "+52 33 9876 5432", email: "roberto@mediagroup.mx", company: "MediaGroup Digital", role: "Director Marketing", image: "", archived: false, tags: ["Marketing"], createdAt: "2026-07-05", customFields: [{ id: "f2", label: "Presupuesto anual", value: "$200K" }], notes: [], reminders: [{ id: "r2", text: "Enviar demo grabada", date: "2026-07-20", done: false }] },
+  { id: "ct4", name: "Ana Sofía Torres", phone: "+52 81 2345 6789", email: "ana@innovatelab.co", company: "InnovateLab", role: "CEO", image: "", archived: false, tags: ["Startup", "VIP"], createdAt: "2026-06-28", customFields: [], notes: [], reminders: [] },
+  { id: "ct5", name: "Jorge Hernández", phone: "+52 55 8765 4321", email: "jorge@retailmax.com.mx", company: "RetailMax", role: "Gerente Compras", image: "", archived: true, tags: ["Retail"], createdAt: "2026-06-15", customFields: [], notes: [{ id: "n3", content: "Sin respuesta últimas 2 semanas", createdAt: "2026-07-01" }], reminders: [] },
 ];
+
+const PAGE_SIZE = 15;
 
 export default function ContactsPreviewPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -47,8 +50,16 @@ export default function ContactsPreviewPage() {
   const [noteForms, setNoteForms] = useState<Record<string, string>>({});
   const [reminderForms, setReminderForms] = useState<Record<string, { text: string; date: string }>>({});
   const [toast, setToast] = useState("");
+  const [page, setPage] = useState(1);
+  const [filterTag, setFilterTag] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [formTags, setFormTags] = useState<string[]>([]);
 
-  useEffect(() => { setContacts(loadFromStorage("contacts", SEED)); }, []);
+  useEffect(() => {
+    const raw = loadFromStorage<Contact[]>("contacts", SEED);
+    // Backward compat: add tags field if missing
+    setContacts(raw.map(c => ({ ...c, tags: c.tags ?? [] })));
+  }, []);
   function save(u: Contact[]) { setContacts(u); saveToStorage("contacts", u); }
   function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
 
@@ -94,22 +105,39 @@ export default function ContactsPreviewPage() {
   function handleAdd() {
     if (!form.name.trim()) return;
     const extraFields = formExtraFields.filter((f) => f.label.trim()).map((f) => ({ id: generateId(), label: f.label, value: f.value }));
-    save([{ id: generateId(), ...form, image: "", archived: false, createdAt: new Date().toISOString().split("T")[0]!, customFields: extraFields, notes: [], reminders: [] }, ...contacts]);
+    save([{ id: generateId(), ...form, image: "", archived: false, tags: formTags, createdAt: new Date().toISOString().split("T")[0]!, customFields: extraFields, notes: [], reminders: [] }, ...contacts]);
     setForm({ name: "", phone: "", email: "", company: "", role: "" });
     setFormExtraFields([]);
+    setFormTags([]);
     setShowForm(false);
+    setPage(1);
   }
 
   function handleDelete(id: string) { save(contacts.filter((c) => c.id !== id)); if (expanded === id) setExpanded(null); }
   function toggleArchive(id: string) { save(contacts.map((c) => c.id === id ? { ...c, archived: !c.archived } : c)); }
 
   const visible = contacts.filter((c) => showArchived ? c.archived : !c.archived);
-  const filtered = visible.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search) ||
-    c.company.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = visible.filter((c) => {
+    const matchesSearch = !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone.includes(search) ||
+      c.company.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+    const matchesTag = !filterTag || c.tags.includes(filterTag);
+    return matchesSearch && matchesTag;
+  });
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // All unique tags for filter dropdown
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    contacts.forEach(c => (c.tags ?? []).forEach(t => tags.add(t)));
+    return [...tags].sort();
+  }, [contacts]);
 
   // Bulk selection
   function toggleSelect(id: string) {
@@ -202,8 +230,14 @@ export default function ContactsPreviewPage() {
           </label>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-56 rounded-md border bg-white py-2 pl-8 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+            <input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="w-56 rounded-md border bg-white py-2 pl-8 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
           </div>
+          {allTags.length > 0 && (
+            <select value={filterTag} onChange={(e) => { setFilterTag(e.target.value); setPage(1); }} className="rounded-md border bg-white px-2 py-2 text-xs focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
+              <option value="">Todas las etiquetas</option>
+              {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
           <button onClick={() => setShowDuplicates(true)} className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100">
             <AlertCircle className="h-3.5 w-3.5" />Duplicados
           </button>
@@ -244,6 +278,32 @@ export default function ContactsPreviewPage() {
               <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Empresa" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
               <input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Cargo / Rol" className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
             </div>
+            {/* Tags input */}
+            <div className="mt-3">
+              <label className="text-xs font-medium text-muted-foreground">Etiquetas</label>
+              <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+                {formTags.map((tag) => (
+                  <span key={tag} className="flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-text">
+                    {tag}
+                    <button onClick={() => setFormTags(formTags.filter(t => t !== tag))} className="hover:text-red-500"><X className="h-3 w-3" /></button>
+                  </span>
+                ))}
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+                      e.preventDefault();
+                      const tag = tagInput.trim().replace(",", "");
+                      if (tag && !formTags.includes(tag)) setFormTags([...formTags, tag]);
+                      setTagInput("");
+                    }
+                  }}
+                  placeholder="Escribe y Enter para agregar..."
+                  className="min-w-[150px] flex-1 rounded-md border px-3 py-1.5 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                />
+              </div>
+            </div>
             {/* Dynamic custom fields */}
             {formExtraFields.length > 0 && (
               <div className="mt-3 space-y-2">
@@ -272,7 +332,7 @@ export default function ContactsPreviewPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map((contact) => {
+            {paginated.map((contact) => {
               const isExpanded = expanded === contact.id;
               const pendingRem = contact.reminders.filter((r) => !r.done).length;
               return (
@@ -295,6 +355,9 @@ export default function ContactsPreviewPage() {
                         <span className="text-sm font-medium truncate">{contact.name}</span>
                         {contact.role && <span className="text-xs text-muted-foreground">· {contact.role}</span>}
                         {contact.archived && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-muted-foreground">Archivado</span>}
+                        {(contact.tags ?? []).map(tag => (
+                          <span key={tag} className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[9px] font-medium text-brand-text">{tag}</span>
+                        ))}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         {contact.company && <span>{contact.company}</span>}
@@ -333,6 +396,31 @@ export default function ContactsPreviewPage() {
                         <div><label className="text-[10px] font-medium text-muted-foreground">Email</label><input defaultValue={contact.email} onBlur={e => { if (e.target.value !== contact.email) save(contacts.map(c => c.id === contact.id ? {...c, email: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
                         <div><label className="text-[10px] font-medium text-muted-foreground">Empresa</label><input defaultValue={contact.company} onBlur={e => { if (e.target.value !== contact.company) save(contacts.map(c => c.id === contact.id ? {...c, company: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
                         <div><label className="text-[10px] font-medium text-muted-foreground">Rol / Cargo</label><input defaultValue={contact.role} onBlur={e => { if (e.target.value !== contact.role) save(contacts.map(c => c.id === contact.id ? {...c, role: e.target.value} : c)); }} className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" /></div>
+                      </div>
+                      {/* Tags editor */}
+                      <div className="mb-4">
+                        <label className="text-[10px] font-medium text-muted-foreground flex items-center gap-1"><Tag className="h-3 w-3" />Etiquetas</label>
+                        <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+                          {(contact.tags ?? []).map(tag => (
+                            <span key={tag} className="flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium text-brand-text">
+                              {tag}
+                              <button onClick={() => save(contacts.map(c => c.id === contact.id ? { ...c, tags: c.tags.filter(t => t !== tag) } : c))} className="hover:text-red-500"><X className="h-2.5 w-2.5" /></button>
+                            </span>
+                          ))}
+                          <input
+                            placeholder="+ Etiqueta"
+                            className="w-24 rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                                const val = (e.target as HTMLInputElement).value.trim();
+                                if (!contact.tags.includes(val)) {
+                                  save(contacts.map(c => c.id === contact.id ? { ...c, tags: [...c.tags, val] } : c));
+                                }
+                                (e.target as HTMLInputElement).value = "";
+                              }
+                            }}
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                         {/* Custom Fields */}
@@ -402,6 +490,31 @@ export default function ContactsPreviewPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded border p-1.5 text-xs hover:bg-gray-50 disabled:opacity-40">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .map((p, idx, arr) => (
+                  <span key={p} className="flex items-center">
+                    {idx > 0 && arr[idx - 1]! < p - 1 && <span className="px-1 text-xs text-muted-foreground">…</span>}
+                    <button onClick={() => setPage(p)} className={`rounded px-2.5 py-1 text-xs font-medium ${p === page ? "bg-brand text-white" : "border hover:bg-gray-50"}`}>{p}</button>
+                  </span>
+                ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded border p-1.5 text-xs hover:bg-gray-50 disabled:opacity-40">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
