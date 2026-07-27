@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { and, asc, desc, eq, ilike, or, count } from "drizzle-orm";
-import { apiError, parseBody, withAuth } from "@/lib/api";
+import { apiError, parseBody } from "@/lib/api";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
 import { isAiConfigured } from "@/lib/env";
 import { chatJson, type ChatMessage } from "@/lib/ai";
+import { getSessionOrNull } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,25 @@ const CrmChatResponse = z.object({
   text: z.string().min(1),
 });
 
-export const POST = withAuth(async (session, req: Request) => {
+/**
+ * Resuelve la organización: primero intenta la sesión del usuario,
+ * si no hay sesión usa la primera organización disponible en la BD.
+ */
+async function resolveOrganizationId(): Promise<string | null> {
+  // Intentar obtener sesión si existe
+  const session = await getSessionOrNull();
+  if (session) return session.organizationId;
+
+  // Sin sesión: buscar la primera organización (instancia single-tenant)
+  const db = getDb();
+  const orgs = await db
+    .select({ id: schema.organization.id })
+    .from(schema.organization)
+    .limit(1);
+  return orgs[0]?.id ?? null;
+}
+
+export async function POST(req: Request) {
   const body = await parseBody(req, bodySchema);
   if (!body.ok) return body.response;
 
@@ -34,12 +53,20 @@ export const POST = withAuth(async (session, req: Request) => {
     return apiError(
       503,
       "ai_not_configured",
-      "No hay proveedor de IA configurado. Configura OPENROUTER_API_TOKEN, GEMINI_API_KEY, o algún token de IA en las variables de entorno."
+      "No hay proveedor de IA configurado. Configura GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno."
+    );
+  }
+
+  const orgId = await resolveOrganizationId();
+  if (!orgId) {
+    return apiError(
+      404,
+      "no_organization",
+      "No se encontró una organización en el sistema. Crea una cuenta primero."
     );
   }
 
   const { message, history } = body.data;
-  const orgId = session.organizationId;
 
   // Gather CRM context in parallel
   const db = getDb();
@@ -201,7 +228,7 @@ No incluyas nada más que el JSON.`;
   }
 
   return Response.json({ text: result.data.text });
-});
+}
 
 /** Search contacts by name fragments from the user message. */
 async function searchContacts(orgId: string, message: string) {

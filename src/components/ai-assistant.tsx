@@ -74,12 +74,12 @@ export function AiAssistant() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
-        if (res.status === 401) {
+        if (res.status === 503) {
           reply =
-            "Para usar el asistente con datos reales necesitas iniciar sesión. Ve a /login para acceder a tu cuenta.";
-        } else if (res.status === 503) {
+            "⚠️ El asistente IA no está configurado. Agrega GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno de Vercel.";
+        } else if (res.status === 404) {
           reply =
-            "⚠️ El asistente IA no está configurado todavía. Configura GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno de Vercel.";
+            "No se encontró una organización en el sistema. Verifica que la base de datos tenga datos.";
         } else {
           reply =
             err?.error?.message ??
