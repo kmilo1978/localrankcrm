@@ -16,6 +16,9 @@ const prefixes = {
   template: "tpl",
   testRun: "run",
   testCase: "case",
+  crmContact: "crc",
+  crmTask: "crt",
+  crmNote: "crn",
 } as const;
 
 export type IdKind = keyof typeof prefixes;

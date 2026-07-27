@@ -375,3 +375,84 @@ export const agentTestCase = pgTable(
   },
   (t) => [index("test_case_run_idx").on(t.runId)]
 );
+
+
+/* ============================================================
+ * CRM Modules (sincronizados con Supabase — multi-dispositivo)
+ * ============================================================ */
+
+export const crmContact = pgTable(
+  "crm_contact",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    phone: text("phone").notNull().default(""),
+    email: text("email").notNull().default(""),
+    company: text("company").notNull().default(""),
+    role: text("role").notNull().default(""),
+    image: text("image").notNull().default(""),
+    archived: boolean("archived").notNull().default(false),
+    tags: jsonb("tags").notNull().default([]),
+    customFields: jsonb("custom_fields").notNull().default([]),
+    notes: jsonb("notes").notNull().default([]),
+    reminders: jsonb("reminders").notNull().default([]),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("crm_contact_org_idx").on(t.organizationId),
+    index("crm_contact_org_name_idx").on(t.organizationId, t.name),
+  ]
+);
+
+export const crmTask = pgTable(
+  "crm_task",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    priority: text("priority").notNull().default("medium"),
+    status: text("status").notNull().default("pending"),
+    dueDate: text("due_date").notNull().default(""),
+    assignee: text("assignee").notNull().default(""),
+    relatedTo: text("related_to").notNull().default(""),
+    category: text("category").notNull().default(""),
+    tags: jsonb("tags").notNull().default([]),
+    done: boolean("done").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("crm_task_org_idx").on(t.organizationId),
+    index("crm_task_org_status_idx").on(t.organizationId, t.status),
+  ]
+);
+
+export const crmNote = pgTable(
+  "crm_note",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    content: text("content").notNull().default(""),
+    image: text("image").notNull().default(""),
+    relatedTo: text("related_to").notNull().default(""),
+    category: text("category").notNull().default("General"),
+    tags: jsonb("tags").notNull().default([]),
+    pinned: boolean("pinned").notNull().default(false),
+    locked: boolean("locked").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("crm_note_org_idx").on(t.organizationId),
+  ]
+);

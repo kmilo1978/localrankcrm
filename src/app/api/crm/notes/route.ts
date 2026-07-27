@@ -1,0 +1,44 @@
+import { z } from "zod";
+import { desc, eq } from "drizzle-orm";
+import { apiError, parseBody, withAuth } from "@/lib/api";
+import { getDb, schema } from "@/lib/db";
+import { scoped } from "@/lib/db/tenant";
+import { newId } from "@/lib/db/ids";
+
+export const dynamic = "force-dynamic";
+
+export const GET = withAuth(async (session) => {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(schema.crmNote)
+    .where(scoped(schema.crmNote.organizationId, session.organizationId))
+    .orderBy(desc(schema.crmNote.createdAt))
+    .limit(500);
+  return Response.json({ notes: rows });
+});
+
+const createSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().optional().default(""),
+  image: z.string().optional().default(""),
+  relatedTo: z.string().optional().default(""),
+  category: z.string().optional().default("General"),
+  tags: z.array(z.string()).optional().default([]),
+  pinned: z.boolean().optional().default(false),
+  locked: z.boolean().optional().default(false),
+});
+
+export const POST = withAuth(async (session, req: Request) => {
+  const body = await parseBody(req, createSchema);
+  if (!body.ok) return body.response;
+
+  const db = getDb();
+  const id = newId("crmNote");
+  await db.insert(schema.crmNote).values({
+    id,
+    organizationId: session.organizationId,
+    ...body.data,
+  });
+  return Response.json({ ok: true, id });
+});
