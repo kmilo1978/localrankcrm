@@ -39,6 +39,12 @@ function getCrmContext(): Record<string, unknown> {
   const crmForms = loadFromStorage("crm_forms", []);
   const radarClips = loadFromStorage("radar_clips", []);
   const linkedinProfiles = loadFromStorage("linkedin_profiles", []);
+  const notes = loadFromStorage("notes", []);
+  const todos = loadFromStorage("todos", {});
+  const companies = loadFromStorage("companies", []);
+  const tasks = loadFromStorage("tasks", []);
+  const suppliers = loadFromStorage("suppliers", []);
+  const reminders = loadFromStorage("reminders_v2", []);
 
   return {
     contacts,
@@ -60,6 +66,12 @@ function getCrmContext(): Record<string, unknown> {
     crmForms,
     radarClips,
     linkedinProfiles,
+    notes,
+    todos,
+    companies,
+    tasks,
+    suppliers,
+    reminders,
   };
 }
 

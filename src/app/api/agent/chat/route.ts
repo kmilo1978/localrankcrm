@@ -391,6 +391,106 @@ function buildDataSummary(ctx: Record<string, unknown>): string {
     }
   }
 
+  // Notes
+  const notes = Array.isArray(ctx.notes) ? ctx.notes : [];
+  if (notes.length > 0) {
+    sections.push(`\nNOTAS (${notes.length}):`);
+    for (const n of notes.slice(0, 15)) {
+      const note = n as Record<string, unknown>;
+      let line = `• ${note.title || "Nota sin título"}`;
+      if (note.content) line += ` | ${String(note.content).slice(0, 100)}`;
+      if (note.pinned) line += " 📌";
+      if (note.tags && Array.isArray(note.tags) && note.tags.length > 0) line += ` | Tags: ${note.tags.join(", ")}`;
+      if (note.createdAt) line += ` | ${note.createdAt}`;
+      sections.push(line);
+    }
+  }
+
+  // To-Do
+  const todos = ctx.todos as Record<string, unknown> | undefined;
+  if (todos && typeof todos === "object") {
+    const periods = ["daily", "weekly", "monthly"] as const;
+    const allTodoItems: string[] = [];
+    for (const period of periods) {
+      const items = Array.isArray(todos[period]) ? (todos[period] as unknown[]) : [];
+      for (const item of items.slice(0, 10)) {
+        const t = item as Record<string, unknown>;
+        allTodoItems.push(`• [${period}] ${t.done ? "✓" : "○"} ${t.text || t.title || "Item"}`);
+      }
+    }
+    if (allTodoItems.length > 0) {
+      sections.push(`\nTO-DO (diario/semanal/mensual):\n${allTodoItems.join("\n")}`);
+    }
+  }
+
+  // Companies
+  const companies = Array.isArray(ctx.companies) ? ctx.companies : [];
+  if (companies.length > 0) {
+    sections.push(`\nCOMPAÑÍAS (${companies.length}):`);
+    for (const c of companies.slice(0, 20)) {
+      const comp = c as Record<string, unknown>;
+      let line = `• ${comp.name || "Empresa"}`;
+      if (comp.industry) line += ` | Industria: ${comp.industry}`;
+      if (comp.phone) line += ` | Tel: ${comp.phone}`;
+      if (comp.website) line += ` | Web: ${comp.website}`;
+      if (comp.city || comp.country) line += ` | ${comp.city || ""}${comp.city && comp.country ? ", " : ""}${comp.country || ""}`;
+      if (comp.employees) line += ` | Empleados: ${comp.employees}`;
+      const compNotes = Array.isArray(comp.notes) ? comp.notes : [];
+      if (compNotes.length > 0) {
+        const noteText = compNotes.slice(0, 2).map((n: unknown) => (n as Record<string, unknown>).content || "").filter(Boolean).join("; ");
+        if (noteText) line += ` | Notas: ${noteText.slice(0, 80)}`;
+      }
+      sections.push(line);
+    }
+  }
+
+  // Tasks
+  const tasksList = Array.isArray(ctx.tasks) ? ctx.tasks : [];
+  if (tasksList.length > 0) {
+    sections.push(`\nTAREAS (${tasksList.length}):`);
+    for (const t of tasksList.slice(0, 20)) {
+      const task = t as Record<string, unknown>;
+      let line = `• ${task.done ? "✓" : "○"} ${task.title || task.text || "Tarea"}`;
+      if (task.priority) line += ` | Prioridad: ${task.priority}`;
+      if (task.dueDate) line += ` | Fecha: ${task.dueDate}`;
+      if (task.assignee) line += ` | Asignada a: ${task.assignee}`;
+      if (task.tags && Array.isArray(task.tags) && task.tags.length > 0) line += ` | Tags: ${task.tags.join(", ")}`;
+      sections.push(line);
+    }
+  }
+
+  // Suppliers
+  const suppliers = Array.isArray(ctx.suppliers) ? ctx.suppliers : [];
+  if (suppliers.length > 0) {
+    sections.push(`\nPROVEEDORES (${suppliers.length}):`);
+    for (const s of suppliers.slice(0, 20)) {
+      const sup = s as Record<string, unknown>;
+      let line = `• ${sup.name || "Proveedor"}`;
+      if (sup.category) line += ` | Categoría: ${sup.category}`;
+      if (sup.contact) line += ` | Contacto: ${sup.contact}`;
+      if (sup.phone) line += ` | Tel: ${sup.phone}`;
+      if (sup.email) line += ` | Email: ${sup.email}`;
+      if (sup.rating) line += ` | Rating: ${sup.rating}/5`;
+      if (sup.tags && Array.isArray(sup.tags) && sup.tags.length > 0) line += ` | Tags: ${sup.tags.join(", ")}`;
+      sections.push(line);
+    }
+  }
+
+  // Reminders
+  const reminders = Array.isArray(ctx.reminders) ? ctx.reminders : [];
+  if (reminders.length > 0) {
+    sections.push(`\nRECORDATORIOS (${reminders.length}):`);
+    for (const r of reminders.slice(0, 15)) {
+      const rem = r as Record<string, unknown>;
+      let line = `• ${rem.title || rem.text || "Recordatorio"}`;
+      if (rem.dateTime) line += ` | Fecha: ${rem.dateTime}`;
+      if (rem.description) line += ` | ${String(rem.description).slice(0, 60)}`;
+      line += rem.active ? " (activo)" : " (inactivo)";
+      if (rem.dismissed) line += " ✓ cumplido";
+      sections.push(line);
+    }
+  }
+
   if (sections.length === 0) {
     return "DATOS DEL CRM: (No se encontraron datos. El CRM puede estar vacío.)";
   }
