@@ -66,6 +66,7 @@ export function AiAssistant() {
       const res = await fetch("/api/agent/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ message: text, history }),
       });
 
@@ -75,10 +76,10 @@ export function AiAssistant() {
         const err = await res.json().catch(() => null);
         if (res.status === 401) {
           reply =
-            "⚠️ No estás autenticado. Inicia sesión para usar el asistente.";
+            "Para usar el asistente con datos reales necesitas iniciar sesión. Ve a /login para acceder a tu cuenta.";
         } else if (res.status === 503) {
           reply =
-            "⚠️ El asistente IA no está configurado todavía. Pide al administrador que configure un proveedor de IA (OpenRouter, Gemini, etc.) en las variables de entorno.";
+            "⚠️ El asistente IA no está configurado todavía. Configura GEMINI_API_KEY o OPENROUTER_API_TOKEN en las variables de entorno de Vercel.";
         } else {
           reply =
             err?.error?.message ??
