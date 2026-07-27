@@ -368,12 +368,12 @@ export function AiAssistant() {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={listening ? "🎙️ Escuchando..." : "Escribe o usa el micrófono..."}
             disabled={loading}
-            className={`flex-1 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50 ${listening ? "border-red-400 bg-red-50" : ""}`}
+            className={`flex-1 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50 ${listening ? "border-brand bg-brand/5 ring-1 ring-brand" : ""}`}
           />
           <button
             onClick={toggleVoice}
             type="button"
-            className={`rounded-md p-2 transition-colors shrink-0 ${listening ? "bg-red-500 text-white animate-pulse" : "border text-muted-foreground hover:bg-gray-50 hover:text-brand"}`}
+            className={`rounded-md p-2 transition-colors shrink-0 ${listening ? "bg-brand text-white animate-pulse shadow-lg shadow-brand/30" : "border text-muted-foreground hover:bg-gray-50 hover:text-brand"}`}
             title={listening ? "Detener" : "Hablar"}
           >
             {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
