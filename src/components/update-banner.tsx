@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
 
-const CURRENT_VERSION = "2.1.0";
+const CURRENT_VERSION = "2.2.0";
 const UPDATES = [
+  { version: "2.2.0", date: "27 Jul 2026", title: "Agente IA con acciones + Voz + Google Login + Backup diario", highlights: ["Agente IA ejecuta acciones: crear contactos, tareas, notas, leads por voz o texto", "Input por micrófono (Web Speech API) en el asistente", "Login con Google OAuth — seguridad y acceso protegido", "Backup reminder diario a las 7pm con notificación", "Paginación en todos los módulos (Contactos, Pipeline, Cartera, Inbox, Projects, etc.)", "Etiquetas en contactos con filtro dropdown", "Social Outreach: importar CSV + edición inline", "Agente IA con acceso a TODOS los módulos del CRM", "Documentación actualizada con todas las funcionalidades"] },
   { version: "2.1.0", date: "20 Jul 2026", title: "Suscripciones, Meeting Reminders IA, Cotizador IA", highlights: ["Módulo de suscripciones y pagos recurrentes", "Meeting Reminders con IA (genera mensajes + sugiere timing)", "Cotizador de propuestas con IA", "Menú reorganizado por categorías colapsables", "50+ módulos disponibles"] },
   { version: "2.0.5", date: "20 Jul 2026", title: "Lead Finder B2B, Email Tools, Social Outreach", highlights: ["Localizador de leads con búsqueda IA", "Email Finder + Verificador + Escritor IA + Limpiar listas", "Social Outreach multicanal (LinkedIn/Twitter/Instagram/FB/TikTok)"] },
   { version: "2.0.4", date: "20 Jul 2026", title: "Workspace aislados, Archivos & IA, Focus", highlights: ["Cada workspace tiene datos independientes", "Importar archivos y preguntarle a la IA", "Modo Pomodoro con timer y estadísticas"] },
