@@ -56,6 +56,8 @@ export default function MeetingRemindersPage() {
   const [showNew, setShowNew] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
   const [toast, setToast] = useState("");
+  const [reminderPage, setReminderPage] = useState(1);
+  const PAGE_SIZE = 8;
   const [form, setForm] = useState({
     meetingTitle: "", meetingDate: "", meetingTime: "",
     attendeeName: "", attendeeEmail: "", attendeePhone: "",
@@ -193,7 +195,7 @@ export default function MeetingRemindersPage() {
         <div className="mb-6">
           <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Clock className="h-3 w-3" />Programados ({scheduled.length})</h3>
           <div className="space-y-2">
-            {scheduled.map(r => (
+            {scheduled.slice((reminderPage - 1) * PAGE_SIZE, reminderPage * PAGE_SIZE).map(r => (
               <div key={r.id} className="group rounded-lg border bg-white p-4">
                 <div className="flex items-start justify-between">
                   <div>
@@ -228,6 +230,16 @@ export default function MeetingRemindersPage() {
               </div>
             ))}
             {scheduled.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No hay recordatorios programados</p>}
+            {scheduled.length > PAGE_SIZE && (
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{(reminderPage - 1) * PAGE_SIZE + 1}-{Math.min(reminderPage * PAGE_SIZE, scheduled.length)} de {scheduled.length}</span>
+                <div className="flex gap-1">
+                  <button onClick={() => setReminderPage(p => Math.max(1, p - 1))} disabled={reminderPage === 1} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">←</button>
+                  <span className="px-2 text-xs">{reminderPage}/{Math.ceil(scheduled.length / PAGE_SIZE)}</span>
+                  <button onClick={() => setReminderPage(p => Math.min(Math.ceil(scheduled.length / PAGE_SIZE), p + 1))} disabled={reminderPage >= Math.ceil(scheduled.length / PAGE_SIZE)} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">→</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

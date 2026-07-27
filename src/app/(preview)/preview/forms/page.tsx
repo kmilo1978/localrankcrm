@@ -100,6 +100,8 @@ export default function FormsPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | FormEntry["status"]>("all");
   const [filterFormId, setFilterFormId] = useState<string>("all");
   const [connectForm, setConnectForm] = useState({ name: "", provider: "tally" as ConnectedForm["provider"], url: "" });
+  const [entryPage, setEntryPage] = useState(1);
+  const ENTRIES_PER_PAGE = 10;
   // Manual entry
   const [manualFields, setManualFields] = useState<FormField[]>([{ label: "", value: "" }]);
 
@@ -334,7 +336,7 @@ export default function FormsPage() {
 
         {/* Entries */}
         <div className="space-y-2">
-          {filtered.map((entry) => {
+          {filtered.slice((entryPage - 1) * ENTRIES_PER_PAGE, entryPage * ENTRIES_PER_PAGE).map((entry) => {
             const isExpanded = expandedEntry === entry.id;
             const nameField = entry.fields.find((f) => f.label.toLowerCase().includes("nombre"));
             const companyField = entry.fields.find((f) => f.label.toLowerCase().includes("empresa") || f.label.toLowerCase().includes("negocio"));
@@ -414,6 +416,16 @@ export default function FormsPage() {
               <ClipboardList className="mx-auto h-10 w-10 text-muted-foreground/30" />
               <p className="mt-2 text-sm">Sin respuestas de formulario</p>
               <p className="text-xs">Conecta un formulario o agrega entradas manualmente.</p>
+            </div>
+          )}
+          {filtered.length > ENTRIES_PER_PAGE && (
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Mostrando {(entryPage - 1) * ENTRIES_PER_PAGE + 1}-{Math.min(entryPage * ENTRIES_PER_PAGE, filtered.length)} de {filtered.length}</span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setEntryPage(p => Math.max(1, p - 1))} disabled={entryPage === 1} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">←</button>
+                <span className="px-2 text-xs">{entryPage}/{Math.ceil(filtered.length / ENTRIES_PER_PAGE)}</span>
+                <button onClick={() => setEntryPage(p => Math.min(Math.ceil(filtered.length / ENTRIES_PER_PAGE), p + 1))} disabled={entryPage >= Math.ceil(filtered.length / ENTRIES_PER_PAGE)} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">→</button>
+              </div>
             </div>
           )}
         </div>

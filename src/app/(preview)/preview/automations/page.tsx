@@ -31,6 +31,8 @@ export default function AutomationsPage() {
   const [tab, setTab] = useState<"automations" | "logs">("automations");
   const [showNew, setShowNew] = useState(false);
   const [newForm, setNewForm] = useState({ name: "", trigger: TRIGGERS[0]! });
+  const [autoPage, setAutoPage] = useState(1);
+  const PAGE_SIZE = 8;
 
   useEffect(() => { setAutomations(loadFromStorage("crm_automations", SEED)); }, []);
   function save(u: Automation[]) { setAutomations(u); saveToStorage("crm_automations", u); }
@@ -68,7 +70,7 @@ export default function AutomationsPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* List */}
             <div className="space-y-2">
-              {automations.map((a) => (
+              {automations.slice((autoPage - 1) * PAGE_SIZE, autoPage * PAGE_SIZE).map((a) => (
                 <div key={a.id} onClick={() => setEditing(a)} className={`rounded-lg border bg-white p-4 cursor-pointer hover:shadow-sm ${editing?.id === a.id ? "border-brand" : ""}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2"><Zap className={`h-4 w-4 ${a.active ? "text-brand" : "text-muted-foreground"}`} /><span className="text-sm font-semibold">{a.name}</span></div>
@@ -85,6 +87,16 @@ export default function AutomationsPage() {
                   </div>
                 </div>
               ))}
+              {automations.length > PAGE_SIZE && (
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-[10px] text-muted-foreground">{automations.length} total</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => setAutoPage(p => Math.max(1, p - 1))} disabled={autoPage === 1} className="rounded border px-2 py-0.5 text-[10px] disabled:opacity-40 hover:bg-gray-50">←</button>
+                    <span className="text-[10px] px-1">{autoPage}/{Math.ceil(automations.length / PAGE_SIZE)}</span>
+                    <button onClick={() => setAutoPage(p => Math.min(Math.ceil(automations.length / PAGE_SIZE), p + 1))} disabled={autoPage >= Math.ceil(automations.length / PAGE_SIZE)} className="rounded border px-2 py-0.5 text-[10px] disabled:opacity-40 hover:bg-gray-50">→</button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Editor */}

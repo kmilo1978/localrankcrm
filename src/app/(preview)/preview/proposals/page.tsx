@@ -106,6 +106,9 @@ export default function ProposalsPage() {
   const [editing, setEditing] = useState<Proposal | null>(null);
   const [previewing, setPreviewing] = useState<Proposal | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [proposalSearch, setProposalSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setProposals(loadFromStorage("proposals", SEED_PROPOSALS)); }, []);
@@ -289,8 +292,18 @@ export default function ProposalsPage() {
             <Plus className="h-3.5 w-3.5" />Nueva
           </button>
         </div>
+        <div className="border-b px-3 py-2">
+          <input value={proposalSearch} onChange={e => { setProposalSearch(e.target.value); setPage(1); }} placeholder="Buscar propuesta..." className="w-full rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+        </div>
         <div className="flex-1 overflow-y-auto">
-          {proposals.map((p) => (
+          {(() => {
+            const filtered = proposalSearch
+              ? proposals.filter(p => p.title.toLowerCase().includes(proposalSearch.toLowerCase()) || p.client.toLowerCase().includes(proposalSearch.toLowerCase()))
+              : proposals;
+            const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            return (<>
+          {paginated.map((p) => (
             <div key={p.id} onClick={() => { setEditing(p); setPreviewing(null); }} className={`group cursor-pointer border-b px-4 py-3 hover:bg-gray-50 ${editing?.id === p.id ? "bg-brand-tint" : ""}`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -312,6 +325,19 @@ export default function ProposalsPage() {
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <div className="border-t px-3 py-2 flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground">{filtered.length} total</span>
+              <div className="flex gap-1">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded border px-1.5 py-0.5 text-[10px] disabled:opacity-40">←</button>
+                <span className="text-[10px] px-1">{page}/{totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded border px-1.5 py-0.5 text-[10px] disabled:opacity-40">→</button>
+              </div>
+            </div>
+          )}
+          {filtered.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground">Sin resultados</p>}
+            </>);
+          })()}
         </div>
       </div>
 
