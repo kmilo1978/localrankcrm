@@ -26,6 +26,19 @@ function getCrmContext(): Record<string, unknown> {
   const inboxConversations = loadFromStorage("inbox_conversations", []);
   const calendarAppointments = loadFromStorage("calendar_appointments", []);
   const focusTasks = loadFromStorage("focus_tasks", []);
+  const checklists = loadFromStorage("checklists_v2", []);
+  const meetingReminders = loadFromStorage("meeting_reminders", []);
+  const automations = loadFromStorage("crm_automations", []);
+  const proposals = loadFromStorage("proposals", []);
+  const projects = loadFromStorage("projects_v3", []);
+  const socialProfiles = loadFromStorage("social_profiles", []);
+  const coldContacts = loadFromStorage("cold_contacts", []);
+  const carteraInvoices = loadFromStorage("cartera_invoices", []);
+  const carteraAgreements = loadFromStorage("cartera_agreements", []);
+  const formEntries = loadFromStorage("crm_form_entries", []);
+  const crmForms = loadFromStorage("crm_forms", []);
+  const radarClips = loadFromStorage("radar_clips", []);
+  const linkedinProfiles = loadFromStorage("linkedin_profiles", []);
 
   return {
     contacts,
@@ -34,6 +47,19 @@ function getCrmContext(): Record<string, unknown> {
     inboxConversations,
     calendarAppointments,
     focusTasks,
+    checklists,
+    meetingReminders,
+    automations,
+    proposals,
+    projects,
+    socialProfiles,
+    coldContacts,
+    carteraInvoices,
+    carteraAgreements,
+    formEntries,
+    crmForms,
+    radarClips,
+    linkedinProfiles,
   };
 }
 
