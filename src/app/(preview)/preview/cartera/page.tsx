@@ -56,6 +56,8 @@ export default function CarteraPage() {
   const [agreementForm, setAgreementForm] = useState({ client: "", totalDebt: "", installments: "3", monthlyAmount: "", startDate: "" });
   const [reminderForm, setReminderForm] = useState({ client: "", message: "", channel: "WhatsApp", date: "" });
   const [form, setForm] = useState({ number: "", client: "", amount: "", dueDate: "" });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => { setInvoices(loadFromStorage("cartera_invoices", SEED_INVOICES)); setAgreements(loadFromStorage("cartera_agreements", SEED_AGREEMENTS)); }, []);
   function saveInv(u: Invoice[]) { setInvoices(u); saveToStorage("cartera_invoices", u); }
@@ -136,7 +138,7 @@ export default function CarteraPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Vencimiento</th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground"></th>
               </tr></thead><tbody className="divide-y">
-                {invoices.map((inv) => (
+                {invoices.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((inv) => (
                   <tr key={inv.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-sm font-mono font-medium">{inv.number}</td>
                     <td className="px-4 py-3 text-sm">{inv.client}</td>
@@ -155,6 +157,16 @@ export default function CarteraPage() {
                 ))}
               </tbody></table>
             </div>
+            {invoices.length > PAGE_SIZE && (
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Mostrando {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, invoices.length)} de {invoices.length}</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">←</button>
+                  <span className="px-2 text-xs">{page}/{Math.ceil(invoices.length / PAGE_SIZE)}</span>
+                  <button onClick={() => setPage(p => Math.min(Math.ceil(invoices.length / PAGE_SIZE), p + 1))} disabled={page >= Math.ceil(invoices.length / PAGE_SIZE)} className="rounded border px-2 py-1 text-xs disabled:opacity-40 hover:bg-gray-50">→</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

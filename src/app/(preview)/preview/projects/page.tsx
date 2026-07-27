@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bot, CheckCircle2, ChevronRight, Circle, Copy, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Bot, CheckCircle2, ChevronRight, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 
@@ -58,6 +58,9 @@ export default function ProjectsPage() {
   const [aiResponse, setAiResponse] = useState("");
   const [activeTab, setActiveTab] = useState<"tasks" | "sections" | "files" | "team" | "notes" | "ai">("tasks");
   const [toast, setToast] = useState("");
+  const [editingProject, setEditingProject] = useState(false);
+  const [editProjectForm, setEditProjectForm] = useState({ name: "", description: "", color: "" });
+  const [projectSearch, setProjectSearch] = useState("");
 
   useEffect(() => { setProjects(loadFromStorage("projects_v3", SEED)); }, []);
   function save(u: Project[]) { setProjects(u); saveToStorage("projects_v3", u); }
@@ -221,6 +224,23 @@ export default function ProjectsPage() {
     return total > 0 ? Math.round(done / total * 100) : 0;
   }
 
+  function openEditProject() {
+    if (!project) return;
+    setEditProjectForm({ name: project.name, description: project.description, color: project.color });
+    setEditingProject(true);
+  }
+
+  function saveProjectEdit() {
+    if (!editProjectForm.name.trim() || !project) return;
+    save(projects.map(p => p.id === project.id ? { ...p, name: editProjectForm.name, description: editProjectForm.description, color: editProjectForm.color } : p));
+    setEditingProject(false);
+    notify("Proyecto actualizado");
+  }
+
+  const filteredProjects = projectSearch
+    ? projects.filter(p => p.name.toLowerCase().includes(projectSearch.toLowerCase()) || p.description.toLowerCase().includes(projectSearch.toLowerCase()))
+    : projects;
+
   return (
     <div className="flex h-full flex-col md:flex-row">
       {/* LEFT: Project list */}
@@ -229,8 +249,11 @@ export default function ProjectsPage() {
           <h2 className="text-xs font-bold">Proyectos</h2>
           <button onClick={() => setShowNewProject(true)} className="rounded bg-brand text-white p-1.5 hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" /></button>
         </div>
+        <div className="px-2 pt-2">
+          <input value={projectSearch} onChange={e => setProjectSearch(e.target.value)} placeholder="Buscar..." className="w-full rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none" />
+        </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {projects.map(p => (
+          {filteredProjects.map(p => (
             <div key={p.id} className={`rounded-lg px-2.5 py-2 cursor-pointer transition-colors ${selectedProject === p.id ? "bg-brand/10 border border-brand/20" : "hover:bg-gray-100"}`} onClick={() => { setSelectedProject(p.id); setSelectedSub(null); }}>
               <div className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
@@ -266,13 +289,28 @@ export default function ProjectsPage() {
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h1 className="text-lg font-bold flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: selectedSub && subProject ? subProject.color : project.color }} />
-                  {currentName}
-                </h1>
-                <p className="text-xs text-muted-foreground">{selectedSub && subProject ? subProject.description : project.description}</p>
+                {editingProject && !selectedSub ? (
+                  <div className="space-y-2">
+                    <input value={editProjectForm.name} onChange={e => setEditProjectForm({...editProjectForm, name: e.target.value})} className="text-lg font-bold rounded border px-2 py-1 w-full focus:border-brand focus:outline-none" />
+                    <input value={editProjectForm.description} onChange={e => setEditProjectForm({...editProjectForm, description: e.target.value})} placeholder="Descripción" className="text-xs rounded border px-2 py-1 w-full focus:border-brand focus:outline-none" />
+                    <div className="flex gap-1">{COLORS.map(c => <button key={c} onClick={() => setEditProjectForm({...editProjectForm, color: c})} className={`h-5 w-5 rounded-full border-2 ${editProjectForm.color === c ? "border-gray-800 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />)}</div>
+                    <div className="flex gap-2">
+                      <button onClick={saveProjectEdit} className="rounded bg-brand px-3 py-1 text-xs text-white hover:bg-brand-hover">Guardar</button>
+                      <button onClick={() => setEditingProject(false)} className="rounded border px-3 py-1 text-xs hover:bg-gray-50">Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h1 className="text-lg font-bold flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: selectedSub && subProject ? subProject.color : project.color }} />
+                      {currentName}
+                    </h1>
+                    <p className="text-xs text-muted-foreground">{selectedSub && subProject ? subProject.description : project.description}</p>
+                  </>
+                )}
               </div>
               <div className="flex gap-1">
+                {!selectedSub && !editingProject && <button onClick={openEditProject} className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-gray-50" title="Editar proyecto"><Edit3 className="h-3 w-3" /></button>}
                 {!selectedSub && <button onClick={() => setShowNewSub(true)} className="flex items-center gap-1 rounded border px-2 py-1 text-xs hover:bg-gray-50"><FolderPlus className="h-3 w-3" />Sub-proyecto</button>}
                 {!selectedSub && <button onClick={() => duplicateProject(project)} className="rounded border px-2 py-1 text-xs hover:bg-gray-50"><Copy className="h-3 w-3" /></button>}
                 {selectedSub ? (

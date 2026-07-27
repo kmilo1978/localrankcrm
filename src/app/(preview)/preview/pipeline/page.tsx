@@ -51,6 +51,8 @@ export default function PipelinePreviewPage() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState({ name: "", company: "", value: "", stageId: "" });
   const [toast, setToast] = useState("");
+  const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
+  const LEADS_PER_STAGE = 8;
 
   useEffect(() => {
     setStages(loadFromStorage("pipeline_stages", SEED_STAGES));
@@ -151,7 +153,7 @@ export default function PipelinePreviewPage() {
                 <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gray-200 px-1.5 text-xs font-medium">{stageLeads.length}</span>
               </div>
               <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
-                {stageLeads.map((lead) => (
+                {(expandedStages.has(stage.id) ? stageLeads : stageLeads.slice(0, LEADS_PER_STAGE)).map((lead) => (
                   <div
                     key={lead.id}
                     draggable
@@ -180,6 +182,18 @@ export default function PipelinePreviewPage() {
                   <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground">
                     Arrastra aquí
                   </div>
+                )}
+                {stageLeads.length > LEADS_PER_STAGE && (
+                  <button
+                    onClick={() => setExpandedStages(prev => {
+                      const next = new Set(prev);
+                      if (next.has(stage.id)) next.delete(stage.id); else next.add(stage.id);
+                      return next;
+                    })}
+                    className="w-full rounded-md border border-dashed py-1.5 text-xs text-muted-foreground hover:bg-gray-100 hover:text-foreground"
+                  >
+                    {expandedStages.has(stage.id) ? "Mostrar menos" : `+${stageLeads.length - LEADS_PER_STAGE} más`}
+                  </button>
                 )}
               </div>
             </div>
