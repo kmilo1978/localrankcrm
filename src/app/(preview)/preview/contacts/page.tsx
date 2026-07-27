@@ -103,6 +103,14 @@ export default function ContactsPreviewPage() {
   function handleDelete(id: string) { save(contacts.filter((c) => c.id !== id)); if (expanded === id) setExpanded(null); }
   function toggleArchive(id: string) { save(contacts.map((c) => c.id === id ? { ...c, archived: !c.archived } : c)); }
 
+  const visible = contacts.filter((c) => showArchived ? c.archived : !c.archived);
+  const filtered = visible.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone.includes(search) ||
+    c.company.toLowerCase().includes(search.toLowerCase()) ||
+    c.email.toLowerCase().includes(search.toLowerCase())
+  );
+
   // Bulk selection
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -169,13 +177,6 @@ export default function ContactsPreviewPage() {
     save(contacts.map((c) => c.id === contactId ? { ...c, reminders: c.reminders.filter((r) => r.id !== remId) } : c));
   }
 
-  const visible = contacts.filter((c) => showArchived ? c.archived : !c.archived);
-  const filtered = visible.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search) ||
-    c.company.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
-  );
 
   // Global pending reminders count
   const pendingReminders = contacts.reduce((sum, c) => sum + c.reminders.filter((r) => !r.done).length, 0);
