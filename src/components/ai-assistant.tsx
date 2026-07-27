@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Bot, Minimize2, Send, Sparkles, X } from "lucide-react";
+/* Web Speech API types (not in default TS lib) */
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
+
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Bot, Mic, MicOff, Minimize2, Send, Sparkles, X } from "lucide-react";
 import { loadFromStorage } from "@/lib/local-storage";
 
 type Message = {
@@ -91,7 +99,49 @@ export function AiAssistant() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
+
+  const toggleVoice = useCallback(() => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setInput("(Tu navegador no soporta voz. Usa Chrome o Edge)");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0]?.transcript || "")
+        .join("");
+      setInput(transcript);
+      // Auto-send on final result
+      if (event.results[event.results.length - 1]?.isFinal) {
+        setTimeout(() => {
+          const btn = document.getElementById("ai-send-btn");
+          if (btn) btn.click();
+        }, 300);
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [listening]);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
@@ -276,11 +326,19 @@ export function AiAssistant() {
                 send();
               }
             }}
-            placeholder="Pregunta sobre tus datos..."
+            placeholder={listening ? "Escuchando..." : "Pregunta sobre tus datos..."}
             disabled={loading}
-            className="flex-1 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50"
+            className={`flex-1 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50 ${listening ? "border-red-300 bg-red-50" : ""}`}
           />
           <button
+            onClick={toggleVoice}
+            className={`rounded-md p-2 transition-colors ${listening ? "bg-red-500 text-white animate-pulse" : "border text-muted-foreground hover:bg-gray-50 hover:text-brand"}`}
+            title={listening ? "Detener" : "Hablar"}
+          >
+            {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+          <button
+            id="ai-send-btn"
             onClick={send}
             disabled={!input.trim() || loading}
             className="rounded-md bg-brand p-2 text-white hover:bg-brand-hover disabled:opacity-50"
