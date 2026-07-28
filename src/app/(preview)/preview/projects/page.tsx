@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Bot, CheckCircle2, ChevronRight, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Bot, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 import { RichEditor } from "@/components/rich-editor";
@@ -133,6 +133,18 @@ export default function ProjectsPage() {
     } else {
       save(projects.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) } : p));
     }
+  }
+
+  function moveTaskUp(taskId: string) {
+    function reorder(tasks: ProjectTask[]) { const idx = tasks.findIndex(t => t.id === taskId); if (idx <= 0) return tasks; const a = [...tasks]; [a[idx - 1], a[idx]] = [a[idx]!, a[idx - 1]!]; return a; }
+    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
+    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
+  }
+
+  function moveTaskDown(taskId: string) {
+    function reorder(tasks: ProjectTask[]) { const idx = tasks.findIndex(t => t.id === taskId); if (idx >= tasks.length - 1) return tasks; const a = [...tasks]; [a[idx], a[idx + 1]] = [a[idx + 1]!, a[idx]!]; return a; }
+    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
+    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
   }
 
   // Notes
@@ -380,7 +392,11 @@ export default function ProjectsPage() {
               <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Tareas ({currentTasks.filter(t => t.done).length}/{currentTasks.length})</h3>
               <div className="space-y-1 mb-3 max-h-60 overflow-y-auto">
                 {currentTasks.map(t => (
-                  <div key={t.id} className="group flex items-center gap-2 rounded px-2 py-1.5 hover:bg-gray-50">
+                  <div key={t.id} className="group flex items-center gap-1.5 rounded px-2 py-1.5 hover:bg-gray-50">
+                    <div className="flex flex-col opacity-0 group-hover:opacity-100">
+                      <button onClick={() => moveTaskUp(t.id)} className="text-muted-foreground hover:text-brand"><ChevronUp className="h-2.5 w-2.5" /></button>
+                      <button onClick={() => moveTaskDown(t.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
+                    </div>
                     <button onClick={() => toggleTask(t.id)}>{t.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}</button>
                     <span className={`flex-1 text-sm ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.title}</span>
                     {t.assignee && <span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{t.assignee}</span>}

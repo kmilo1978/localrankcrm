@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Copy, Download, Edit2, Eye, FileText, Image, Link, Mic, PenTool, Plus, Send, Trash2, Upload, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Download, Edit2, Eye, FileText, Image, Link, Mic, PenTool, Plus, Send, Trash2, Upload, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type MediaItem = { id: string; type: "image" | "audio" | "embed"; url: string; name: string };
@@ -164,6 +164,24 @@ export default function ProposalsPage() {
   function removeSection(sectionId: string) {
     if (!editing) return;
     updateProposal({ ...editing, sections: editing.sections.filter((s) => s.id !== sectionId) });
+  }
+
+  function moveSectionUp(sectionId: string) {
+    if (!editing) return;
+    const idx = editing.sections.findIndex(s => s.id === sectionId);
+    if (idx <= 0) return;
+    const sections = [...editing.sections];
+    [sections[idx - 1], sections[idx]] = [sections[idx]!, sections[idx - 1]!];
+    updateProposal({ ...editing, sections });
+  }
+
+  function moveSectionDown(sectionId: string) {
+    if (!editing) return;
+    const idx = editing.sections.findIndex(s => s.id === sectionId);
+    if (idx >= editing.sections.length - 1) return;
+    const sections = [...editing.sections];
+    [sections[idx], sections[idx + 1]] = [sections[idx + 1]!, sections[idx]!];
+    updateProposal({ ...editing, sections });
   }
 
   function updateSection(sectionId: string, field: "title" | "content", value: string) {
@@ -540,7 +558,13 @@ export default function ProposalsPage() {
                     <div key={section.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between mb-2">
                         <input value={section.title} onChange={(e) => !editing.locked && updateSection(section.id, "title", e.target.value)} readOnly={editing.locked} className={`font-medium text-sm border-0 bg-transparent focus:outline-none focus:ring-0 p-0 flex-1 ${editing.locked ? "cursor-not-allowed" : ""}`} placeholder="Título de sección" />
-                        {!editing.locked && <button onClick={() => removeSection(section.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>}
+                        {!editing.locked && (
+                          <div className="flex gap-0.5">
+                            <button onClick={() => moveSectionUp(section.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Subir"><ChevronUp className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => moveSectionDown(section.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Bajar"><ChevronDown className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => removeSection(section.id)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                          </div>
+                        )}
                       </div>
                       <textarea value={section.content} onChange={(e) => !editing.locked && updateSection(section.id, "content", e.target.value)} readOnly={editing.locked} rows={6} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} placeholder="Contenido de esta sección..." />
                       {/* Media items */}
