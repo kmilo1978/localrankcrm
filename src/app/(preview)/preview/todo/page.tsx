@@ -52,12 +52,19 @@ export default function TodoPage() {
 
   useEffect(() => {
     const raw = loadFromStorage<TodoState>("todos", SEED);
-    const savedPeriods = loadFromStorage<CustomPeriod[]>("todo_periods", DEFAULT_PERIODS);
+    const savedPeriods = loadFromStorage<CustomPeriod[]>("todo_periods", []);
+    // Always include default periods + any custom ones saved
+    const allPeriods = savedPeriods.length > 0 ? savedPeriods : DEFAULT_PERIODS;
+    // Merge: ensure defaults are always present
+    const mergedPeriods = [...DEFAULT_PERIODS];
+    for (const sp of allPeriods) {
+      if (!mergedPeriods.find(p => p.id === sp.id)) mergedPeriods.push(sp);
+    }
     // Ensure all periods have arrays
     const filled: TodoState = {};
-    for (const p of savedPeriods) { filled[p.id] = raw[p.id] || []; }
+    for (const p of mergedPeriods) { filled[p.id] = raw[p.id] || []; }
     setTodos(filled);
-    setPeriods(savedPeriods);
+    setPeriods(mergedPeriods);
   }, []);
   function save(u: TodoState) { setTodos(u); saveToStorage("todos", u); }
   function savePeriods(p: CustomPeriod[]) { setPeriods(p); saveToStorage("todo_periods", p); }
