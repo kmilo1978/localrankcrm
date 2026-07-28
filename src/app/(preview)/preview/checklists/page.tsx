@@ -115,6 +115,10 @@ export default function ChecklistsPage() {
     save(lists.map(l => l.id === listId ? { ...l, items: l.items.filter(i => i.id !== itemId) } : l));
   }
 
+  function editItemText(listId: string, itemId: string, newText: string) {
+    save(lists.map(l => l.id === listId ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, text: newText } : i) } : l));
+  }
+
   function toggleLock(id: string) {
     save(lists.map(l => l.id === id ? { ...l, locked: !l.locked } : l));
     const list = lists.find(l => l.id === id);
@@ -265,7 +269,7 @@ export default function ChecklistsPage() {
                         <button onClick={() => moveItemDown(cl.id, item.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
                       </div>
                       <input type="checkbox" checked={item.done} onChange={() => toggleItem(cl.id, item.id)} className="h-3.5 w-3.5 accent-[var(--accent)] shrink-0" />
-                      <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</span>
+                      <input value={item.text} onChange={(e) => editItemText(cl.id, item.id, e.target.value)} readOnly={cl.locked} className={`flex-1 text-xs bg-transparent border-0 p-0 focus:outline-none focus:ring-0 ${item.done ? "line-through text-muted-foreground" : ""} ${cl.locked ? "cursor-not-allowed" : ""}`} />
                       <button onClick={() => deleteItem(cl.id, item.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
                     </div>
                   ))}
