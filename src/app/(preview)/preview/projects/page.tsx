@@ -147,6 +147,11 @@ export default function ProjectsPage() {
     else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
   }
 
+  function editTaskTitle(taskId: string, newTitle: string) {
+    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : sp) } : p)); }
+    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : p)); }
+  }
+
   // Notes
   function addNote() {
     if (!noteInput.trim()) return;
@@ -414,7 +419,7 @@ export default function ProjectsPage() {
                       <button onClick={() => moveTaskDown(t.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
                     </div>
                     <button onClick={() => toggleTask(t.id)}>{t.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}</button>
-                    <span className={`flex-1 text-sm ${t.done ? "line-through text-muted-foreground" : ""}`}>{t.title}</span>
+                    <input value={t.title} onChange={(e) => editTaskTitle(t.id, e.target.value)} className={`flex-1 text-sm bg-transparent border-0 p-0 focus:outline-none focus:ring-0 ${t.done ? "line-through text-muted-foreground" : ""}`} />
                     {t.assignee && <span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{t.assignee}</span>}
                     <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
                   </div>

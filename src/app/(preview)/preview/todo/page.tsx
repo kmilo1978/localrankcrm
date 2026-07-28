@@ -78,6 +78,10 @@ export default function TodoPage() {
     save({ ...todos, [period]: items });
   }
 
+  function editItemText(period: TodoPeriod, id: string, newText: string) {
+    save({ ...todos, [period]: todos[period].map(t => t.id === id ? { ...t, text: newText } : t) });
+  }
+
   function cloneItem(period: TodoPeriod, item: TodoItem) {
     const copy: TodoItem = { ...item, id: generateId(), done: false };
     save({ ...todos, [period]: [copy, ...todos[period]] });
@@ -151,7 +155,9 @@ export default function TodoPage() {
                       <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
                         {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
                       </button>
-                      <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</span>
+                      <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>
+                        <input value={item.text} onChange={(e) => editItemText(period, item.id, e.target.value)} className={`w-full bg-transparent border-0 p-0 text-xs focus:outline-none focus:ring-0 ${item.done ? "line-through text-muted-foreground" : ""}`} />
+                      </span>
                       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 shrink-0">
                         <button onClick={() => cloneItem(period, item)} className="text-muted-foreground hover:text-brand" title="Clonar"><Copy className="h-3 w-3" /></button>
                         <button onClick={() => { const targets = (["daily","weekly","monthly"] as TodoPeriod[]).filter(p => p !== period); moveItem(period, targets[0]!, item); }} className="text-muted-foreground hover:text-purple-600" title={`Mover a ${period === "daily" ? "semanal" : period === "weekly" ? "mensual" : "diario"}`}><ArrowRight className="h-3 w-3" /></button>

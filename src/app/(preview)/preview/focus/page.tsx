@@ -72,6 +72,7 @@ export default function FocusPage() {
 
   function toggleTask(id: string) { saveTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)); }
   function deleteTask(id: string) { saveTasks(tasks.filter(t => t.id !== id)); }
+  function editTaskText(id: string, text: string) { saveTasks(tasks.map(t => t.id === id ? { ...t, text } : t)); }
   function togglePriority(id: string) { saveTasks(tasks.map(t => t.id === id ? { ...t, priority: t.priority === "high" ? "normal" : "high" } : t)); }
 
   const mins = Math.floor(timeLeft / 60);
@@ -154,7 +155,7 @@ export default function FocusPage() {
                 {tasks.filter(t => !t.done).map(task => (
                   <div key={task.id} className="group flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-50">
                     <button onClick={() => toggleTask(task.id)}><Circle className="h-4 w-4 text-muted-foreground" /></button>
-                    <span className="flex-1 text-sm">{task.text}</span>
+                    <input value={task.text} onChange={(e) => editTaskText(task.id, e.target.value)} className="flex-1 text-sm bg-transparent border-0 p-0 focus:outline-none focus:ring-0" />
                     <button onClick={() => togglePriority(task.id)} className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${task.priority === "high" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500"}`}>{task.priority === "high" ? "Alta" : "Normal"}</button>
                     <button onClick={() => { setCurrentTask(task.text); if (!timerRunning) startTimer(); }} className="opacity-0 group-hover:opacity-100 rounded px-1.5 py-0.5 text-[9px] bg-brand/10 text-brand font-medium">Enfocar</button>
                     <button onClick={() => deleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
