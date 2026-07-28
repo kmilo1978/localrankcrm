@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Calendar, CheckCircle2, Circle, Clock, ClipboardCopy, Edit3, Plus, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { ViewToggle, ViewMode } from "@/components/view-toggle";
+import { RichEditor } from "@/components/rich-editor";
 import { SortableList } from "@/components/sortable-list";
 
 type Task = {
@@ -128,7 +129,7 @@ export default function TasksPage() {
             <h3 className="mb-4 font-semibold">Agregar nueva tarea</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Titulo *" className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descripcion" rows={2} className="col-span-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+              <div className="col-span-full"><RichEditor value={form.description} onChange={(html) => setForm({ ...form, description: html })} placeholder="Descripción" minHeight="60px" /></div>
               <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value as Task["priority"] })} className="rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none">
                 <option value="high">Prioridad Alta</option><option value="medium">Prioridad Media</option><option value="low">Prioridad Baja</option>
               </select>
@@ -301,7 +302,7 @@ export default function TasksPage() {
             </div>
             <div className="space-y-3">
               <div><label className="text-xs font-medium text-muted-foreground">Titulo</label><input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Descripcion</label><textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} rows={2} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Descripcion</label><div className="mt-1"><RichEditor value={form.description} onChange={(html) => setForm({...form, description: html})} minHeight="60px" /></div></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-xs font-medium text-muted-foreground">Estado</label>
                   <select value={form.status} onChange={e => setForm({...form, status: e.target.value as Task["status"]})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none">

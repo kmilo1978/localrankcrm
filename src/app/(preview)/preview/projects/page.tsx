@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Bot, CheckCircle2, ChevronRight, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
+import { RichEditor } from "@/components/rich-editor";
 
 type ProjectNote = { id: string; text: string; author: string; date: string };
 type ProjectTask = { id: string; title: string; done: boolean; assignee: string };
@@ -369,7 +370,7 @@ export default function ProjectsPage() {
               {/* Add section — always visible */}
               <div className="rounded-lg border border-dashed bg-gray-50/50 p-3 space-y-2">
                 <input value={sectionForm.title} onChange={e => setSectionForm({...sectionForm, title: e.target.value})} placeholder="Titulo de seccion (ej: Objetivos, Brief, Recursos...)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
-                <textarea value={sectionForm.content} onChange={e => setSectionForm({...sectionForm, content: e.target.value})} placeholder="Contenido libre (texto, links, listas...)" rows={3} className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <RichEditor value={sectionForm.content} onChange={(html) => setSectionForm({...sectionForm, content: html})} placeholder="Contenido libre (texto, links, listas...)" minHeight="80px" />
                 <button onClick={addSection} disabled={!sectionForm.title.trim()} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover disabled:opacity-50">+ Agregar seccion</button>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Lock, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
+import { RichEditor } from "@/components/rich-editor";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
 import { ViewToggle, ViewMode } from "@/components/view-toggle";
 import { SortableList } from "@/components/sortable-list";
@@ -221,7 +222,7 @@ export default function NotesPage() {
           <div className="mb-4 rounded-lg border bg-white p-5">
             <div className="space-y-3">
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título *" className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
-              <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Contenido..." rows={4} className="w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand" />
+              <RichEditor value={form.content} onChange={(html) => setForm({ ...form, content: html })} placeholder="Contenido..." minHeight="120px" />
               {/* Image attachment */}
               <div className="flex items-center gap-2">
                 <button onClick={async () => { const img = await openImagePicker(); if (img) setForm({...form, image: img}); }} className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Adjuntar imagen</button>
@@ -392,7 +393,7 @@ export default function NotesPage() {
             </div>
             <div className="space-y-3">
               <div><label className="text-xs font-medium text-muted-foreground">Titulo</label><input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Contenido</label><textarea value={editForm.content} onChange={e => setEditForm({...editForm, content: e.target.value})} rows={8} className="w-full rounded border px-3 py-2 text-sm mt-1 focus:border-brand focus:outline-none" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Contenido</label><div className="mt-1"><RichEditor value={editForm.content} onChange={(html) => setEditForm({...editForm, content: html})} minHeight="200px" /></div></div>
               <div className="flex items-center gap-2">
                 <button onClick={async () => { const img = await openImagePicker(); if (img) setEditForm({...editForm, image: img}); }} className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs hover:bg-gray-50"><ImagePlus className="h-3.5 w-3.5" />Imagen</button>
                 {editForm.image && <div className="relative"><img src={editForm.image} alt="" className="h-12 w-12 rounded border object-cover" /><button onClick={() => setEditForm({...editForm, image: ""})} className="absolute -top-1 -right-1 rounded-full bg-red-500 p-0.5 text-white"><X className="h-2.5 w-2.5" /></button></div>}
