@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, CheckCircle2, Circle, Plus, Trash2, Bell, Copy, ArrowRight } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Trash2, Bell, Copy, ArrowRight } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type TodoItem = { id: string; text: string; done: boolean; createdAt: string };
@@ -60,6 +60,22 @@ export default function TodoPage() {
 
   function deleteItem(period: TodoPeriod, id: string) {
     save({ ...todos, [period]: todos[period].filter((t) => t.id !== id) });
+  }
+
+  function moveItemUp(period: TodoPeriod, id: string) {
+    const items = [...todos[period]];
+    const idx = items.findIndex(t => t.id === id);
+    if (idx <= 0) return;
+    [items[idx - 1], items[idx]] = [items[idx]!, items[idx - 1]!];
+    save({ ...todos, [period]: items });
+  }
+
+  function moveItemDown(period: TodoPeriod, id: string) {
+    const items = [...todos[period]];
+    const idx = items.findIndex(t => t.id === id);
+    if (idx >= items.length - 1) return;
+    [items[idx], items[idx + 1]] = [items[idx + 1]!, items[idx]!];
+    save({ ...todos, [period]: items });
   }
 
   function cloneItem(period: TodoPeriod, item: TodoItem) {
@@ -127,7 +143,11 @@ export default function TodoPage() {
                 {/* Items */}
                 <div className="max-h-80 overflow-y-auto px-2 py-2 space-y-1">
                   {items.map((item) => (
-                    <div key={item.id} className={`group flex items-start gap-2 rounded px-2 py-1.5 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
+                    <div key={item.id} className={`group flex items-start gap-1.5 rounded px-2 py-1.5 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
+                      <div className="flex flex-col opacity-0 group-hover:opacity-100 mt-0.5">
+                        <button onClick={() => moveItemUp(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronUp className="h-2.5 w-2.5" /></button>
+                        <button onClick={() => moveItemDown(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
+                      </div>
                       <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
                         {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
                       </button>
