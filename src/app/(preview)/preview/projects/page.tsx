@@ -179,18 +179,36 @@ export default function ProjectsPage() {
     }
   }
 
+  function updateSectionField(secId: string, field: "title" | "content", value: string) {
+    if (selectedSub) {
+      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : sp) } : p));
+    } else {
+      save(projects.map(p => p.id === selectedProject ? { ...p, sections: p.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : p));
+    }
+  }
+
   // Files
   async function addFile() {
-    const img = await openImagePicker();
-    if (!img) return;
-    const name = "Archivo-" + new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }) + ".jpg";
-    const file: ProjectFile = { id: generateId(), name, data: img, addedAt: new Date().toISOString().split("T")[0]! };
-    if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: [...sp.files, file] } : sp) } : p));
-    } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, files: [...p.files, file] } : p));
-    }
-    notify("Archivo agregado");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv";
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target?.result as string;
+        const pFile: ProjectFile = { id: generateId(), name: file.name, data, addedAt: new Date().toISOString().split("T")[0]! };
+        if (selectedSub) {
+          save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: [...sp.files, pFile] } : sp) } : p));
+        } else {
+          save(projects.map(p => p.id === selectedProject ? { ...p, files: [...p.files, pFile] } : p));
+        }
+        notify("Archivo agregado");
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
   }
 
   function deleteFile(fileId: string) {
@@ -371,12 +389,10 @@ export default function ProjectsPage() {
               {currentSections.map(sec => (
                 <div key={sec.id} className="rounded-lg border bg-white p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
-                      <FileText className="h-3.5 w-3.5 text-brand" />{sec.title}
-                    </h4>
-                    <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                    <input value={sec.title} onChange={e => updateSectionField(sec.id, "title", e.target.value)} className="text-sm font-semibold flex-1 bg-transparent border-0 p-0 focus:outline-none focus:ring-0" placeholder="Título de sección" />
+                    <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500 shrink-0 ml-2"><Trash2 className="h-3 w-3" /></button>
                   </div>
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap break-words leading-relaxed">{sec.content}</div>
+                  <RichEditor value={sec.content} onChange={(html) => updateSectionField(sec.id, "content", html)} placeholder="Edita el contenido..." minHeight="60px" />
                 </div>
               ))}
               {/* Add section — always visible */}
