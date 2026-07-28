@@ -5,12 +5,14 @@ import { Calendar, CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Trash2, B
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type TodoItem = { id: string; text: string; done: boolean; createdAt: string };
-type TodoPeriod = "daily" | "weekly" | "monthly";
+type TodoPeriod = "daily" | "weekly" | "monthly" | "semestral" | "yearly";
 
 type TodoState = {
   daily: TodoItem[];
   weekly: TodoItem[];
   monthly: TodoItem[];
+  semestral: TodoItem[];
+  yearly: TodoItem[];
 };
 
 const SEED: TodoState = {
@@ -31,19 +33,23 @@ const SEED: TodoState = {
     { id: "tm3", text: "Revisar y optimizar procesos del CRM", done: false, createdAt: "2026-07-01" },
     { id: "tm4", text: "Capacitación equipo — nuevas funcionalidades", done: true, createdAt: "2026-07-01" },
   ],
+  semestral: [],
+  yearly: [],
 };
 
 const PERIOD_CONFIG = {
   daily: { label: "Diario", sublabel: "Hoy", color: "border-t-blue-400", bg: "bg-blue-50" },
   weekly: { label: "Semanal", sublabel: "Esta semana", color: "border-t-purple-400", bg: "bg-purple-50" },
   monthly: { label: "Mensual", sublabel: "Este mes", color: "border-t-amber-400", bg: "bg-amber-50" },
+  semestral: { label: "6 Meses", sublabel: "Este semestre", color: "border-t-green-400", bg: "bg-green-50" },
+  yearly: { label: "Anual", sublabel: "Este año", color: "border-t-red-400", bg: "bg-red-50" },
 };
 
 export default function TodoPage() {
   const [todos, setTodos] = useState<TodoState>(SEED);
-  const [newItems, setNewItems] = useState<Record<TodoPeriod, string>>({ daily: "", weekly: "", monthly: "" });
+  const [newItems, setNewItems] = useState<Record<TodoPeriod, string>>({ daily: "", weekly: "", monthly: "", semestral: "", yearly: "" });
 
-  useEffect(() => { setTodos(loadFromStorage("todos", SEED)); }, []);
+  useEffect(() => { const raw = loadFromStorage<TodoState>("todos", SEED); setTodos({ ...SEED, ...raw, semestral: raw.semestral || [], yearly: raw.yearly || [] }); }, []);
   function save(u: TodoState) { setTodos(u); saveToStorage("todos", u); }
 
   function addItem(period: TodoPeriod) {
