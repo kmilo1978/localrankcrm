@@ -5,15 +5,10 @@ import { Calendar, CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Trash2, B
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
 type TodoItem = { id: string; text: string; done: boolean; createdAt: string };
-type TodoPeriod = "daily" | "weekly" | "monthly" | "semestral" | "yearly";
+type TodoPeriod = string;
+type CustomPeriod = { id: string; label: string; sublabel: string; color: string; bg: string };
 
-type TodoState = {
-  daily: TodoItem[];
-  weekly: TodoItem[];
-  monthly: TodoItem[];
-  semestral: TodoItem[];
-  yearly: TodoItem[];
-};
+type TodoState = Record<string, TodoItem[]>;
 
 const SEED: TodoState = {
   daily: [
@@ -37,20 +32,53 @@ const SEED: TodoState = {
   yearly: [],
 };
 
-const PERIOD_CONFIG = {
-  daily: { label: "Diario", sublabel: "Hoy", color: "border-t-blue-400", bg: "bg-blue-50" },
-  weekly: { label: "Semanal", sublabel: "Esta semana", color: "border-t-purple-400", bg: "bg-purple-50" },
-  monthly: { label: "Mensual", sublabel: "Este mes", color: "border-t-amber-400", bg: "bg-amber-50" },
-  semestral: { label: "6 Meses", sublabel: "Este semestre", color: "border-t-green-400", bg: "bg-green-50" },
-  yearly: { label: "Anual", sublabel: "Este año", color: "border-t-red-400", bg: "bg-red-50" },
-};
+const DEFAULT_PERIODS: CustomPeriod[] = [
+  { id: "daily", label: "Diario", sublabel: "Hoy", color: "border-t-blue-400", bg: "bg-blue-50" },
+  { id: "weekly", label: "Semanal", sublabel: "Esta semana", color: "border-t-purple-400", bg: "bg-purple-50" },
+  { id: "monthly", label: "Mensual", sublabel: "Este mes", color: "border-t-amber-400", bg: "bg-amber-50" },
+  { id: "semestral", label: "6 Meses", sublabel: "Este semestre", color: "border-t-green-400", bg: "bg-green-50" },
+  { id: "yearly", label: "Anual", sublabel: "Este año", color: "border-t-red-400", bg: "bg-red-50" },
+];
+
+const COLORS = ["border-t-blue-400", "border-t-purple-400", "border-t-amber-400", "border-t-green-400", "border-t-red-400", "border-t-cyan-400", "border-t-pink-400", "border-t-orange-400"];
+const BGS = ["bg-blue-50", "bg-purple-50", "bg-amber-50", "bg-green-50", "bg-red-50", "bg-cyan-50", "bg-pink-50", "bg-orange-50"];
 
 export default function TodoPage() {
   const [todos, setTodos] = useState<TodoState>(SEED);
-  const [newItems, setNewItems] = useState<Record<TodoPeriod, string>>({ daily: "", weekly: "", monthly: "", semestral: "", yearly: "" });
+  const [periods, setPeriods] = useState<CustomPeriod[]>(DEFAULT_PERIODS);
+  const [newItems, setNewItems] = useState<Record<string, string>>({});
+  const [showAddPeriod, setShowAddPeriod] = useState(false);
+  const [periodForm, setPeriodForm] = useState({ label: "", sublabel: "" });
 
-  useEffect(() => { const raw = loadFromStorage<TodoState>("todos", SEED); setTodos({ ...SEED, ...raw, semestral: raw.semestral || [], yearly: raw.yearly || [] }); }, []);
+  useEffect(() => {
+    const raw = loadFromStorage<TodoState>("todos", SEED);
+    const savedPeriods = loadFromStorage<CustomPeriod[]>("todo_periods", DEFAULT_PERIODS);
+    // Ensure all periods have arrays
+    const filled: TodoState = {};
+    for (const p of savedPeriods) { filled[p.id] = raw[p.id] || []; }
+    setTodos(filled);
+    setPeriods(savedPeriods);
+  }, []);
   function save(u: TodoState) { setTodos(u); saveToStorage("todos", u); }
+  function savePeriods(p: CustomPeriod[]) { setPeriods(p); saveToStorage("todo_periods", p); }
+
+  function addCustomPeriod() {
+    if (!periodForm.label.trim()) return;
+    const id = generateId();
+    const idx = periods.length % COLORS.length;
+    const newPeriod: CustomPeriod = { id, label: periodForm.label, sublabel: periodForm.sublabel || periodForm.label, color: COLORS[idx]!, bg: BGS[idx]! };
+    savePeriods([...periods, newPeriod]);
+    save({ ...todos, [id]: [] });
+    setPeriodForm({ label: "", sublabel: "" });
+    setShowAddPeriod(false);
+  }
+
+  function deleteCustomPeriod(id: string) {
+    savePeriods(periods.filter(p => p.id !== id));
+    const newTodos = { ...todos };
+    delete newTodos[id];
+    save(newTodos);
+  }
 
   function addItem(period: TodoPeriod) {
     const text = newItems[period].trim();
@@ -119,11 +147,12 @@ export default function TodoPage() {
           <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana y mes</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {(["daily", "weekly", "monthly"] as TodoPeriod[]).map((period) => {
-            const config = PERIOD_CONFIG[period];
-            const items = todos[period];
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {periods.map((config) => {
+            const period = config.id;
+            const items = todos[period] || [];
             const doneCount = items.filter((t) => t.done).length;
+            const isCustom = !["daily", "weekly", "monthly", "semestral", "yearly"].includes(period);
             return (
               <div key={period} className={`rounded-lg border border-t-4 ${config.color} bg-white`}>
                 <div className="px-4 py-3 border-b">
@@ -132,9 +161,14 @@ export default function TodoPage() {
                       <h3 className="font-semibold text-sm">{config.label}</h3>
                       <p className="text-xs text-muted-foreground">{config.sublabel} · {doneCount}/{items.length}</p>
                     </div>
-                    {doneCount > 0 && (
-                      <button onClick={() => clearDone(period)} className="text-[10px] text-muted-foreground hover:text-red-500">Limpiar ✓</button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {doneCount > 0 && (
+                        <button onClick={() => clearDone(period)} className="text-[10px] text-muted-foreground hover:text-red-500">Limpiar ✓</button>
+                      )}
+                      {isCustom && (
+                        <button onClick={() => deleteCustomPeriod(period)} className="text-muted-foreground hover:text-red-500 rounded p-0.5 hover:bg-red-50" title="Eliminar periodo"><Trash2 className="h-3 w-3" /></button>
+                      )}
+                    </div>
                   </div>
                   {/* Progress bar */}
                   <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
@@ -177,6 +211,25 @@ export default function TodoPage() {
               </div>
             );
           })}
+
+          {/* Add custom period card */}
+          <div className="rounded-lg border border-dashed bg-gray-50/50 p-4 flex flex-col items-center justify-center min-h-[200px]">
+            {showAddPeriod ? (
+              <div className="space-y-2 w-full">
+                <input value={periodForm.label} onChange={e => setPeriodForm({...periodForm, label: e.target.value})} placeholder="Nombre (ej: Trimestral, Q3, Proyecto X)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <input value={periodForm.sublabel} onChange={e => setPeriodForm({...periodForm, sublabel: e.target.value})} placeholder="Subtítulo (ej: Jul-Sep 2026)" className="w-full rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none" />
+                <div className="flex gap-2">
+                  <button onClick={addCustomPeriod} className="rounded bg-brand px-3 py-1.5 text-xs text-white hover:bg-brand-hover">Crear</button>
+                  <button onClick={() => setShowAddPeriod(false)} className="rounded border px-3 py-1.5 text-xs hover:bg-gray-50">Cancelar</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setShowAddPeriod(true)} className="flex flex-col items-center gap-2 text-muted-foreground hover:text-brand">
+                <Plus className="h-8 w-8" />
+                <span className="text-xs font-medium">Agregar periodo personalizado</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
