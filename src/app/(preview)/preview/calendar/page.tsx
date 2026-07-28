@@ -58,6 +58,7 @@ export default function CalendarPage() {
   const [showNewCalendar, setShowNewCalendar] = useState(false);
   const [showSync, setShowSync] = useState(false);
   const [syncToast, setSyncToast] = useState("");
+  const [calView, setCalView] = useState<"month" | "week" | "day">("month");
   const [visibleCalendars, setVisibleCalendars] = useState<Set<string>>(new Set());
   const [apptForm, setApptForm] = useState({ title: "", date: "", time: "", duration: "", calendarId: "", contact: "", type: "appointment" as Appointment["type"], amount: "", notes: "" });
   const [calForm, setCalForm] = useState({ name: "", color: COLORS[0]! });
@@ -190,18 +191,27 @@ export default function CalendarPage() {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Month nav */}
-        <div className="flex items-center justify-between border-b px-6 py-3">
-          <div className="flex items-center gap-3">
+        {/* Nav bar */}
+        <div className="flex items-center justify-between border-b px-4 md:px-6 py-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="rounded p-1 hover:bg-gray-100"><ChevronLeft className="h-5 w-5" /></button>
-            <h2 className="text-lg font-semibold w-44 text-center">{MONTHS[currentMonth]} {currentYear}</h2>
+            <h2 className="text-sm md:text-lg font-semibold w-36 md:w-44 text-center">{MONTHS[currentMonth]} {currentYear}</h2>
             <button onClick={nextMonth} className="rounded p-1 hover:bg-gray-100"><ChevronRight className="h-5 w-5" /></button>
           </div>
-          <button onClick={() => { setCurrentYear(2026); setCurrentMonth(6); setSelectedDate(today ?? null); }} className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">Hoy</button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border overflow-hidden">
+              <button onClick={() => setCalView("month")} className={`px-3 py-1.5 text-xs font-medium ${calView === "month" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Mes</button>
+              <button onClick={() => setCalView("week")} className={`px-3 py-1.5 text-xs font-medium ${calView === "week" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Semana</button>
+              <button onClick={() => setCalView("day")} className={`px-3 py-1.5 text-xs font-medium ${calView === "day" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Día</button>
+            </div>
+            <button onClick={() => { setCurrentYear(2026); setCurrentMonth(6); setSelectedDate(today ?? null); }} className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">Hoy</button>
+          </div>
         </div>
 
-        {/* Calendar grid */}
+        {/* Calendar content */}
         <div className="flex-1 overflow-y-auto overflow-x-auto p-4">
+          {/* MONTH VIEW */}
+          {calView === "month" && (
           <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border min-w-[500px]">
             {/* Day headers */}
             {DAYS.map((d) => (
@@ -233,6 +243,94 @@ export default function CalendarPage() {
               );
             })}
           </div>
+          )}
+
+          {/* WEEK VIEW */}
+          {calView === "week" && (() => {
+            const selectedOrToday = selectedDate || today || `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
+            const baseDate = new Date(selectedOrToday + "T12:00:00");
+            const dayOfWeek = baseDate.getDay();
+            const weekStart = new Date(baseDate); weekStart.setDate(baseDate.getDate() - dayOfWeek);
+            const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am to 8pm
+            const weekDays = Array.from({ length: 7 }, (_, i) => {
+              const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+              return d.toISOString().split("T")[0]!;
+            });
+            return (
+              <div className="min-w-[600px]">
+                {/* Week header */}
+                <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
+                  <div className="p-1" />
+                  {weekDays.map((d) => {
+                    const date = new Date(d + "T12:00:00");
+                    const isToday2 = d === today;
+                    return (
+                      <div key={d} onClick={() => { setSelectedDate(d); setCalView("day"); }} className={`p-2 text-center cursor-pointer hover:bg-gray-50 border-l ${isToday2 ? "bg-brand/5" : ""}`}>
+                        <p className="text-[10px] text-muted-foreground">{DAYS[date.getDay()]}</p>
+                        <p className={`text-sm font-semibold ${isToday2 ? "text-brand" : ""}`}>{date.getDate()}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Hour rows */}
+                {HOURS.map((hour) => (
+                  <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b min-h-[48px]">
+                    <div className="p-1 text-[10px] text-muted-foreground text-right pr-2 pt-1">{hour}:00</div>
+                    {weekDays.map((d) => {
+                      const hourAppts = visibleAppts.filter((a) => a.date === d && a.time && parseInt(a.time.split(":")[0]!) === hour);
+                      return (
+                        <div key={d} className="border-l p-0.5 relative">
+                          {hourAppts.map((a) => (
+                            <div key={a.id} className="rounded px-1 py-0.5 text-[9px] truncate mb-0.5" style={{ backgroundColor: `${getCalColor(a.calendarId)}20`, color: getCalColor(a.calendarId) }}>
+                              {a.title}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* DAY VIEW */}
+          {calView === "day" && (() => {
+            const dayDate = selectedDate || today || `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-01`;
+            const HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm
+            const dayAppts2 = visibleAppts.filter((a) => a.date === dayDate);
+            const dateObj = new Date(dayDate + "T12:00:00");
+            return (
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <button onClick={() => { const d = new Date(dayDate + "T12:00:00"); d.setDate(d.getDate() - 1); setSelectedDate(d.toISOString().split("T")[0]!); }} className="rounded p-1 hover:bg-gray-100"><ChevronLeft className="h-4 w-4" /></button>
+                  <h3 className="text-sm font-semibold">{DAYS[dateObj.getDay()]} {dateObj.getDate()} de {MONTHS[dateObj.getMonth()]} {dateObj.getFullYear()}</h3>
+                  <button onClick={() => { const d = new Date(dayDate + "T12:00:00"); d.setDate(d.getDate() + 1); setSelectedDate(d.toISOString().split("T")[0]!); }} className="rounded p-1 hover:bg-gray-100"><ChevronRight className="h-4 w-4" /></button>
+                </div>
+                <div className="space-y-0">
+                  {HOURS.map((hour) => {
+                    const hourAppts = dayAppts2.filter((a) => a.time && parseInt(a.time.split(":")[0]!) === hour);
+                    return (
+                      <div key={hour} className="flex border-b min-h-[52px]">
+                        <div className="w-14 shrink-0 p-1 text-[10px] text-muted-foreground text-right pr-2 pt-1">{hour}:00</div>
+                        <div className="flex-1 p-1 border-l">
+                          {hourAppts.map((a) => (
+                            <div key={a.id} className="rounded px-2 py-1.5 text-xs mb-1 flex items-center gap-2" style={{ backgroundColor: `${getCalColor(a.calendarId)}15`, borderLeft: `3px solid ${getCalColor(a.calendarId)}` }}>
+                              <div className="flex-1">
+                                <p className="font-medium">{a.title}</p>
+                                <p className="text-[10px] text-muted-foreground">{a.time}{a.duration ? ` · ${a.duration}` : ""}{a.contact ? ` · ${a.contact}` : ""}</p>
+                              </div>
+                              <button onClick={() => deleteAppt(a.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Selected date detail */}
