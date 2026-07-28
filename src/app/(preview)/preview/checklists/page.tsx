@@ -123,6 +123,28 @@ export default function ChecklistsPage() {
 
   function deleteList(id: string) { save(lists.filter(l => l.id !== id)); }
 
+  function moveItemUp(listId: string, itemId: string) {
+    save(lists.map(l => {
+      if (l.id !== listId) return l;
+      const idx = l.items.findIndex(i => i.id === itemId);
+      if (idx <= 0) return l;
+      const items = [...l.items];
+      [items[idx - 1], items[idx]] = [items[idx]!, items[idx - 1]!];
+      return { ...l, items };
+    }));
+  }
+
+  function moveItemDown(listId: string, itemId: string) {
+    save(lists.map(l => {
+      if (l.id !== listId) return l;
+      const idx = l.items.findIndex(i => i.id === itemId);
+      if (idx >= l.items.length - 1) return l;
+      const items = [...l.items];
+      [items[idx], items[idx + 1]] = [items[idx + 1]!, items[idx]!];
+      return { ...l, items };
+    }));
+  }
+
   function moveListUp(id: string) {
     const idx = lists.findIndex(l => l.id === id);
     if (idx <= 0) return;
@@ -237,7 +259,11 @@ export default function ChecklistsPage() {
                 {/* Items */}
                 <div className="space-y-0.5 max-h-64 overflow-y-auto mb-3">
                   {cl.items.map(item => (
-                    <div key={item.id} className="group flex items-center gap-2 rounded px-1.5 py-1 hover:bg-gray-50">
+                    <div key={item.id} className="group flex items-center gap-1.5 rounded px-1.5 py-1 hover:bg-gray-50">
+                      <div className="flex flex-col opacity-0 group-hover:opacity-100">
+                        <button onClick={() => moveItemUp(cl.id, item.id)} className="text-muted-foreground hover:text-brand"><ChevronUp className="h-2.5 w-2.5" /></button>
+                        <button onClick={() => moveItemDown(cl.id, item.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
+                      </div>
                       <input type="checkbox" checked={item.done} onChange={() => toggleItem(cl.id, item.id)} className="h-3.5 w-3.5 accent-[var(--accent)] shrink-0" />
                       <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</span>
                       <button onClick={() => deleteItem(cl.id, item.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 shrink-0"><Trash2 className="h-2.5 w-2.5" /></button>
