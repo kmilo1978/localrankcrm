@@ -161,9 +161,9 @@ export default function WorkspacesPage() {
   const [vaultKey, setVaultKey] = useState({ label: "", value: "" });
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Sidebar */}
-      <div className="w-60 shrink-0 border-r flex flex-col overflow-hidden">
+      <div className="w-full md:w-60 shrink-0 border-b md:border-b-0 md:border-r flex flex-col overflow-hidden max-h-48 md:max-h-none">
         <div className="border-b px-3 py-3 flex items-center justify-between">
           <div>
             <h3 className="text-xs font-semibold uppercase text-muted-foreground">Espacios</h3>

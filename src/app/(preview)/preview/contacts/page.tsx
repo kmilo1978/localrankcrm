@@ -213,7 +213,7 @@ export default function ContactsPreviewPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <header className="sticky top-0 z-10 border-b bg-white px-6 py-3">
+      <header className="sticky top-0 z-10 border-b bg-white px-4 md:px-6 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <h2 className="font-semibold">Contactos</h2>
@@ -363,10 +363,10 @@ export default function ContactsPreviewPage() {
                           <span key={tag} className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[9px] font-medium text-brand-text">{tag}</span>
                         ))}
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {contact.company && <span>{contact.company}</span>}
-                        {contact.phone && <span className="flex items-center gap-0.5"><Phone className="h-3 w-3" />{contact.phone}</span>}
-                        {contact.email && <span className="flex items-center gap-0.5"><Mail className="h-3 w-3" />{contact.email}</span>}
+                      <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-muted-foreground flex-wrap">
+                        {contact.company && <span className="truncate max-w-[120px] md:max-w-none">{contact.company}</span>}
+                        {contact.phone && <span className="flex items-center gap-0.5 hidden md:flex"><Phone className="h-3 w-3" />{contact.phone}</span>}
+                        {contact.email && <span className="flex items-center gap-0.5 hidden md:flex"><Mail className="h-3 w-3" />{contact.email}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

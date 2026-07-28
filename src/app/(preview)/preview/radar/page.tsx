@@ -214,14 +214,14 @@ export default function RadarPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <div className="h-full overflow-y-auto p-4 md:p-6">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2"><Bookmark className="h-6 w-6 text-brand" />Radar</h1>
-            <p className="text-sm text-muted-foreground">Captura páginas web, organiza por carpetas y etiquetas. Sincronizado con la extensión del navegador.</p>
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2"><Bookmark className="h-5 md:h-6 w-5 md:w-6 text-brand" />Radar</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">Captura páginas web, organiza por carpetas y etiquetas.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button onClick={() => { syncExtensionLeads(); setCopyMsg("Extensión sincronizada"); }} className="flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100" title="Sincronizar leads de la extensión"><RefreshCw className="h-3.5 w-3.5" />Sync ext</button>
             <button onClick={pasteClip} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Pegar clip desde portapapeles"><ClipboardPaste className="h-3.5 w-3.5" />Pegar</button>
             <button onClick={copyAllCSV} className="flex items-center gap-1 rounded-md border px-3 py-2 text-xs font-medium hover:bg-gray-50" title="Copiar todos como CSV"><ClipboardCopy className="h-3.5 w-3.5" />Copiar CSV</button>

@@ -201,15 +201,15 @@ export default function ScoutPage() {
   function clearResults() { setResults([]); localStorage.removeItem("localrank_scout_results"); }
 
   return (
-    <div className="h-full overflow-y-auto p-6">
+    <div className="h-full overflow-y-auto p-4 md:p-6">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2"><Search className="h-5 w-5 text-brand" />Scout — Lead Scraper</h1>
-            <p className="text-sm text-muted-foreground">Scrapea perfiles de 8 plataformas, enriquece con email verificado y exporta.</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Scrapea perfiles de 8 plataformas, enriquece con email verificado y exporta.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button onClick={() => setShowInfo(!showInfo)} className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">
               <Sparkles className="h-3.5 w-3.5" />Info & Alcance
             </button>
