@@ -53,18 +53,19 @@ export default function TodoPage() {
   useEffect(() => {
     const raw = loadFromStorage<TodoState>("todos", SEED);
     const savedPeriods = loadFromStorage<CustomPeriod[]>("todo_periods", []);
-    // Always include default periods + any custom ones saved
-    const allPeriods = savedPeriods.length > 0 ? savedPeriods : DEFAULT_PERIODS;
-    // Merge: ensure defaults are always present
+    // Always start with all 5 defaults
     const mergedPeriods = [...DEFAULT_PERIODS];
-    for (const sp of allPeriods) {
+    // Add any custom periods the user created
+    for (const sp of savedPeriods) {
       if (!mergedPeriods.find(p => p.id === sp.id)) mergedPeriods.push(sp);
     }
-    // Ensure all periods have arrays
+    // Ensure all periods have arrays in the todo data
     const filled: TodoState = {};
     for (const p of mergedPeriods) { filled[p.id] = raw[p.id] || []; }
     setTodos(filled);
     setPeriods(mergedPeriods);
+    // Save periods so they persist
+    saveToStorage("todo_periods", mergedPeriods);
   }, []);
   function save(u: TodoState) { setTodos(u); saveToStorage("todos", u); }
   function savePeriods(p: CustomPeriod[]) { setPeriods(p); saveToStorage("todo_periods", p); }
@@ -154,7 +155,7 @@ export default function TodoPage() {
           <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana y mes</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {periods.map((config) => {
             const period = config.id;
             const items = todos[period] || [];
