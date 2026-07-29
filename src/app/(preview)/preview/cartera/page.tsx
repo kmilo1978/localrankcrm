@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, Ban, Calendar, CheckCircle2, Clock, Copy, CreditCard, DollarSign, Edit3, FileText, HandCoins, History, Plus, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
@@ -7,7 +7,19 @@ type Invoice = { id: string; number: string; client: string; amount: number; cur
 type PaymentAgreement = { id: string; client: string; totalDebt: number; installments: number; monthlyAmount: number; startDate: string; status: "active" | "defaulted" | "completed" };
 type CollectionEntry = { id: string; client: string; action: string; channel: string; date: string; result: string };
 
-type Tab = "facturas" | "por_cobrar" | "vencimientos" | "pagos" | "recordatorios" | "acuerdos" | "historial" | "cancelaciones";
+type Tab = "facturas" | "por_cobrar" | "vencimientos" | "pagos" | "recordatorios" | "acuerdos" | "historial" | "cancelaciones" | "documentos";
+
+type CarteraDocument = {
+  id: string;
+  fileName: string;
+  fileData: string;
+  fileType: string;
+  classification: "factura" | "contrato" | "recibo" | "orden_compra" | "otro";
+  status: "pendiente" | "procesado" | "error";
+  extractedFields: { label: string; value: string }[];
+  uploadedAt: string;
+  notes: string;
+};
 
 const TABS: { key: Tab; label: string; icon: typeof FileText }[] = [
   { key: "facturas", label: "Facturas", icon: FileText },
@@ -18,6 +30,7 @@ const TABS: { key: Tab; label: string; icon: typeof FileText }[] = [
   { key: "acuerdos", label: "Acuerdos", icon: HandCoins },
   { key: "historial", label: "Historial", icon: History },
   { key: "cancelaciones", label: "Cancelaciones", icon: Ban },
+  { key: "documentos", label: "Documentos", icon: FileText },
 ];
 
 const SEED_INVOICES: Invoice[] = [
@@ -58,8 +71,11 @@ export default function CarteraPage() {
   const [form, setForm] = useState({ number: "", client: "", amount: "", dueDate: "" });
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
+  const [docs, setDocs] = useState<CarteraDocument[]>([]);
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setInvoices(loadFromStorage("cartera_invoices", SEED_INVOICES)); setAgreements(loadFromStorage("cartera_agreements", SEED_AGREEMENTS)); }, []);
+  useEffect(() => { setInvoices(loadFromStorage("cartera_invoices", SEED_INVOICES)); setAgreements(loadFromStorage("cartera_agreements", SEED_AGREEMENTS)); setDocs(loadFromStorage("cartera_documents", [])); }, []);
   function saveInv(u: Invoice[]) { setInvoices(u); saveToStorage("cartera_invoices", u); }
 
   function createInvoice() {
@@ -85,6 +101,84 @@ export default function CarteraPage() {
   }
   function deleteAgreement(id: string) { saveAgr(agreements.filter(a => a.id !== id)); }
   function toggleAgreementStatus(id: string, status: PaymentAgreement["status"]) { saveAgr(agreements.map(a => a.id === id ? { ...a, status } : a)); }
+
+  // Documents
+  function saveDocs(u: CarteraDocument[]) { setDocs(u); saveToStorage("cartera_documents", u); }
+
+  function handleDocUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const data = ev.target?.result as string;
+        // Simulate field extraction based on file name
+        const extractedFields = simulateExtraction(file.name);
+        const doc: CarteraDocument = {
+          id: generateId(),
+          fileName: file.name,
+          fileData: data,
+          fileType: file.type,
+          classification: guessClassification(file.name),
+          status: "procesado",
+          extractedFields,
+          uploadedAt: new Date().toISOString().split("T")[0]!,
+          notes: "",
+        };
+        setDocs(prev => { const updated = [doc, ...prev]; saveToStorage("cartera_documents", updated); return updated; });
+      };
+      reader.readAsDataURL(file);
+    }
+    if (docInputRef.current) docInputRef.current.value = "";
+  }
+
+  function guessClassification(name: string): CarteraDocument["classification"] {
+    const lower = name.toLowerCase();
+    if (lower.includes("factura") || lower.includes("invoice") || lower.includes("fac")) return "factura";
+    if (lower.includes("contrato") || lower.includes("contract")) return "contrato";
+    if (lower.includes("recibo") || lower.includes("receipt")) return "recibo";
+    if (lower.includes("orden") || lower.includes("order") || lower.includes("po")) return "orden_compra";
+    return "otro";
+  }
+
+  function simulateExtraction(fileName: string): { label: string; value: string }[] {
+    // Simulated OCR extraction - ready to connect real OCR later
+    return [
+      { label: "Archivo", value: fileName },
+      { label: "Número documento", value: `DOC-${Math.floor(Math.random() * 9000 + 1000)}` },
+      { label: "Fecha", value: new Date().toISOString().split("T")[0]! },
+      { label: "Monto estimado", value: `$${(Math.random() * 5000 + 500).toFixed(0)}` },
+      { label: "Proveedor/Cliente", value: "(Conectar OCR para extraer)" },
+    ];
+  }
+
+  function updateDocClassification(id: string, classification: CarteraDocument["classification"]) {
+    saveDocs(docs.map(d => d.id === id ? { ...d, classification } : d));
+  }
+
+  function updateDocField(docId: string, fieldIdx: number, value: string) {
+    saveDocs(docs.map(d => d.id === docId ? { ...d, extractedFields: d.extractedFields.map((f, i) => i === fieldIdx ? { ...f, value } : f) } : d));
+  }
+
+  function addDocField(docId: string) {
+    saveDocs(docs.map(d => d.id === docId ? { ...d, extractedFields: [...d.extractedFields, { label: "Nuevo campo", value: "" }] } : d));
+  }
+
+  function deleteDoc(id: string) { saveDocs(docs.filter(d => d.id !== id)); }
+
+  function exportDocsCSV() {
+    const rows = docs.map(d => {
+      const obj: Record<string, string> = { archivo: d.fileName, clasificacion: d.classification, fecha: d.uploadedAt, estado: d.status };
+      d.extractedFields.forEach(f => { obj[f.label] = f.value; });
+      return obj;
+    });
+    const headers = Object.keys(rows[0] || {});
+    const csv = [headers.join(","), ...rows.map(r => headers.map(h => `"${(r[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `cartera-documentos-${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const totalPending = invoices.filter((i) => i.status === "pending").reduce((s, i) => s + i.amount, 0);
   const totalOverdue = invoices.filter((i) => i.status === "overdue").reduce((s, i) => s + i.amount, 0);
@@ -310,6 +404,92 @@ export default function CarteraPage() {
               </div>
             ))}
             {invoices.filter((i) => i.status === "cancelled").length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Sin cancelaciones.</p>}
+          </div>
+        )}
+
+        {/* Documentos (OCR) */}
+        {tab === "documentos" && (
+          <div className="space-y-4">
+            {/* Upload area */}
+            <div className="rounded-lg border-2 border-dashed bg-gray-50 p-6 text-center">
+              <input ref={docInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx" multiple onChange={handleDocUpload} className="hidden" />
+              <FileText className="h-10 w-10 mx-auto text-gray-300 mb-3" />
+              <p className="text-sm font-medium mb-1">Arrastra archivos o haz click para subir</p>
+              <p className="text-xs text-muted-foreground mb-3">PDF, imágenes, DOC, XLS — Sube múltiples archivos a la vez</p>
+              <button onClick={() => docInputRef.current?.click()} className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover">Seleccionar archivos</button>
+            </div>
+
+            {/* Actions bar */}
+            {docs.length > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{docs.length} documento{docs.length !== 1 ? "s" : ""} · {docs.filter(d => d.status === "procesado").length} procesados</span>
+                <button onClick={exportDocsCSV} className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-gray-50">📊 Exportar CSV</button>
+              </div>
+            )}
+
+            {/* Documents list */}
+            <div className="space-y-2">
+              {docs.map(doc => {
+                const isExpanded = expandedDoc === doc.id;
+                const classColors: Record<string, string> = { factura: "bg-blue-100 text-blue-700", contrato: "bg-purple-100 text-purple-700", recibo: "bg-green-100 text-green-700", orden_compra: "bg-amber-100 text-amber-700", otro: "bg-gray-100 text-gray-700" };
+                const classLabels: Record<string, string> = { factura: "Factura", contrato: "Contrato", recibo: "Recibo", orden_compra: "Orden de compra", otro: "Otro" };
+                return (
+                  <div key={doc.id} className="rounded-lg border bg-white overflow-hidden">
+                    {/* Row */}
+                    <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" onClick={() => setExpandedDoc(isExpanded ? null : doc.id)}>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-gray-100">
+                        {doc.fileType.includes("pdf") ? <FileText className="h-4 w-4 text-red-500" /> : <FileText className="h-4 w-4 text-blue-500" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{doc.fileName}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{doc.uploadedAt}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${classColors[doc.classification]}`}>{classLabels[doc.classification]}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${doc.status === "procesado" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{doc.status === "procesado" ? "✓ Procesado" : "⏳ Pendiente"}</span>
+                        </div>
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc.id); }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+
+                    {/* Expanded: extracted fields */}
+                    {isExpanded && (
+                      <div className="border-t px-4 py-3 bg-gray-50/50">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-xs font-semibold uppercase text-muted-foreground">Campos extraídos</h4>
+                          <div className="flex gap-2">
+                            <select value={doc.classification} onChange={e => updateDocClassification(doc.id, e.target.value as CarteraDocument["classification"])} className="rounded border px-2 py-1 text-[10px] focus:border-brand focus:outline-none">
+                              <option value="factura">Factura</option>
+                              <option value="contrato">Contrato</option>
+                              <option value="recibo">Recibo</option>
+                              <option value="orden_compra">Orden de compra</option>
+                              <option value="otro">Otro</option>
+                            </select>
+                            <button onClick={() => addDocField(doc.id)} className="rounded border px-2 py-1 text-[10px] hover:bg-gray-100">+ Campo</button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {doc.extractedFields.map((field, idx) => (
+                            <div key={idx} className="flex gap-1">
+                              <input value={field.label} onChange={e => { const fields = [...doc.extractedFields]; fields[idx] = { ...field, label: e.target.value }; saveDocs(docs.map(d => d.id === doc.id ? { ...d, extractedFields: fields } : d)); }} className="w-28 rounded border px-2 py-1 text-[10px] font-medium bg-white focus:border-brand focus:outline-none" />
+                              <input value={field.value} onChange={e => updateDocField(doc.id, idx, e.target.value)} className="flex-1 rounded border px-2 py-1 text-[10px] bg-white focus:border-brand focus:outline-none" />
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 text-[9px] text-muted-foreground italic">💡 Los campos se extraen automáticamente al conectar un servicio OCR (Mindee, Google Document AI). Por ahora puedes editarlos manualmente.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {docs.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm font-medium">Sin documentos</p>
+                <p className="text-xs">Sube facturas, contratos o recibos para extraer datos automáticamente.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
