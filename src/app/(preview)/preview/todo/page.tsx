@@ -97,23 +97,23 @@ export default function TodoPage() {
   }
 
   function addItem(period: TodoPeriod) {
-    const text = newItems[period].trim();
+    const text = (newItems[period] ?? "").trim();
     if (!text) return;
     const item: TodoItem = { id: generateId(), text, done: false, createdAt: new Date().toISOString().split("T")[0]! };
-    save({ ...todos, [period]: [item, ...todos[period]] });
+    save({ ...todos, [period]: [item, ...(todos[period] || [])] });
     setNewItems({ ...newItems, [period]: "" });
   }
 
   function toggleItem(period: TodoPeriod, id: string) {
-    save({ ...todos, [period]: todos[period].map((t) => t.id === id ? { ...t, done: !t.done } : t) });
+    save({ ...todos, [period]: (todos[period] || []).map((t) => t.id === id ? { ...t, done: !t.done } : t) });
   }
 
   function deleteItem(period: TodoPeriod, id: string) {
-    save({ ...todos, [period]: todos[period].filter((t) => t.id !== id) });
+    save({ ...todos, [period]: (todos[period] || []).filter((t) => t.id !== id) });
   }
 
   function moveItemUp(period: TodoPeriod, id: string) {
-    const items = [...todos[period]];
+    const items = [...(todos[period] || [])];
     const idx = items.findIndex(t => t.id === id);
     if (idx <= 0) return;
     [items[idx - 1], items[idx]] = [items[idx]!, items[idx - 1]!];
@@ -121,7 +121,7 @@ export default function TodoPage() {
   }
 
   function moveItemDown(period: TodoPeriod, id: string) {
-    const items = [...todos[period]];
+    const items = [...(todos[period] || [])];
     const idx = items.findIndex(t => t.id === id);
     if (idx >= items.length - 1) return;
     [items[idx], items[idx + 1]] = [items[idx + 1]!, items[idx]!];
@@ -129,16 +129,16 @@ export default function TodoPage() {
   }
 
   function editItemText(period: TodoPeriod, id: string, newText: string) {
-    save({ ...todos, [period]: todos[period].map(t => t.id === id ? { ...t, text: newText } : t) });
+    save({ ...todos, [period]: (todos[period] || []).map(t => t.id === id ? { ...t, text: newText } : t) });
   }
 
   function cloneItem(period: TodoPeriod, item: TodoItem) {
     const copy: TodoItem = { ...item, id: generateId(), done: false };
-    save({ ...todos, [period]: [copy, ...todos[period]] });
+    save({ ...todos, [period]: [copy, ...(todos[period] || [])] });
   }
 
   function moveItem(fromPeriod: TodoPeriod, toPeriod: TodoPeriod, item: TodoItem) {
-    save({ ...todos, [fromPeriod]: todos[fromPeriod].filter(t => t.id !== item.id), [toPeriod]: [{ ...item, id: generateId(), done: false }, ...todos[toPeriod]] });
+    save({ ...todos, [fromPeriod]: (todos[fromPeriod] || []).filter(t => t.id !== item.id), [toPeriod]: [{ ...item, id: generateId(), done: false }, ...(todos[toPeriod] || [])] });
   }
 
   function sendToReminder(item: TodoItem) {
@@ -149,7 +149,7 @@ export default function TodoPage() {
   }
 
   function clearDone(period: TodoPeriod) {
-    save({ ...todos, [period]: todos[period].filter((t) => !t.done) });
+    save({ ...todos, [period]: (todos[period] || []).filter((t) => !t.done) });
   }
 
   const totalDone = Object.values(todos).reduce((sum, items) => sum + items.filter((t) => t.done).length, 0);
@@ -195,7 +195,7 @@ export default function TodoPage() {
                 {/* Add item */}
                 <div className="px-3 py-2 border-b">
                   <div className="flex gap-1.5">
-                    <input value={newItems[period]} onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") addItem(period); }} placeholder="Agregar tarea..." className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
+                    <input value={newItems[period] ?? ""} onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") addItem(period); }} placeholder="Agregar tarea..." className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
                     <button onClick={() => addItem(period)} className="rounded bg-brand px-2 py-1.5 text-xs text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
