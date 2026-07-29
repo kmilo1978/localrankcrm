@@ -28,8 +28,16 @@ const SEED: TodoState = {
     { id: "tm3", text: "Revisar y optimizar procesos del CRM", done: false, createdAt: "2026-07-01" },
     { id: "tm4", text: "Capacitación equipo — nuevas funcionalidades", done: true, createdAt: "2026-07-01" },
   ],
-  semestral: [],
-  yearly: [],
+  semestral: [
+    { id: "ts1", text: "Alcanzar 50 clientes activos", done: false, createdAt: "2026-07-01" },
+    { id: "ts2", text: "Lanzar módulo de automatización WhatsApp", done: false, createdAt: "2026-07-01" },
+    { id: "ts3", text: "Crear 3 casos de éxito documentados", done: false, createdAt: "2026-07-01" },
+  ],
+  yearly: [
+    { id: "ty1", text: "Facturar $100K en servicios recurrentes", done: false, createdAt: "2026-01-01" },
+    { id: "ty2", text: "Expandir equipo — contratar 2 personas", done: false, createdAt: "2026-01-01" },
+    { id: "ty3", text: "Lanzar producto SaaS propio", done: false, createdAt: "2026-01-01" },
+  ],
 };
 
 const DEFAULT_PERIODS: CustomPeriod[] = [
@@ -144,18 +152,18 @@ export default function TodoPage() {
     save({ ...todos, [period]: todos[period].filter((t) => !t.done) });
   }
 
-  const totalDone = todos.daily.filter((t) => t.done).length + todos.weekly.filter((t) => t.done).length + todos.monthly.filter((t) => t.done).length;
-  const totalAll = todos.daily.length + todos.weekly.length + todos.monthly.length;
+  const totalDone = Object.values(todos).reduce((sum, items) => sum + items.filter((t) => t.done).length, 0);
+  const totalAll = Object.values(todos).reduce((sum, items) => sum + items.length, 0);
 
   return (
     <div className="h-full overflow-y-auto p-6">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">To-Do</h1>
-          <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana y mes</p>
+          <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana, mes, semestre y año</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {periods.map((config) => {
             const period = config.id;
             const items = todos[period] || [];
