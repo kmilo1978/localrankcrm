@@ -138,8 +138,17 @@ export default function ProposalsPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const printRef = useRef<HTMLDivElement>(null);
+  // User-saved templates — loaded client-side only to avoid SSR crash
+  const [userTemplates, setUserTemplates] = useState<Array<{ id: string; name: string; description: string; tag: string; sections: { title: string; content: string }[] }>>([]);
 
-  useEffect(() => { setProposals(loadFromStorage("proposals", SEED_PROPOSALS)); }, []);
+  useEffect(() => {
+    setProposals(loadFromStorage("proposals", SEED_PROPOSALS));
+    // Load user templates client-side only (localStorage not available on SSR)
+    try {
+      const saved = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
+      setUserTemplates(saved);
+    } catch { setUserTemplates([]); }
+  }, []);
   function save(u: Proposal[]) { setProposals(u); saveToStorage("proposals", u); }
 
   function createFromTemplate(template: Template) {
@@ -269,16 +278,17 @@ export default function ProposalsPage() {
 
   function confirmSaveAsTemplate() {
     if (!editing || !templateName.trim()) return;
-    const userTemplates = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
-    userTemplates.unshift({
+    const newTpl = {
       id: generateId(),
       name: templateName,
       description: templateTag,
       tag: templateTag,
       createdAt: new Date().toISOString().split("T")[0]!,
       sections: editing.sections.map(s => ({ title: s.title, content: s.content })),
-    });
-    localStorage.setItem("localrank_proposal_templates", JSON.stringify(userTemplates));
+    };
+    const updated = [newTpl, ...userTemplates];
+    setUserTemplates(updated);
+    localStorage.setItem("localrank_proposal_templates", JSON.stringify(updated));
     setSaveAsTemplate(false);
     setTemplateName("");
     setTemplateTag("");
@@ -393,6 +403,13 @@ export default function ProposalsPage() {
                 <div className="flex items-center gap-1 shrink-0">
                   {p.locked && <span title="Bloqueada" className="text-amber-500">🔒</span>}
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_STYLES[p.status]}`}>{STATUS_LABELS[p.status]}</span>
+                  <button
+                    onClick={e => { e.stopPropagation(); deleteProposal(p.id); }}
+                    className="opacity-0 group-hover:opacity-100 ml-1 rounded p-0.5 text-muted-foreground hover:text-red-500 hover:bg-red-50"
+                    title="Eliminar propuesta"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
               <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
@@ -730,28 +747,29 @@ export default function ProposalsPage() {
               <button onClick={() => setShowTemplates(false)} className="rounded p-1 hover:bg-gray-100"><X className="h-5 w-5" /></button>
             </div>
             {/* User saved templates */}
-            {(() => {
-              const userTpls = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
-              if (userTpls.length === 0) return null;
-              return (
-                <div className="mb-5">
-                  <h4 className="text-xs font-semibold uppercase text-purple-700 mb-2 flex items-center gap-1">🏷️ Mis templates guardados</h4>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {userTpls.map((t: { id: string; name: string; description: string; tag: string; sections: { title: string; content: string }[] }) => (
-                      <button key={t.id} onClick={() => createFromTemplate({ id: t.id, name: t.name, description: t.description, sections: t.sections })} className="rounded-lg border border-purple-200 bg-purple-50/50 p-4 text-left hover:border-purple-400 hover:bg-purple-50 transition-colors">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-base">🏷️</span>
-                          <span className="font-medium text-sm">{t.name}</span>
-                          {t.tag && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] text-purple-700">{t.tag}</span>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t.sections.length} secciones · {t.description || "Template personalizado"}</p>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="border-t my-4" />
+            {userTemplates.length > 0 && (
+              <div className="mb-5">
+                <h4 className="text-xs font-semibold uppercase text-purple-700 mb-2 flex items-center gap-1">🏷️ Mis templates guardados</h4>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {userTemplates.map((t) => (
+                    <div key={t.id} className="group rounded-lg border border-purple-200 bg-purple-50/50 p-4 hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <button onClick={() => createFromTemplate({ id: t.id, name: t.name, description: t.description, sections: t.sections })} className="flex-1 text-left">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-base">🏷️</span>
+                            <span className="font-medium text-sm">{t.name}</span>
+                            {t.tag && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] text-purple-700">{t.tag}</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{t.sections.length} secciones · {t.description || "Template personalizado"}</p>
+                        </button>
+                        <button onClick={() => { const upd = userTemplates.filter(u => u.id !== t.id); setUserTemplates(upd); localStorage.setItem("localrank_proposal_templates", JSON.stringify(upd)); }} className="opacity-0 group-hover:opacity-100 ml-2 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 shrink-0" title="Eliminar template"><Trash2 className="h-3 w-3" /></button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              );
-            })()}
+                <div className="border-t my-4" />
+              </div>
+            )}
             <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Plantillas predefinidas</h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {TEMPLATES.map((t) => (
