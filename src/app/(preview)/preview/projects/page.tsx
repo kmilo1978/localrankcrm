@@ -88,7 +88,20 @@ export default function ProjectsPage() {
   const [projectSearch, setProjectSearch] = useState("");
 
   useEffect(() => { setProjects(loadFromStorage("projects_v3", SEED)); }, []);
-  function save(u: Project[]) { setProjects(u); saveToStorage("projects_v3", u); }
+
+  /** Functional save — always operates on the latest state to avoid stale-closure bugs */
+  function save(updater: Project[] | ((prev: Project[]) => Project[])) {
+    setProjects(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveToStorage("projects_v3", next);
+      return next;
+    });
+  }
+
+  /** Helper: update only the currently selected project/sub-project */
+  function updateCurrent(mutate: (p: Project, spId: string | null) => Project) {
+    save(prev => prev.map(p => p.id === selectedProject ? mutate(p, selectedSub) : p));
+  }
   function notify(m: string) { setToast(m); setTimeout(() => setToast(""), 2500); }
 
   const project = projects.find(p => p.id === selectedProject);
@@ -105,80 +118,83 @@ export default function ProjectsPage() {
   function createProject() {
     if (!form.name.trim()) return;
     const p: Project = { id: generateId(), name: form.name, description: form.description, color: form.color, subProjects: [], tasks: [], notes: [], sections: [], files: [], team: [], createdAt: new Date().toISOString().split("T")[0]! };
-    save([...projects, p]); setSelectedProject(p.id); setSelectedSub(null);
+    save(prev => [...prev, p]);
+    setSelectedProject(p.id); setSelectedSub(null);
     setForm({ name: "", description: "", color: COLORS[0]! }); setShowNewProject(false); notify("Proyecto creado");
   }
 
   function createSubProject() {
-    if (!form.name.trim() || !project) return;
+    if (!form.name.trim()) return;
     const sp: SubProject = { id: generateId(), name: form.name, description: form.description, color: form.color, tasks: [], notes: [], sections: [], files: [], team: [] };
-    save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: [...p.subProjects, sp] } : p));
+    save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: [...p.subProjects, sp] } : p));
     setSelectedSub(sp.id); setForm({ name: "", description: "", color: COLORS[0]! }); setShowNewSub(false); notify("Sub-proyecto creado");
   }
 
   function deleteProject(id: string) {
-    const deleted = projects.find(p => p.id === id);
-    if (deleted) {
-      const snapshot = [...projects];
-      pushUndo({ label: `Proyecto eliminado: "${deleted.name}"`, undo: () => save(snapshot) });
-    }
-    save(projects.filter(p => p.id !== id));
+    save(prev => {
+      const deleted = prev.find(p => p.id === id);
+      if (deleted) {
+        const snapshot = [...prev];
+        pushUndo({ label: `Proyecto eliminado: "${deleted.name}"`, undo: () => save(snapshot) });
+      }
+      return prev.filter(p => p.id !== id);
+    });
     if (selectedProject === id) { setSelectedProject(null); setSelectedSub(null); }
   }
 
   function deleteSubProject(spId: string) {
-    save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.filter(sp => sp.id !== spId) } : p));
+    save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.filter(sp => sp.id !== spId) } : p));
     if (selectedSub === spId) setSelectedSub(null);
   }
 
   function duplicateProject(p: Project) {
     const copy: Project = { ...p, id: generateId(), name: p.name + " (copia)", subProjects: p.subProjects.map(sp => ({ ...sp, id: generateId(), tasks: sp.tasks.map(t => ({ ...t, id: generateId(), done: false })) })), tasks: p.tasks.map(t => ({ ...t, id: generateId(), done: false })), createdAt: new Date().toISOString().split("T")[0]! };
-    save([...projects, copy]); notify("Proyecto duplicado");
+    save(prev => [...prev, copy]); notify("Proyecto duplicado");
   }
 
   // Tasks
   function addTask() {
     if (!taskInput.trim()) return;
     const task: ProjectTask = { id: generateId(), title: taskInput, done: false, assignee: "" };
-    if (selectedSub && subProject) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: [...sp.tasks, task] } : sp) } : p));
-    } else if (project) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, tasks: [...p.tasks, task] } : p));
+    if (selectedSub) {
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: [...sp.tasks, task] } : sp) } : p));
+    } else {
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: [...p.tasks, task] } : p));
     }
     setTaskInput("");
   }
 
   function toggleTask(taskId: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, done: !t.done } : t) } : p));
     }
   }
 
   function deleteTask(taskId: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.filter(t => t.id !== taskId) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.filter(t => t.id !== taskId) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) } : p));
     }
   }
 
   function moveTaskUp(taskId: string) {
     function reorder(tasks: ProjectTask[]) { const idx = tasks.findIndex(t => t.id === taskId); if (idx <= 0) return tasks; const a = [...tasks]; [a[idx - 1], a[idx]] = [a[idx]!, a[idx - 1]!]; return a; }
-    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
-    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
+    if (selectedSub) { save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
+    else { save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
   }
 
   function moveTaskDown(taskId: string) {
     function reorder(tasks: ProjectTask[]) { const idx = tasks.findIndex(t => t.id === taskId); if (idx >= tasks.length - 1) return tasks; const a = [...tasks]; [a[idx], a[idx + 1]] = [a[idx + 1]!, a[idx]!]; return a; }
-    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
-    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
+    if (selectedSub) { save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: reorder(sp.tasks) } : sp) } : p)); }
+    else { save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: reorder(p.tasks) } : p)); }
   }
 
   function editTaskTitle(taskId: string, newTitle: string) {
-    if (selectedSub) { save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : sp) } : p)); }
-    else { save(projects.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : p)); }
+    if (selectedSub) { save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, tasks: sp.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : sp) } : p)); }
+    else { save(prev => prev.map(p => p.id === selectedProject ? { ...p, tasks: p.tasks.map(t => t.id === taskId ? { ...t, title: newTitle } : t) } : p)); }
   }
 
   // Notes
@@ -186,9 +202,9 @@ export default function ProjectsPage() {
     if (!noteInput.trim()) return;
     const note: ProjectNote = { id: generateId(), text: noteInput, author: "Admin", date: new Date().toISOString().split("T")[0]! };
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, notes: [note, ...sp.notes] } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, notes: [note, ...sp.notes] } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, notes: [note, ...p.notes] } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, notes: [note, ...p.notes] } : p));
     }
     setNoteInput("");
   }
@@ -198,26 +214,26 @@ export default function ProjectsPage() {
     if (!sectionForm.title.trim()) return;
     const sec: ProjectSection = { id: generateId(), title: sectionForm.title, content: sectionForm.content, type: sectionForm.type };
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: [...sp.sections, sec] } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: [...sp.sections, sec] } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, sections: [...p.sections, sec] } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, sections: [...p.sections, sec] } : p));
     }
     setSectionForm({ title: "", content: "", type: "text" }); setShowAddSection(false); notify("Seccion agregada");
   }
 
   function deleteSection(secId: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.filter(s => s.id !== secId) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.filter(s => s.id !== secId) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, sections: p.sections.filter(s => s.id !== secId) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, sections: p.sections.filter(s => s.id !== secId) } : p));
     }
   }
 
   function updateSectionField(secId: string, field: "title" | "content", value: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, sections: sp.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, sections: p.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, sections: p.sections.map(s => s.id === secId ? { ...s, [field]: value } : s) } : p));
     }
   }
 
@@ -234,9 +250,9 @@ export default function ProjectsPage() {
         const data = e.target?.result as string;
         const pFile: ProjectFile = { id: generateId(), name: file.name, data, addedAt: new Date().toISOString().split("T")[0]! };
         if (selectedSub) {
-          save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: [...sp.files, pFile] } : sp) } : p));
+          save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: [...sp.files, pFile] } : sp) } : p));
         } else {
-          save(projects.map(p => p.id === selectedProject ? { ...p, files: [...p.files, pFile] } : p));
+          save(prev => prev.map(p => p.id === selectedProject ? { ...p, files: [...p.files, pFile] } : p));
         }
         notify("Archivo agregado");
       };
@@ -247,9 +263,9 @@ export default function ProjectsPage() {
 
   function deleteFile(fileId: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: sp.files.filter(f => f.id !== fileId) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, files: sp.files.filter(f => f.id !== fileId) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, files: p.files.filter(f => f.id !== fileId) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, files: p.files.filter(f => f.id !== fileId) } : p));
     }
   }
 
@@ -258,18 +274,18 @@ export default function ProjectsPage() {
     if (!memberInput.name.trim()) return;
     const m: TeamMember = { id: generateId(), name: memberInput.name, role: memberInput.role || "Miembro" };
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: [...sp.team, m] } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: [...sp.team, m] } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, team: [...p.team, m] } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, team: [...p.team, m] } : p));
     }
     setMemberInput({ name: "", role: "" }); notify("Miembro agregado");
   }
 
   function removeMember(mId: string) {
     if (selectedSub) {
-      save(projects.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: sp.team.filter(m => m.id !== mId) } : sp) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, subProjects: p.subProjects.map(sp => sp.id === selectedSub ? { ...sp, team: sp.team.filter(m => m.id !== mId) } : sp) } : p));
     } else {
-      save(projects.map(p => p.id === selectedProject ? { ...p, team: p.team.filter(m => m.id !== mId) } : p));
+      save(prev => prev.map(p => p.id === selectedProject ? { ...p, team: p.team.filter(m => m.id !== mId) } : p));
     }
   }
 
@@ -297,7 +313,7 @@ export default function ProjectsPage() {
 
   function saveProjectEdit() {
     if (!editProjectForm.name.trim() || !project) return;
-    save(projects.map(p => p.id === project.id ? { ...p, name: editProjectForm.name, description: editProjectForm.description, color: editProjectForm.color } : p));
+    save(prev => prev.map(p => p.id === project.id ? { ...p, name: editProjectForm.name, description: editProjectForm.description, color: editProjectForm.color } : p));
     setEditingProject(false);
     notify("Proyecto actualizado");
   }

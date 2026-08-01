@@ -73,6 +73,7 @@ function executeAction(action: Record<string, unknown>): string {
         reminders: [],
       };
       saveToStorage("contacts", [newContact, ...contacts]);
+      window.dispatchEvent(new StorageEvent("storage", { key: "localrank_ws_" + (localStorage.getItem("localrank_active_workspace") || "default") + "_contacts" }));
       return `✅ Contacto "${newContact.name}" creado exitosamente.`;
     }
 
@@ -89,6 +90,8 @@ function executeAction(action: Record<string, unknown>): string {
         createdAt: new Date().toISOString().split("T")[0],
       };
       saveToStorage("tasks", [newTask, ...tasks]);
+      // Dispatch storage event so the Tasks page re-renders if open
+      window.dispatchEvent(new StorageEvent("storage", { key: "localrank_ws_" + (localStorage.getItem("localrank_active_workspace") || "default") + "_tasks" }));
       return `✅ Tarea "${newTask.title}" creada.`;
     }
 
@@ -104,6 +107,7 @@ function executeAction(action: Record<string, unknown>): string {
         createdAt: new Date().toISOString().split("T")[0],
       };
       saveToStorage("notes", [newNote, ...notes]);
+      window.dispatchEvent(new StorageEvent("storage", { key: "localrank_ws_" + (localStorage.getItem("localrank_active_workspace") || "default") + "_notes" }));
       return `✅ Nota "${newNote.title}" creada.`;
     }
 

@@ -43,6 +43,18 @@ export default function TasksPage() {
 
   useEffect(() => { setTasks(loadFromStorage("tasks", SEED_TASKS)); }, []);
 
+  // Refresh when another component (e.g. AI assistant) modifies tasks
+  useEffect(() => {
+    function handleStorageChange(e: Event) {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.key === "tasks") {
+        setTasks(loadFromStorage("tasks", SEED_TASKS));
+      }
+    }
+    window.addEventListener("localrank-storage", handleStorageChange);
+    return () => window.removeEventListener("localrank-storage", handleStorageChange);
+  }, []);
+
   function save(updated: Task[]) { setTasks(updated); saveToStorage("tasks", updated); }
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2500); }

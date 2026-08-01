@@ -64,7 +64,10 @@ export function loadFromStorage<T>(key: string, defaultValue: T): T {
 export function saveToStorage<T>(key: string, value: T): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(buildKey(key), JSON.stringify(value));
+    const fullKey = buildKey(key);
+    localStorage.setItem(fullKey, JSON.stringify(value));
+    // Notify other components on the same page (storage event normally only fires cross-tab)
+    window.dispatchEvent(new CustomEvent("localrank-storage", { detail: { key, fullKey } }));
   } catch {
     // Storage full or unavailable
   }
