@@ -202,30 +202,46 @@ export default function TodoPage() {
                 {/* Add item */}
                 <div className="px-3 py-2 border-b">
                   <div className="flex gap-1.5">
-                    <input value={newItems[period] ?? ""} onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") addItem(period); }} placeholder="Agregar tarea..." className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none" />
-                    <button onClick={() => addItem(period)} className="rounded bg-brand px-2 py-1.5 text-xs text-white hover:bg-brand-hover"><Plus className="h-3.5 w-3.5" /></button>
+                    <textarea
+                      value={newItems[period] ?? ""}
+                      onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addItem(period); } }}
+                      placeholder="Agregar tarea... (Enter para crear, Shift+Enter para nueva línea)"
+                      rows={1}
+                      onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 80) + "px"; }}
+                      className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none resize-none overflow-hidden"
+                    />
+                    <button onClick={() => addItem(period)} className="rounded bg-brand px-2 py-1.5 text-xs text-white hover:bg-brand-hover self-end"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
                 </div>
 
                 {/* Items */}
-                <div className="max-h-80 overflow-y-auto px-2 py-2 space-y-1">
+                <div className="max-h-[420px] overflow-y-auto px-2 py-2 space-y-1">
                   {items.map((item) => (
-                    <div key={item.id} className={`group flex items-start gap-1.5 rounded px-2 py-1.5 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
-                      <div className="flex flex-col opacity-0 group-hover:opacity-100 mt-0.5">
-                        <button onClick={() => moveItemUp(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronUp className="h-2.5 w-2.5" /></button>
-                        <button onClick={() => moveItemDown(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
+                    <div key={item.id} className={`group rounded px-2 py-2 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
+                      <div className="flex items-start gap-1.5">
+                        <div className="flex flex-col opacity-0 group-hover:opacity-100 mt-0.5 shrink-0">
+                          <button onClick={() => moveItemUp(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronUp className="h-2.5 w-2.5" /></button>
+                          <button onClick={() => moveItemDown(period, item.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
+                        </div>
+                        <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
+                          {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                        </button>
+                        <textarea
+                          value={item.text}
+                          onChange={(e) => editItemText(period, item.id, e.target.value)}
+                          rows={1}
+                          onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }}
+                          onFocus={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }}
+                          className={`flex-1 min-w-0 bg-transparent border-0 p-0 text-xs leading-relaxed resize-none overflow-hidden focus:outline-none focus:ring-0 ${item.done ? "line-through text-muted-foreground" : ""}`}
+                        />
                       </div>
-                      <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
-                        {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
-                      </button>
-                      <span className={`flex-1 text-xs ${item.done ? "line-through text-muted-foreground" : ""}`}>
-                        <input value={item.text} onChange={(e) => editItemText(period, item.id, e.target.value)} className={`w-full bg-transparent border-0 p-0 text-xs focus:outline-none focus:ring-0 ${item.done ? "line-through text-muted-foreground" : ""}`} />
-                      </span>
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 shrink-0">
+                      {/* Actions row — below text for better readability */}
+                      <div className="flex gap-1 mt-1 ml-9 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => cloneItem(period, item)} className="text-muted-foreground hover:text-brand" title="Clonar"><Copy className="h-3 w-3" /></button>
                         <button onClick={() => { const targets = (["daily","weekly","monthly"] as TodoPeriod[]).filter(p => p !== period); moveItem(period, targets[0]!, item); }} className="text-muted-foreground hover:text-purple-600" title={`Mover a ${period === "daily" ? "semanal" : period === "weekly" ? "mensual" : "diario"}`}><ArrowRight className="h-3 w-3" /></button>
                         <button onClick={() => sendToReminder(item)} className="text-muted-foreground hover:text-amber-600" title="Recordatorio"><Bell className="h-3 w-3" /></button>
-                        <button onClick={() => deleteItem(period, item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                        <button onClick={() => deleteItem(period, item.id)} className="text-muted-foreground hover:text-red-500" title="Eliminar"><Trash2 className="h-3 w-3" /></button>
                       </div>
                     </div>
                   ))}
