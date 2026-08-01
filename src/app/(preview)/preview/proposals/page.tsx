@@ -4,6 +4,33 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronUp, Copy, Download, Edit2, Eye, FileText, Image, Link, Mic, PenTool, Plus, Send, Trash2, Upload, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 
+/** Deferred input: local state while typing, saves to parent only on blur/Enter */
+function DeferredInput({ value, onCommit, readOnly, className, placeholder }: { value: string; onCommit: (v: string) => void; readOnly?: boolean; className?: string; placeholder?: string }) {
+  const [local, setLocal] = useState(value);
+  const prev = useRef(value);
+  useEffect(() => { if (value !== prev.current) { setLocal(value); prev.current = value; } }, [value]);
+  if (readOnly) return <input value={local} readOnly className={className} placeholder={placeholder} />;
+  return (
+    <input value={local} onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== prev.current) { prev.current = local; onCommit(local); } }}
+      onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); }}
+      className={className} placeholder={placeholder} />
+  );
+}
+
+/** Deferred textarea: local state while typing, saves to parent only on blur */
+function DeferredTextarea({ value, onCommit, readOnly, rows, className, placeholder }: { value: string; onCommit: (v: string) => void; readOnly?: boolean; rows?: number; className?: string; placeholder?: string }) {
+  const [local, setLocal] = useState(value);
+  const prev = useRef(value);
+  useEffect(() => { if (value !== prev.current) { setLocal(value); prev.current = value; } }, [value]);
+  if (readOnly) return <textarea value={local} readOnly rows={rows} className={className} placeholder={placeholder} />;
+  return (
+    <textarea value={local} onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== prev.current) { prev.current = local; onCommit(local); } }}
+      rows={rows} className={className} placeholder={placeholder} />
+  );
+}
+
 type MediaItem = { id: string; type: "image" | "audio" | "embed"; url: string; name: string };
 type ButtonItem = { id: string; label: string; url: string; color: string };
 type ProposalSection = { id: string; title: string; content: string; media: MediaItem[]; buttons?: ButtonItem[] };
@@ -501,16 +528,16 @@ export default function ProposalsPage() {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-xs font-medium">Título de la propuesta</label>
-                      <input value={editing.title} onChange={(e) => !editing.locked && updateProposal({ ...editing, title: e.target.value })} readOnly={editing.locked} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
+                      <DeferredInput value={editing.title} onCommit={v => !editing.locked && updateProposal({ ...editing, title: v })} readOnly={editing.locked} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs font-medium">Cliente</label>
-                      <input value={editing.client} onChange={(e) => !editing.locked && updateProposal({ ...editing, client: e.target.value })} readOnly={editing.locked} placeholder="Nombre del cliente" className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
+                      <DeferredInput value={editing.client} onCommit={v => !editing.locked && updateProposal({ ...editing, client: v })} readOnly={editing.locked} placeholder="Nombre del cliente" className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                     </div>
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium">Total / Inversión</label>
-                    <input value={editing.total} onChange={(e) => !editing.locked && updateProposal({ ...editing, total: e.target.value })} readOnly={editing.locked} placeholder="$10,000 USD" className={`w-48 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
+                    <DeferredInput value={editing.total} onCommit={v => !editing.locked && updateProposal({ ...editing, total: v })} readOnly={editing.locked} placeholder="$10,000 USD" className={`w-48 rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} />
                   </div>
 
                   {/* Logo & Signature */}
@@ -597,9 +624,9 @@ export default function ProposalsPage() {
                   <div className="rounded-lg border bg-gray-50 p-4 space-y-2">
                     <h4 className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">📄 Pie de página</h4>
                     <p className="text-[10px] text-muted-foreground">Aparece al final de la propuesta y en el PDF exportado.</p>
-                    <textarea
+                    <DeferredTextarea
                       value={editing.footerText ?? ""}
-                      onChange={(e) => !editing.locked && updateProposal({ ...editing, footerText: e.target.value })}
+                      onCommit={v => !editing.locked && updateProposal({ ...editing, footerText: v })}
                       readOnly={editing.locked}
                       rows={2}
                       placeholder="Ej: LocalRank · www.localrank.co · contacto@localrank.co · Tel: +57 300 000 0000&#10;Vigencia de esta propuesta: 15 días · Confidencial"
@@ -611,7 +638,7 @@ export default function ProposalsPage() {
                   {editing.sections.map((section) => (
                     <div key={section.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <input value={section.title} onChange={(e) => !editing.locked && updateSection(section.id, "title", e.target.value)} readOnly={editing.locked} className={`font-medium text-sm border-0 bg-transparent focus:outline-none focus:ring-0 p-0 flex-1 ${editing.locked ? "cursor-not-allowed" : ""}`} placeholder="Título de sección" />
+                        <DeferredInput value={section.title} onCommit={v => !editing.locked && updateSection(section.id, "title", v)} readOnly={editing.locked} className={`font-medium text-sm border-0 bg-transparent focus:outline-none focus:ring-0 p-0 flex-1 ${editing.locked ? "cursor-not-allowed" : ""}`} placeholder="Título de sección" />
                         {!editing.locked && (
                           <div className="flex gap-0.5">
                             <button onClick={() => moveSectionUp(section.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Subir"><ChevronUp className="h-3.5 w-3.5" /></button>
@@ -620,7 +647,7 @@ export default function ProposalsPage() {
                           </div>
                         )}
                       </div>
-                      <textarea value={section.content} onChange={(e) => !editing.locked && updateSection(section.id, "content", e.target.value)} readOnly={editing.locked} rows={6} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} placeholder="Contenido de esta sección..." />
+                      <DeferredTextarea value={section.content} onCommit={v => !editing.locked && updateSection(section.id, "content", v)} readOnly={editing.locked} rows={6} className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand ${editing.locked ? "bg-gray-50 cursor-not-allowed opacity-70" : ""}`} placeholder="Contenido de esta sección..." />
                       {/* Media items */}
                       {(section.media || []).length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">

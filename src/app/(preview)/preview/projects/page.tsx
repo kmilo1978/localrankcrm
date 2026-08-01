@@ -1,9 +1,32 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bot, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { openImagePicker } from "@/lib/image-upload";
 import { RichEditor } from "@/components/rich-editor";
+
+/**
+ * Input that keeps local state while typing and only calls onCommit on blur/Enter.
+ * This prevents parent re-renders from resetting the cursor on every keystroke.
+ */
+function DeferredInput({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
+  const [local, setLocal] = useState(value);
+  const prev = useRef(value);
+  // Sync if parent changes the value externally (e.g. switching sections)
+  useEffect(() => {
+    if (value !== prev.current) { setLocal(value); prev.current = value; }
+  }, [value]);
+  return (
+    <input
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== prev.current) { prev.current = local; onCommit(local); } }}
+      onKeyDown={e => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+      className={className}
+      placeholder={placeholder}
+    />
+  );
+}
 
 type ProjectNote = { id: string; text: string; author: string; date: string };
 type ProjectTask = { id: string; title: string; done: boolean; assignee: string };
@@ -394,10 +417,10 @@ export default function ProjectsPage() {
               {currentSections.map(sec => (
                 <div key={sec.id} className="rounded-lg border bg-white p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <input value={sec.title} onChange={e => updateSectionField(sec.id, "title", e.target.value)} className="text-sm font-semibold flex-1 bg-transparent border-0 p-0 focus:outline-none focus:ring-0" placeholder="Título de sección" />
+                    <DeferredInput value={sec.title} onCommit={v => updateSectionField(sec.id, "title", v)} className="text-sm font-semibold flex-1 bg-transparent border-0 p-0 focus:outline-none focus:ring-0" placeholder="Título de sección" />
                     <button onClick={() => deleteSection(sec.id)} className="text-muted-foreground hover:text-red-500 shrink-0 ml-2"><Trash2 className="h-3 w-3" /></button>
                   </div>
-                  <RichEditor value={sec.content} onChange={(html) => updateSectionField(sec.id, "content", html)} placeholder="Edita el contenido..." minHeight="60px" />
+                  <RichEditor value={sec.content} onChange={() => {}} onBlurSave={(html) => updateSectionField(sec.id, "content", html)} placeholder="Edita el contenido..." minHeight="60px" />
                 </div>
               ))}
               {/* Add section — always visible */}
@@ -419,7 +442,7 @@ export default function ProjectsPage() {
                       <button onClick={() => moveTaskDown(t.id)} className="text-muted-foreground hover:text-brand"><ChevronDown className="h-2.5 w-2.5" /></button>
                     </div>
                     <button onClick={() => toggleTask(t.id)}>{t.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}</button>
-                    <input value={t.title} onChange={(e) => editTaskTitle(t.id, e.target.value)} className={`flex-1 text-sm bg-transparent border-0 p-0 focus:outline-none focus:ring-0 ${t.done ? "line-through text-muted-foreground" : ""}`} />
+                    <DeferredInput value={t.title} onCommit={v => editTaskTitle(t.id, v)} className={`flex-1 text-sm bg-transparent border-0 p-0 focus:outline-none focus:ring-0 ${t.done ? "line-through text-muted-foreground" : ""}`} />
                     {t.assignee && <span className="text-[9px] text-muted-foreground bg-gray-100 rounded px-1.5 py-0.5">{t.assignee}</span>}
                     <button onClick={() => deleteTask(t.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
                   </div>
