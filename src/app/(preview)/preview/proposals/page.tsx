@@ -143,7 +143,29 @@ export default function ProposalsPage() {
   const [userTemplates, setUserTemplates] = useState<Array<{ id: string; name: string; description: string; tag: string; sections: { title: string; content: string }[] }>>([]);
 
   useEffect(() => {
-    setProposals(loadFromStorage("proposals", SEED_PROPOSALS));
+    const raw = loadFromStorage<Proposal[]>("proposals", SEED_PROPOSALS);
+    // Sanitize: ensure all proposals have the newer fields (backwards compat with old data)
+    const sanitized = raw.map(p => ({
+      ...p,
+      footerText: p.footerText ?? "",
+      sentVia: p.sentVia ?? "",
+      utm: p.utm ?? { source: "", medium: "", campaign: "" },
+      password: p.password ?? "",
+      locked: p.locked ?? false,
+      views: p.views ?? 0,
+      lastViewedAt: p.lastViewedAt ?? "",
+      linkEnabled: p.linkEnabled ?? true,
+      logoUrl: p.logoUrl ?? "",
+      bannerUrl: p.bannerUrl ?? "",
+      signatureUrl: p.signatureUrl ?? "",
+      signatureName: p.signatureName ?? "",
+      sections: (p.sections || []).map(s => ({
+        ...s,
+        media: s.media || [],
+        buttons: s.buttons || [],
+      })),
+    }));
+    setProposals(sanitized);
     // Load user templates client-side only (localStorage not available on SSR)
     try {
       const saved = JSON.parse(localStorage.getItem("localrank_proposal_templates") || "[]");
@@ -630,9 +652,9 @@ export default function ProposalsPage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                      <div><label className="mb-1 block text-[10px] font-medium">utm_source</label><input value={editing.utm.source} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, source: e.target.value } })} placeholder="crm" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
-                      <div><label className="mb-1 block text-[10px] font-medium">utm_medium</label><input value={editing.utm.medium} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, medium: e.target.value } })} placeholder="email" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
-                      <div><label className="mb-1 block text-[10px] font-medium">utm_campaign</label><input value={editing.utm.campaign} onChange={(e) => updateProposal({ ...editing, utm: { ...editing.utm, campaign: e.target.value } })} placeholder="propuestas_julio" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_source</label><input value={editing.utm?.source ?? ""} onChange={(e) => updateProposal({ ...editing, utm: { ...(editing.utm || { source: "", medium: "", campaign: "" }), source: e.target.value } })} placeholder="crm" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_medium</label><input value={editing.utm?.medium ?? ""} onChange={(e) => updateProposal({ ...editing, utm: { ...(editing.utm || { source: "", medium: "", campaign: "" }), medium: e.target.value } })} placeholder="email" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
+                      <div><label className="mb-1 block text-[10px] font-medium">utm_campaign</label><input value={editing.utm?.campaign ?? ""} onChange={(e) => updateProposal({ ...editing, utm: { ...(editing.utm || { source: "", medium: "", campaign: "" }), campaign: e.target.value } })} placeholder="propuestas_julio" className="w-full rounded border px-2 py-1.5 text-xs" /></div>
                     </div>
                     {/* Analytics */}
                     <div className="flex items-center gap-4 pt-2 border-t">
