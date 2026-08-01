@@ -161,15 +161,26 @@ export default function TodoPage() {
 
   const totalDone = Object.values(todos).reduce((sum, items) => sum + items.filter((t) => t.done).length, 0);
   const totalAll = Object.values(todos).reduce((sum, items) => sum + items.length, 0);
+  const [view, setView] = useState<"columns" | "list" | "focus">("columns");
+  const [focusPeriod, setFocusPeriod] = useState<string>(periods[0]?.id || "daily");
 
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">To-Do</h1>
-          <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana, mes, semestre y año</p>
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">To-Do</h1>
+            <p className="text-sm text-muted-foreground">{totalDone}/{totalAll} completadas · Organiza por día, semana, mes, semestre y año</p>
+          </div>
+          <div className="flex rounded-md border overflow-hidden">
+            <button onClick={() => setView("columns")} className={`px-3 py-1.5 text-xs font-medium ${view === "columns" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Columnas</button>
+            <button onClick={() => setView("list")} className={`px-3 py-1.5 text-xs font-medium ${view === "list" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Lista</button>
+            <button onClick={() => setView("focus")} className={`px-3 py-1.5 text-xs font-medium ${view === "focus" ? "bg-brand text-white" : "hover:bg-gray-50"}`}>Foco</button>
+          </div>
         </div>
 
+        {/* ═══ VIEW: COLUMNS ═══ */}
+        {view === "columns" && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {periods.map((config) => {
             const period = config.id;
@@ -270,6 +281,144 @@ export default function TodoPage() {
             )}
           </div>
         </div>
+        )}
+
+        {/* ═══ VIEW: LIST ═══ */}
+        {view === "list" && (
+          <div className="max-w-3xl mx-auto space-y-6">
+            {periods.map((config) => {
+              const period = config.id;
+              const items = todos[period] || [];
+              if (items.length === 0) return null;
+              const doneCount = items.filter(t => t.done).length;
+              return (
+                <div key={period}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`h-3 w-3 rounded-full border-2 ${config.color.replace("border-t-", "border-")}`} />
+                    <h3 className="text-sm font-semibold">{config.label}</h3>
+                    <span className="text-xs text-muted-foreground">{doneCount}/{items.length}</span>
+                    {doneCount > 0 && <button onClick={() => clearDone(period)} className="text-[10px] text-muted-foreground hover:text-red-500 ml-auto">Limpiar ✓</button>}
+                  </div>
+                  {/* Add inline */}
+                  <div className="flex gap-1.5 mb-2">
+                    <textarea
+                      value={newItems[period] ?? ""}
+                      onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addItem(period); } }}
+                      placeholder="Agregar tarea..."
+                      rows={1}
+                      onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 60) + "px"; }}
+                      className="flex-1 rounded border px-2 py-1.5 text-xs focus:border-brand focus:outline-none resize-none overflow-hidden"
+                    />
+                    <button onClick={() => addItem(period)} className="rounded bg-brand px-2 py-1.5 text-xs text-white hover:bg-brand-hover self-end"><Plus className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <div className="space-y-1 rounded-lg border bg-white p-2">
+                    {items.map((item) => (
+                      <div key={item.id} className={`group flex items-start gap-2 rounded px-2 py-2 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
+                        <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
+                          {item.done ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+                        </button>
+                        <p className={`flex-1 text-sm leading-relaxed whitespace-pre-wrap ${item.done ? "line-through text-muted-foreground" : ""}`}>{item.text}</p>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0">
+                          <button onClick={() => cloneItem(period, item)} className="text-muted-foreground hover:text-brand"><Copy className="h-3 w-3" /></button>
+                          <button onClick={() => sendToReminder(item)} className="text-muted-foreground hover:text-amber-600"><Bell className="h-3 w-3" /></button>
+                          <button onClick={() => deleteItem(period, item.id)} className="text-muted-foreground hover:text-red-500"><Trash2 className="h-3 w-3" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ═══ VIEW: FOCUS ═══ */}
+        {view === "focus" && (
+          <div className="max-w-2xl mx-auto">
+            {/* Period tabs */}
+            <div className="flex flex-wrap gap-1 mb-4 border-b pb-3">
+              {periods.map(config => {
+                const count = (todos[config.id] || []).length;
+                const done = (todos[config.id] || []).filter(t => t.done).length;
+                return (
+                  <button key={config.id} onClick={() => setFocusPeriod(config.id)} className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${focusPeriod === config.id ? "bg-brand text-white" : "hover:bg-gray-100"}`}>
+                    {config.label}
+                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${focusPeriod === config.id ? "bg-white/20" : "bg-gray-200"}`}>{done}/{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Single period content — expanded */}
+            {(() => {
+              const config = periods.find(p => p.id === focusPeriod) || periods[0];
+              if (!config) return null;
+              const period = config.id;
+              const items = todos[period] || [];
+              const doneCount = items.filter(t => t.done).length;
+              return (
+                <div className={`rounded-lg border border-t-4 ${config.color} bg-white`}>
+                  <div className="px-5 py-4 border-b">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-base">{config.label}</h3>
+                        <p className="text-xs text-muted-foreground">{config.sublabel} · {doneCount}/{items.length} completadas</p>
+                      </div>
+                      {doneCount > 0 && <button onClick={() => clearDone(period)} className="text-xs text-muted-foreground hover:text-red-500">Limpiar completadas</button>}
+                    </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
+                      <div className="h-2 rounded-full bg-brand transition-all" style={{ width: `${items.length > 0 ? (doneCount / items.length) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  {/* Add item */}
+                  <div className="px-5 py-3 border-b">
+                    <div className="flex gap-2">
+                      <textarea
+                        value={newItems[period] ?? ""}
+                        onChange={(e) => setNewItems({ ...newItems, [period]: e.target.value })}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addItem(period); } }}
+                        placeholder="Agregar tarea... (Enter para crear)"
+                        rows={1}
+                        onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 80) + "px"; }}
+                        className="flex-1 rounded border px-3 py-2 text-sm focus:border-brand focus:outline-none resize-none overflow-hidden"
+                      />
+                      <button onClick={() => addItem(period)} className="rounded bg-brand px-3 py-2 text-sm text-white hover:bg-brand-hover self-end"><Plus className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                  {/* Items — full size */}
+                  <div className="px-3 py-3 space-y-1">
+                    {items.map((item) => (
+                      <div key={item.id} className={`group rounded px-3 py-3 hover:bg-gray-50 ${item.done ? "opacity-50" : ""}`}>
+                        <div className="flex items-start gap-2">
+                          <button onClick={() => toggleItem(period, item.id)} className="mt-0.5 shrink-0">
+                            {item.done ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
+                          </button>
+                          <textarea
+                            value={item.text}
+                            onChange={(e) => editItemText(period, item.id, e.target.value)}
+                            rows={1}
+                            onInput={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }}
+                            onFocus={(e) => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }}
+                            className={`flex-1 min-w-0 bg-transparent border-0 p-0 text-sm leading-relaxed resize-none overflow-hidden focus:outline-none focus:ring-0 ${item.done ? "line-through text-muted-foreground" : ""}`}
+                          />
+                        </div>
+                        <div className="flex gap-1.5 mt-2 ml-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => moveItemUp(period, item.id)} className="text-muted-foreground hover:text-brand" title="Subir"><ChevronUp className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => moveItemDown(period, item.id)} className="text-muted-foreground hover:text-brand" title="Bajar"><ChevronDown className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => cloneItem(period, item)} className="text-muted-foreground hover:text-brand" title="Clonar"><Copy className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => { const targets = periods.map(p => p.id).filter(p => p !== period); if (targets[0]) moveItem(period, targets[0], item); }} className="text-muted-foreground hover:text-purple-600" title="Mover"><ArrowRight className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => sendToReminder(item)} className="text-muted-foreground hover:text-amber-600" title="Recordatorio"><Bell className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => deleteItem(period, item.id)} className="text-muted-foreground hover:text-red-500" title="Eliminar"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
+                      </div>
+                    ))}
+                    {items.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Sin tareas en este periodo. ¡Agrega una arriba!</p>}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
