@@ -21,6 +21,7 @@ type Proposal = {
   bannerUrl: string;
   signatureUrl: string;
   signatureName: string;
+  footerText: string;
   // Tracking & security
   sentVia: string;
   utm: { source: string; medium: string; campaign: string };
@@ -89,12 +90,12 @@ const STATUS_STYLES = {
 const STATUS_LABELS = { draft: "Borrador", sent: "Enviada", accepted: "Aceptada", rejected: "Rechazada" };
 
 const SEED_PROPOSALS: Proposal[] = [
-  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", sentVia: "email", utm: { source: "crm", medium: "email", campaign: "propuestas_julio" }, password: "", locked: false, views: 4, lastViewedAt: "Hace 2h", linkEnabled: true, sections: [
+  { id: "p1", title: "Propuesta Web + SEO — TechCorp", client: "TechCorp Solutions", status: "sent", total: "$12,500 USD", createdAt: "2026-07-15", templateId: "t1", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "Juan Pérez — Director Comercial", footerText: "LocalRank · www.localrank.co · contacto@localrank.co · Tel: +57 300 000 0000", sentVia: "email", utm: { source: "crm", medium: "email", campaign: "propuestas_julio" }, password: "", locked: false, views: 4, lastViewedAt: "Hace 2h", linkEnabled: true, sections: [
     { id: "s1", title: "Resumen Ejecutivo", content: "Estimado Carlos Ruiz,\n\nGracias por la oportunidad de presentar nuestra propuesta. A continuación detallamos nuestra solución para TechCorp Solutions.", media: [] },
     { id: "s2", title: "Alcance", content: "• Rediseño completo del sitio web\n• SEO técnico + estrategia de contenido\n• Landing pages para campañas\n• Google Ads (setup + 3 meses)", media: [] },
     { id: "s3", title: "Inversión", content: "Setup: $8,500 USD\nMantenimiento mensual: $1,500 USD\nTotal primer año: $12,500 USD", media: [] },
   ]},
-  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "", sentVia: "", utm: { source: "", medium: "", campaign: "" }, password: "demo2026", locked: false, views: 0, lastViewedAt: "", linkEnabled: false, sections: [
+  { id: "p2", title: "Consultoría Digital — MediaGroup", client: "MediaGroup Digital", status: "draft", total: "$5,000 USD", createdAt: "2026-07-17", logoUrl: "", bannerUrl: "", signatureUrl: "", signatureName: "", footerText: "", sentVia: "", utm: { source: "", medium: "", campaign: "" }, password: "demo2026", locked: false, views: 0, lastViewedAt: "", linkEnabled: false, sections: [
     { id: "s4", title: "Introducción", content: "Propuesta de consultoría para optimizar la estrategia digital de MediaGroup.", media: [] },
     { id: "s5", title: "Plan", content: "4 semanas de análisis + implementación.", media: [] },
     { id: "s6", title: "Inversión", content: "$5,000 USD - pago en 2 partes", media: [] },
@@ -127,6 +128,7 @@ export default function ProposalsPage() {
       bannerUrl: "",
       signatureUrl: "",
       signatureName: "",
+      footerText: "",
       sentVia: "",
       utm: { source: "", medium: "", campaign: "" },
       password: "",
@@ -136,24 +138,49 @@ export default function ProposalsPage() {
       linkEnabled: true,
       sections: template.sections.map((s) => ({ id: generateId(), title: s.title, content: s.content, media: [] })),
     };
-    save([p, ...proposals]);
+    // Use functional update to avoid stale closures
+    setProposals((prev) => {
+      const next = [p, ...prev];
+      saveToStorage("proposals", next);
+      return next;
+    });
     setEditing(p);
     setShowTemplates(false);
   }
 
   function updateProposal(updated: Proposal) {
-    save(proposals.map((p) => p.id === updated.id ? updated : p));
+    // Use functional setState to avoid closure-stale array issues
+    setProposals((prev) => {
+      // If the proposal no longer exists (race condition), add it back
+      const exists = prev.some((p) => p.id === updated.id);
+      const next = exists
+        ? prev.map((p) => (p.id === updated.id ? updated : p))
+        : [updated, ...prev];
+      saveToStorage("proposals", next);
+      return next;
+    });
     setEditing(updated);
   }
 
   function deleteProposal(id: string) {
-    save(proposals.filter((p) => p.id !== id));
+    // Clear editing FIRST to avoid stale-state renders on the deleted record
     if (editing?.id === id) setEditing(null);
+    if (previewing?.id === id) setPreviewing(null);
+    // Use functional update so we always work from latest state
+    setProposals((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      saveToStorage("proposals", next);
+      return next;
+    });
   }
 
   function duplicateProposal(p: Proposal) {
     const dup: Proposal = { ...p, id: generateId(), title: `${p.title} (copia)`, status: "draft", createdAt: new Date().toISOString().split("T")[0]!, sections: p.sections.map((s) => ({ ...s, id: generateId(), media: [...(s.media || [])] })) };
-    save([dup, ...proposals]);
+    setProposals((prev) => {
+      const next = [dup, ...prev];
+      saveToStorage("proposals", next);
+      return next;
+    });
   }
 
   function addSection() {
@@ -277,11 +304,18 @@ export default function ProposalsPage() {
   function exportPDF(proposal: Proposal) {
     const content = `
       <html><head><title>${proposal.title}</title>
-      <style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1f2937}
-      h1{font-size:24px;margin-bottom:4px}h2{font-size:18px;color:#e91e8c;margin-top:32px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
-      p{white-space:pre-wrap;line-height:1.6}.meta{color:#6b7280;font-size:14px}.total{font-size:20px;font-weight:bold;color:#e91e8c;margin-top:24px;padding:16px;border:2px solid #e91e8c;border-radius:8px;text-align:center}
-      img.logo{height:48px;margin-bottom:16px}img.media{max-height:240px;border-radius:8px;margin-top:12px}img.sig{height:40px;margin-top:24px}
-      .signature{border-top:1px solid #e5e7eb;padding-top:16px;margin-top:32px}
+      <style>
+        body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#1f2937}
+        h1{font-size:24px;margin-bottom:4px}
+        h2{font-size:18px;color:#e91e8c;margin-top:32px;border-bottom:1px solid #e5e7eb;padding-bottom:8px}
+        p{white-space:pre-wrap;line-height:1.6}
+        .meta{color:#6b7280;font-size:14px}
+        .total{font-size:20px;font-weight:bold;color:#e91e8c;margin-top:24px;padding:16px;border:2px solid #e91e8c;border-radius:8px;text-align:center}
+        img.logo{height:48px;margin-bottom:16px}
+        img.media{max-height:240px;border-radius:8px;margin-top:12px}
+        img.sig{height:40px;margin-top:24px}
+        .signature{border-top:1px solid #e5e7eb;padding-top:16px;margin-top:32px}
+        .footer{border-top:1px solid #e5e7eb;padding-top:14px;margin-top:40px;text-align:center;font-size:11px;color:#9ca3af;white-space:pre-wrap;line-height:1.6}
       </style></head><body>
       ${proposal.bannerUrl ? `<img style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:16px" src="${proposal.bannerUrl}" />` : ""}
       ${proposal.logoUrl ? `<img class="logo" src="${proposal.logoUrl}" />` : ""}
@@ -290,6 +324,7 @@ export default function ProposalsPage() {
       ${proposal.sections.map((s) => `<h2>${s.title}</h2><p>${s.content}</p>${(s.media || []).filter((m) => m.type === "image").map((m) => `<img class="media" src="${m.url}" />`).join("")}`).join("")}
       ${proposal.total ? `<div class="total">Total: ${proposal.total}</div>` : ""}
       ${proposal.signatureUrl || proposal.signatureName ? `<div class="signature">${proposal.signatureUrl ? `<img class="sig" src="${proposal.signatureUrl}" />` : ""}${proposal.signatureName ? `<p><strong>${proposal.signatureName}</strong></p>` : ""}</div>` : ""}
+      ${proposal.footerText ? `<div class="footer">${proposal.footerText.replace(/\n/g, "<br/>")}</div>` : ""}
       </body></html>
     `;
     const win = window.open("", "_blank");
@@ -442,6 +477,13 @@ export default function ProposalsPage() {
                       {editing.signatureName && <p className="mt-1 text-sm font-medium">{editing.signatureName}</p>}
                     </div>
                   )}
+
+                  {/* Footer */}
+                  {editing.footerText && (
+                    <div className="mt-10 border-t pt-4 text-center">
+                      <p className="text-[11px] text-muted-foreground whitespace-pre-wrap leading-relaxed">{editing.footerText}</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Editor mode */
@@ -551,9 +593,21 @@ export default function ProposalsPage() {
                     </div>
                   </div>
 
-                  <hr />
+                  {/* Footer personalizado */}
+                  <div className="rounded-lg border bg-gray-50 p-4 space-y-2">
+                    <h4 className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">📄 Pie de página</h4>
+                    <p className="text-[10px] text-muted-foreground">Aparece al final de la propuesta y en el PDF exportado.</p>
+                    <textarea
+                      value={editing.footerText ?? ""}
+                      onChange={(e) => !editing.locked && updateProposal({ ...editing, footerText: e.target.value })}
+                      readOnly={editing.locked}
+                      rows={2}
+                      placeholder="Ej: LocalRank · www.localrank.co · contacto@localrank.co · Tel: +57 300 000 0000&#10;Vigencia de esta propuesta: 15 días · Confidencial"
+                      className={`w-full rounded-md border px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand resize-none ${editing.locked ? "bg-gray-100 cursor-not-allowed opacity-70" : ""}`}
+                    />
+                  </div>
 
-                  {/* Sections */}
+                  <hr />
                   {editing.sections.map((section) => (
                     <div key={section.id} className="rounded-lg border p-4">
                       <div className="flex items-center justify-between mb-2">
