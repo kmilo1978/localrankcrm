@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, CheckCircle2, ChevronDown, ChevronUp, Circle, Plus, Trash2, Bell, Copy, ArrowRight } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 
 type TodoItem = { id: string; text: string; done: boolean; createdAt: string };
 type TodoPeriod = string;
@@ -109,7 +110,13 @@ export default function TodoPage() {
   }
 
   function deleteItem(period: TodoPeriod, id: string) {
-    save({ ...todos, [period]: (todos[period] || []).filter((t) => t.id !== id) });
+    const items = todos[period] || [];
+    const deleted = items.find(t => t.id === id);
+    if (deleted) {
+      const snapshot = { ...todos };
+      pushUndo({ label: `To-Do eliminado: "${deleted.text}"`, undo: () => save(snapshot) });
+    }
+    save({ ...todos, [period]: items.filter((t) => t.id !== id) });
   }
 
   function moveItemUp(period: TodoPeriod, id: string) {

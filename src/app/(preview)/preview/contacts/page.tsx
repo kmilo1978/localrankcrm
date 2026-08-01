@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Archive, ArchiveRestore, AlertCircle, ArrowRightLeft, Bell, ChevronDown, ChevronLeft, ChevronRight, ImagePlus, Mail, Phone, Plus, Search, StickyNote, Tag, Trash2, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 import { openImagePicker } from "@/lib/image-upload";
 
 type CustomField = { id: string; label: string; value: string };
@@ -113,7 +114,15 @@ export default function ContactsPreviewPage() {
     setPage(1);
   }
 
-  function handleDelete(id: string) { save(contacts.filter((c) => c.id !== id)); if (expanded === id) setExpanded(null); }
+  function handleDelete(id: string) {
+    const deleted = contacts.find(c => c.id === id);
+    if (deleted) {
+      const snapshot = [...contacts];
+      pushUndo({ label: `Contacto eliminado: "${deleted.name}"`, undo: () => save(snapshot) });
+    }
+    save(contacts.filter((c) => c.id !== id));
+    if (expanded === id) setExpanded(null);
+  }
   function toggleArchive(id: string) { save(contacts.map((c) => c.id === id ? { ...c, archived: !c.archived } : c)); }
 
   const visible = contacts.filter((c) => showArchived ? c.archived : !c.archived);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ClipboardCopy, Edit3, GripVertical, Plus, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 
 type Lead = {
   id: string;
@@ -70,7 +71,14 @@ export default function PipelinePreviewPage() {
     setShowForm(false);
   }
 
-  function handleDeleteLead(id: string) { saveLeads(leads.filter((l) => l.id !== id)); }
+  function handleDeleteLead(id: string) {
+    const deleted = leads.find(l => l.id === id);
+    if (deleted) {
+      const snapshot = [...leads];
+      pushUndo({ label: `Lead eliminado: "${deleted.name}"`, undo: () => saveLeads(snapshot) });
+    }
+    saveLeads(leads.filter((l) => l.id !== id));
+  }
 
   function moveLead(leadId: string, toStageId: string) {
     saveLeads(leads.map((l) => l.id === leadId ? { ...l, stageId: toStageId } : l));

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bot, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Circle, Copy, Edit3, FileText, FolderKanban, FolderPlus, ImagePlus, Paperclip, Plus, Send, Trash2, UserPlus, Users, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 import { openImagePicker } from "@/lib/image-upload";
 import { RichEditor } from "@/components/rich-editor";
 
@@ -116,6 +117,11 @@ export default function ProjectsPage() {
   }
 
   function deleteProject(id: string) {
+    const deleted = projects.find(p => p.id === id);
+    if (deleted) {
+      const snapshot = [...projects];
+      pushUndo({ label: `Proyecto eliminado: "${deleted.name}"`, undo: () => save(snapshot) });
+    }
     save(projects.filter(p => p.id !== id));
     if (selectedProject === id) { setSelectedProject(null); setSelectedSub(null); }
   }

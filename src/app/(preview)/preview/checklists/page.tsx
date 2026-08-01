@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { CheckSquare, ChevronDown, ChevronUp, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
 import { SortableList } from "@/components/sortable-list";
 
@@ -125,7 +126,14 @@ export default function ChecklistsPage() {
     notify(list?.locked ? "Desbloqueado" : "Bloqueado");
   }
 
-  function deleteList(id: string) { save(lists.filter(l => l.id !== id)); }
+  function deleteList(id: string) {
+    const deleted = lists.find(l => l.id === id);
+    if (deleted) {
+      const snapshot = [...lists];
+      pushUndo({ label: `Checklist eliminado: "${deleted.title}"`, undo: () => save(snapshot) });
+    }
+    save(lists.filter(l => l.id !== id));
+  }
 
   function moveItemUp(listId: string, itemId: string) {
     save(lists.map(l => {

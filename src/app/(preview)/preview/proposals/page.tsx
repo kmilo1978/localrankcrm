@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, ChevronUp, Copy, Download, Edit2, Eye, FileText, Image, Link, Mic, PenTool, Plus, Send, Trash2, Upload, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 
 /** Deferred input: local state while typing, saves to parent only on blur/Enter */
 function DeferredInput({ value, onCommit, readOnly, className, placeholder }: { value: string; onCommit: (v: string) => void; readOnly?: boolean; className?: string; placeholder?: string }) {
@@ -199,15 +200,19 @@ export default function ProposalsPage() {
   }
 
   function deleteProposal(id: string) {
-    // Clear editing FIRST to avoid stale-state renders on the deleted record
-    if (editing?.id === id) setEditing(null);
-    if (previewing?.id === id) setPreviewing(null);
-    // Use functional update so we always work from latest state
+    // Snapshot for undo BEFORE clearing editing
     setProposals((prev) => {
+      const deleted = prev.find(p => p.id === id);
+      if (deleted) {
+        pushUndo({ label: `Propuesta eliminada: "${deleted.title}"`, undo: () => setProposals(cur => { const next = [deleted, ...cur]; saveToStorage("proposals", next); return next; }) });
+      }
       const next = prev.filter((p) => p.id !== id);
       saveToStorage("proposals", next);
       return next;
     });
+    // Clear editing FIRST to avoid stale-state renders on the deleted record
+    if (editing?.id === id) setEditing(null);
+    if (previewing?.id === id) setPreviewing(null);
   }
 
   function duplicateProposal(p: Proposal) {

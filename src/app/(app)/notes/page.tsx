@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, ClipboardCopy, Copy, Edit3, Filter, ImagePlus, Lock, Pin, Plus, Search, StickyNote, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 import { openImagePicker } from "@/lib/image-upload";
 import { RichEditor } from "@/components/rich-editor";
 import { CrmTag, loadTags, saveTags, getTagsByModule, createTag, deleteTag as removeTag, updateTag, TAG_PRESET_COLORS, getTagColor } from "@/lib/tags";
@@ -88,7 +89,15 @@ export default function NotesPage() {
   }
   function togglePin(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, pinned: !n.pinned } : n)); }
   function toggleLock(id: string) { saveNotes(notes.map((n) => n.id === id ? { ...n, locked: !n.locked } : n)); }
-  function deleteNote(id: string) { saveNotes(notes.filter((n) => n.id !== id)); if (viewNote?.id === id) setViewNote(null); }
+  function deleteNote(id: string) {
+    const deleted = notes.find(n => n.id === id);
+    if (deleted) {
+      const snapshot = [...notes];
+      pushUndo({ label: `Nota eliminada: "${deleted.title}"`, undo: () => saveNotes(snapshot) });
+    }
+    saveNotes(notes.filter((n) => n.id !== id));
+    if (viewNote?.id === id) setViewNote(null);
+  }
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(""), 2500); }
 

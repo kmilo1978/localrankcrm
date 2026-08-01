@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, CheckCircle2, Circle, Clock, ClipboardCopy, Edit3, Plus, Tag, Trash2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 import { ViewToggle, ViewMode } from "@/components/view-toggle";
 import { RichEditor } from "@/components/rich-editor";
 import { SortableList } from "@/components/sortable-list";
@@ -103,7 +104,14 @@ export default function TasksPage() {
     });
   }
 
-  function handleDelete(id: string) { save(tasks.filter((t) => t.id !== id)); }
+  function handleDelete(id: string) {
+    const deleted = tasks.find(t => t.id === id);
+    if (deleted) {
+      const snapshot = [...tasks];
+      pushUndo({ label: `Tarea eliminada: "${deleted.title}"`, undo: () => save(snapshot) });
+    }
+    save(tasks.filter((t) => t.id !== id));
+  }
 
   const filtered = filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
   const pendingCount = tasks.filter((t) => t.status === "pending").length;

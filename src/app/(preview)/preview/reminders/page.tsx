@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, BellRing, Clock, Copy, Edit3, Plus, Repeat, Trash2, Volume2, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
+import { pushUndo } from "@/lib/undo-store";
 
 type Reminder = {
   id: string; title: string; description: string; dateTime: string;
@@ -104,7 +105,14 @@ export default function RemindersPage() {
   }
 
   function resetForm() { setForm({ title: "", description: "", dateTime: "", repeat: "none", sound: true }); }
-  function deleteReminder(id: string) { save(reminders.filter(r => r.id !== id)); }
+  function deleteReminder(id: string) {
+    const deleted = reminders.find(r => r.id === id);
+    if (deleted) {
+      const snapshot = [...reminders];
+      pushUndo({ label: `Recordatorio eliminado: "${deleted.title}"`, undo: () => save(snapshot) });
+    }
+    save(reminders.filter(r => r.id !== id));
+  }
   function toggleActive(id: string) { save(reminders.map(r => r.id === id ? { ...r, active: !r.active } : r)); }
   function duplicateReminder(r: Reminder) { save([{ ...r, id: generateId(), dismissed: false }, ...reminders]); notify("Duplicado"); }
 
