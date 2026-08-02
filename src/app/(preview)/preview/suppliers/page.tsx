@@ -172,20 +172,17 @@ export default function SuppliersPage() {
                   {/* Inline tags management */}
                   <div>
                     <p className="text-[10px] font-semibold uppercase text-muted-foreground mb-1.5">🏷️ Etiquetas</p>
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {sup.tags.map((t, i) => (
-                        <span key={i} className="flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
-                          <Tag className="h-2.5 w-2.5" />{t}
-                          <button onClick={() => save(suppliers.map(s => s.id === sup.id ? { ...s, tags: s.tags.filter(tag => tag !== t) } : s))} className="ml-0.5 text-brand/50 hover:text-red-500"><X className="h-2.5 w-2.5" /></button>
-                        </span>
-                      ))}
-                      {sup.tags.length === 0 && <span className="text-[10px] text-muted-foreground italic">Sin etiquetas</span>}
-                    </div>
                     <TagInput
                       value={sup.tags}
-                      onChange={(newTags) => save(suppliers.map(s => s.id === sup.id ? { ...s, tags: newTags } : s))}
+                      onChange={(newTags) => {
+                        setSuppliers(prev => {
+                          const next = prev.map(s => s.id === sup.id ? { ...s, tags: newTags } : s);
+                          saveToStorage("suppliers", next);
+                          return next;
+                        });
+                      }}
                       suggestions={allTags}
-                      placeholder="Agregar etiqueta... (Enter para crear nueva)"
+                      placeholder="Escribe y presiona Enter para crear etiqueta..."
                     />
                   </div>
                   {/* Logo upload */}
