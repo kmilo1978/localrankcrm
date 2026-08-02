@@ -1,23 +1,23 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckSquare, ChevronDown, ChevronUp, ClipboardPaste, Copy, Edit3, Lock, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
+import { CheckSquare, ChevronDown, ChevronUp, ClipboardPaste, Copy, Edit3, Lock, Pin, Plus, RotateCcw, Search, Trash2, Unlock, UserPlus, X } from "lucide-react";
 import { loadFromStorage, saveToStorage, generateId } from "@/lib/local-storage";
 import { pushUndo } from "@/lib/undo-store";
 import { CrmTag, loadTags, getTagColor, TAG_PRESET_COLORS } from "@/lib/tags";
 import { SortableList } from "@/components/sortable-list";
 
 type CheckItem = { id: string; text: string; done: boolean };
-type Checklist = { id: string; title: string; client: string; category: string; tags: string[]; project: string; locked: boolean; items: CheckItem[]; createdAt: string };
+type Checklist = { id: string; title: string; client: string; category: string; tags: string[]; project: string; locked: boolean; pinned: boolean; items: CheckItem[]; createdAt: string };
 
 const SEED: Checklist[] = [
-  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", category: "Ventas", tags: ["Cliente VIP"], project: "Implementación", locked: false, createdAt: "2026-07-17", items: [
+  { id: "cl1", title: "Onboarding cliente", client: "TechCorp", category: "Ventas", tags: ["Cliente VIP"], project: "Implementación", locked: false, pinned: true, createdAt: "2026-07-17", items: [
     { id: "i1", text: "Crear contacto en CRM", done: true },
     { id: "i2", text: "Asignar responsable", done: true },
     { id: "i3", text: "Enviar email de bienvenida", done: false },
     { id: "i4", text: "Agendar llamada kickoff", done: false },
     { id: "i5", text: "Configurar canales", done: false },
   ]},
-  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", category: "Ventas", tags: ["Urgente"], project: "Comercial", locked: false, createdAt: "2026-07-16", items: [
+  { id: "cl2", title: "Cierre de venta", client: "MediaGroup", category: "Ventas", tags: ["Urgente"], project: "Comercial", locked: false, pinned: false, createdAt: "2026-07-16", items: [
     { id: "i6", text: "Propuesta aprobada", done: true },
     { id: "i7", text: "Contrato firmado", done: true },
     { id: "i8", text: "Pago recibido", done: false },
@@ -71,15 +71,18 @@ export default function ChecklistsPage() {
   const checklistCategories = Array.from(new Set(lists.map(l => l.category || "General").filter(Boolean)));
 
   const filtered = lists
+    .map(l => ({ ...l, pinned: l.pinned ?? false })) // backwards compat
     .filter(l => filterCat === "all" || (l.category || "General") === filterCat)
     .filter(l => !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.client.toLowerCase().includes(search.toLowerCase()));
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // Pinned always first
+  const sorted = [...filtered.filter(l => l.pinned), ...filtered.filter(l => !l.pinned)];
+  const totalPages = Math.ceil(sorted.length / PER_PAGE);
+  const paginated = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   function createEmpty() {
     if (!newTitle.trim()) return;
-    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, category: newCategory || "General", tags: newTags, project: newProject, locked: false, items: [], createdAt: new Date().toISOString().split("T")[0]! };
+    const cl: Checklist = { id: generateId(), title: newTitle, client: newClient, category: newCategory || "General", tags: newTags, project: newProject, locked: false, pinned: false, items: [], createdAt: new Date().toISOString().split("T")[0]! };
     save([cl, ...lists]); setNewTitle(""); setNewClient(""); setNewCategory("General"); setNewProject(""); setNewTags([]); setShowNew(false);
   }
 
@@ -87,7 +90,7 @@ export default function ChecklistsPage() {
     if (!pasteTitle.trim() || !pasteText.trim()) return;
     const items = splitText(pasteText).map(text => ({ id: generateId(), text, done: false }));
     if (items.length === 0) { notify("No se detectaron items"); return; }
-    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, category: "General", tags: [], project: "", locked: false, items, createdAt: new Date().toISOString().split("T")[0]! };
+    const cl: Checklist = { id: generateId(), title: pasteTitle, client: pasteClient, category: "General", tags: [], project: "", locked: false, pinned: false, items, createdAt: new Date().toISOString().split("T")[0]! };
     save([cl, ...lists]); setPasteTitle(""); setPasteClient(""); setPasteText(""); setShowPaste(false);
     notify(items.length + " items creados");
   }
@@ -118,6 +121,12 @@ export default function ChecklistsPage() {
 
   function editItemText(listId: string, itemId: string, newText: string) {
     save(lists.map(l => l.id === listId ? { ...l, items: l.items.map(i => i.id === itemId ? { ...i, text: newText } : i) } : l));
+  }
+
+  function togglePin(id: string) {
+    save(lists.map(l => l.id === id ? { ...l, pinned: !l.pinned } : l));
+    const list = lists.find(l => l.id === id);
+    notify(list?.pinned ? "Desfijado" : "Fijado 📌");
   }
 
   function toggleLock(id: string) {
@@ -240,6 +249,7 @@ export default function ChecklistsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold">{cl.title}</h3>
+                      {cl.pinned && <Pin className="h-3 w-3 text-brand" />}
                       {cl.locked && <Lock className="h-3 w-3 text-amber-600" />}
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -252,6 +262,7 @@ export default function ChecklistsPage() {
                   <div className="flex gap-0.5">
                     <button onClick={() => moveListUp(cl.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Subir"><ChevronUp className="h-3 w-3" /></button>
                     <button onClick={() => moveListDown(cl.id)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Bajar"><ChevronDown className="h-3 w-3" /></button>
+                    <button onClick={() => togglePin(cl.id)} className={`rounded p-1 hover:bg-gray-50 ${cl.pinned ? "text-brand" : "text-muted-foreground hover:text-brand"}`} title={cl.pinned ? "Desfijar" : "Fijar"}><Pin className="h-3 w-3" /></button>
                     <button onClick={() => toggleLock(cl.id)} className={`rounded p-1 hover:bg-gray-50 ${cl.locked ? "text-amber-600" : "text-muted-foreground hover:text-amber-600"}`} title={cl.locked ? "Desbloquear" : "Bloquear"}>{cl.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}</button>
                     <button onClick={() => { setEditId(cl.id); setEditTitle(cl.title); setEditClient(cl.client); setEditCategory(cl.category || "General"); }} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Editar"><Edit3 className="h-3 w-3" /></button>
                     <button onClick={() => cloneList(cl)} className="rounded p-1 text-muted-foreground hover:text-brand hover:bg-gray-50" title="Clonar"><Copy className="h-3 w-3" /></button>
